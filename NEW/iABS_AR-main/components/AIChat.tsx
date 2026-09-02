@@ -7,16 +7,18 @@ interface AIChatProps {
   streamerInfo?: string;
 }
 
-const API_KEYS = [
-  'gsk_' + 'V7y88dTEyvtOAPHdJoOdWGdyb3FYX8qrz3kyBERIeOujM1sAfazv',
-  'gsk_' + 'rGub5FeS08rtWWgW7uWfWGdyb3FYTlRBDKRTid0wyYUviCXncqlT',
-  'gsk_' + 'mZMw8CpeN5i5Hwfb00uuWGdyb3FYynfKyzN3BRbtyuVIyrqsyQPt',
-  'gsk_' + 'TUyJSeLJeqDqYk3RwSnLWGdyb3FYXn8qslpcCAHBYddxjXC8JgBW',
-  'gsk_' + 'aqrdIH9a67feNMOJTlTCWGdyb3FYNHgf0N6CMbej6xahwXzxMtRP',
-  'gsk_' + 'nyCJ2dpr9yWFy2ntlx7AWGdyb3FYQqQ6Qtk2eY2b81LoJGxxpFe3',
-  'gsk_' + 'UWHYDZa67nHM3tTD9WOpWGdyb3FYnpVTCQByrIkZQLgeBuaoK9pd',
-  'gsk_' + 'PRC4cfP1nkFV0HVn3BHhWGdyb3FYPfp9VIGtoumcNZbKf52doE6w',
-  'gsk_' + 'Sn8b2uiGvpVfgCqZsU0sWGdyb3FYzRgMgOHrEGeplfNHJIx9SMpd'
+const API_KEYS = (import.meta.env.VITE_OPENROUTER_API_KEYS || '')
+  .split(',')
+  .map((k: string) => k.trim())
+  .filter(Boolean);
+
+const MODELS = [
+  'minimax/minimax-m3:free',
+  'nvidia/nemotron-3-ultra-550b-a55b:free',
+  'minimax/minimax-m2.7:free',
+  'liquid/lfm-2.5-2.6b:free',
+  'google/gemma-4-31b-it:free',
+  'google/gemma-4-26b-a4b-it:free',
 ];
 
 const SYSTEM_PROMPT = `أنت "أبو سعد" (محمد القحطاني) - الستريمر iABS. لست ذكاء اصطناعي. رد كأنك أبو سعد شخصياً.
@@ -315,7 +317,6 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
   const [input, setInput] = useState('');
   const [isWaiting, setIsWaiting] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
-  const [keyIndex, setKeyIndex] = useState(0);
   const [showQuickActions, setShowQuickActions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -342,24 +343,34 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
     sendMessageDirect(newMessages, query);
   };
 
-  const tryRequest = async (body: object, keyIdx: number): Promise<Response> => {
-    if (keyIdx >= API_KEYS.length) throw new Error('All API keys failed');
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEYS[keyIdx]}`,
-      },
-      body: JSON.stringify(body),
-    });
-    
-    if (res.status === 429 || res.status === 401 || res.status === 500) {
-      // For Groq 429 rate limit, wait slightly before retry
-      if (res.status === 429) await new Promise(r => setTimeout(r, 1000));
-      return tryRequest(body, keyIdx + 1);
+  const tryRequest = async (body: object): Promise<Response> => {
+    const attempts = [];
+    for (const model of MODELS) {
+      for (const key of API_KEYS) {
+        attempts.push(
+          fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${key}`,
+              'HTTP-Referer': window.location.origin,
+              'X-Title': 'iABS Stream Hub',
+            },
+            body: JSON.stringify({ ...body, model }),
+          })
+        );
+      }
     }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res;
+
+    const settled = await Promise.allSettled(attempts);
+
+    for (const result of settled) {
+      if (result.status !== 'fulfilled') continue;
+      const res = result.value;
+      if (res.ok) return res;
+    }
+
+    throw new Error('All models/keys failed');
   };
 
   const sendMessageDirect = async (newMessages: Message[], text: string) => {
@@ -377,7 +388,6 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
         : SYSTEM_PROMPT;
 
       const body = {
-        model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: systemContent },
           ...newMessages.map(m => ({ role: m.role, content: m.content })),
@@ -387,8 +397,7 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
         temperature: 0.7,
       };
 
-      const response = await tryRequest(body, keyIndex);
-      setKeyIndex(0);
+      const response = await tryRequest(body);
 
       const reader = response.body?.getReader();
       if (!reader) throw new Error('No reader');
@@ -418,9 +427,13 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
                 setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
               }
               assistantContent += delta;
+              const cleanedContent = assistantContent
+                .replace(/```(?:thinking|reasoning)\s*[\s\S]*?```/g, '')
+                .replace(/(?:thinking|reasoning):\s*(?:<\|im_end\|>)?/gi, '')
+                .trim();
               setMessages(prev => {
                 const updated = [...prev];
-                updated[updated.length - 1] = { role: 'assistant', content: assistantContent };
+                updated[updated.length - 1] = { role: 'assistant', content: cleanedContent };
                 return updated;
               });
             }
