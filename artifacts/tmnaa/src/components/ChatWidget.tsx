@@ -190,7 +190,16 @@ const P = [
 ].join('\n');
 
 type Msg = { role: 'user' | 'assistant'; content: string };
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+const MODELS = [
+  'minimax/minimax-m3:free',
+  'nvidia/nemotron-3-ultra-550b-a55b:free',
+  'minimax/minimax-m2.7:free',
+  'liquid/lfm-2.5-2.6b:free',
+  'google/gemma-4-31b-it:free',
+  'google/gemma-4-26b-a4b-it:free',
+];
 
 const TH = { primary: '#D4A84A', primaryDark: '#B8860B', primaryLight: '#E8C97A', bgDark: '#120D08', text: '#F5EBD5', textMuted: '#A08A5A', border: 'rgba(212,168,74,0.25)', borderLight: 'rgba(212,168,74,0.15)' };
 
@@ -289,7 +298,7 @@ export default function ChatWidget() {
   const inputRef = useRef<HTMLInputElement>(null);
   const typingRef = useRef<number | null>(null);
 
-  const apiKeys = useMemo(() => { const s = import.meta.env.VITE_GROQ_API_KEYS || ''; return s.split(',').map((x: string) => x.trim()).filter(Boolean); }, []);
+  const apiKeys = useMemo(() => { const s = import.meta.env.VITE_OPENROUTER_API_KEYS || ''; return s.split(',').map((x: string) => x.trim()).filter(Boolean); }, []);
 
   const renderText = useCallback((text: string, sendFn: (text: string) => void) => {
     const processMarkdown = (str: string, pk: number) => {
@@ -495,30 +504,52 @@ export default function ChatWidget() {
     return p;
   }, [counts, botrix, vods, liveData]);
 
-  const fetchFB = useCallback(async (hist: Msg[], ki = 0): Promise<string> => {
-    if (ki >= apiKeys.length) throw new Error('no keys');
-    const key = apiKeys[ki];
-    try {
-      const r = await fetch(GROQ_URL, { 
-        method: 'POST', 
-        headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ 
-          model: 'llama-3.3-70b-versatile', 
-          messages: [{ role: 'system', content: buildPrompt() }, ...hist], 
-          temperature: 0.3, 
-          max_tokens: 512 
-        }) 
-      });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      const d = await r.json();
-      const txt = d.choices?.[0]?.message?.content ?? '';
-      
-      // Check for hallucinated Chinese/Russian languages. If found, throw error to force retry on next key
-      if (/[\u0400-\u04FF\u4E00-\u9FFF]/.test(txt)) {
-        throw new Error('Hallucinated foreign languages detected, retrying with next key');
+  const fetchFB = useCallback(async (hist: Msg[]): Promise<string> => {
+    if (!apiKeys.length) throw new Error('no keys configured');
+    const lastError: number[] = [];
+
+    for (const model of MODELS) {
+      const attempts = apiKeys.map((key) =>
+        fetch(OPENROUTER_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + key,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'tmnaa Stream Hub',
+          },
+          body: JSON.stringify({
+            model,
+            messages: [{ role: 'system', content: buildPrompt() }, ...hist],
+            temperature: 0.3,
+            max_tokens: 512,
+          }),
+        })
+      );
+
+      const settled = await Promise.allSettled(attempts);
+
+      for (const result of settled) {
+        if (result.status !== 'fulfilled') continue;
+        const r = result.value;
+        if (!r.ok) { lastError.push(r.status); continue; }
+        try {
+          const d = await r.json();
+          const txt = d.choices?.[0]?.message?.content ?? '';
+
+          // Check for hallucinated Chinese/Russian languages. If found, skip and try next.
+          if (/[\u0400-\u04FF\u4E00-\u9FFF]/.test(txt)) {
+            lastError.push(0);
+            continue;
+          }
+          return txt;
+        } catch {
+          lastError.push(0);
+        }
       }
-      return txt;
-    } catch { return fetchFB(hist, ki + 1); }
+    }
+
+    throw new Error('All models/keys failed (last: ' + lastError.join(',') + ')');
   }, [apiKeys, buildPrompt]);
 
   const send = useCallback(async (ov?: string) => {
