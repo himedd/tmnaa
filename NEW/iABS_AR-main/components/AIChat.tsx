@@ -344,33 +344,33 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
   };
 
   const tryRequest = async (body: object): Promise<Response> => {
-    const attempts = [];
+    let lastError: unknown = null;
+
     for (const model of MODELS) {
-      for (const key of API_KEYS) {
-        attempts.push(
-          fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${key}`,
-              'HTTP-Referer': window.location.origin,
-              'X-Title': 'iABS Stream Hub',
-            },
-            body: JSON.stringify({ ...body, model }),
-          })
-        );
+      const attempts = API_KEYS.map((key) =>
+        fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${key}`,
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'iABS Stream Hub',
+          },
+          body: JSON.stringify({ ...body, model }),
+        })
+      );
+
+      const settled = await Promise.allSettled(attempts);
+
+      for (const result of settled) {
+        if (result.status !== 'fulfilled') continue;
+        const res = result.value;
+        if (res.ok) return res;
+        lastError = res.status;
       }
     }
 
-    const settled = await Promise.allSettled(attempts);
-
-    for (const result of settled) {
-      if (result.status !== 'fulfilled') continue;
-      const res = result.value;
-      if (res.ok) return res;
-    }
-
-    throw new Error('All models/keys failed');
+    throw new Error(lastError ? `All models/keys failed (last: ${lastError})` : 'No API keys configured');
   };
 
   const sendMessageDirect = async (newMessages: Message[], text: string) => {
