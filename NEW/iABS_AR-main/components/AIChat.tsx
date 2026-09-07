@@ -13,12 +13,12 @@ const API_KEYS = (import.meta.env.VITE_OPENROUTER_API_KEYS || '')
   .filter(Boolean);
 
 const MODELS = [
-  'minimax/minimax-m3:free',
-  'nvidia/nemotron-3-ultra-550b-a55b:free',
-  'minimax/minimax-m2.7:free',
-  'liquid/lfm-2.5-2.6b:free',
   'google/gemma-4-31b-it:free',
   'google/gemma-4-26b-a4b-it:free',
+  'meta-llama/llama-4-scout:free',
+  'meta-llama/llama-4-maverick:free',
+  'minimax/minimax-m3:free',
+  'liquid/lfm-2.5-2.6b:free',
 ];
 
 const SYSTEM_PROMPT = `أنت "أبو سعد" (محمد القحطاني) - الستريمر iABS. لست ذكاء اصطناعي. رد كأنك أبو سعد شخصياً.
@@ -359,6 +359,11 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
 
   const tryRequest = async (body: object): Promise<Response> => {
     let lastError: unknown = null;
+    const errors: string[] = [];
+
+    if (API_KEYS.length === 0) {
+      throw new Error('No API keys configured - VITE_OPENROUTER_API_KEYS is empty');
+    }
 
     for (const model of MODELS) {
       const attempts = API_KEYS.map((key) =>
@@ -377,13 +382,19 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
       const settled = await Promise.allSettled(attempts);
 
       for (const result of settled) {
-        if (result.status !== 'fulfilled') continue;
+        if (result.status !== 'fulfilled') {
+          errors.push(`${model}: network error`);
+          continue;
+        }
         const res = result.value;
         if (res.ok) return res;
+        const errText = await res.text().catch(() => '');
+        errors.push(`${model}: ${res.status} ${errText.slice(0, 100)}`);
         lastError = res.status;
       }
     }
 
+    console.error('[AIChat] All attempts failed:', errors);
     throw new Error(lastError ? `All models/keys failed (last: ${lastError})` : 'No API keys configured');
   };
 
