@@ -343,7 +343,7 @@ const SocialCard: React.FC<{ social: SocialLink, index: number, className?: stri
             ></div>
 
             {/* === PERIODIC SHINE ANIMATION LAYER === */}
-            <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none z-20">
+            <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none z-20 hidden md:block">
                 {/* Wide sheen for unified wave effect */}
                 <div
                     className="absolute top-[-100%] left-[-100%] w-[300%] h-[300%] bg-gradient-to-br from-transparent via-white/10 to-transparent animate-shine-periodic"
@@ -865,7 +865,8 @@ export default function App() {
         };
 
         fetchLive();
-        const interval = setInterval(fetchLive, 3000); // تحديث لايف كل 3 ثواني (أون لاين)
+        // Changed to 15s (15000ms) from 3s to reduce heavy phone load and battery drain
+        const interval = setInterval(fetchLive, 15000); 
         return () => {
             clearInterval(interval);
             authSub?.subscription?.unsubscribe();
@@ -1119,10 +1120,10 @@ export default function App() {
                 <div className="absolute inset-0 responsive_bg transition-all duration-1000 ease-in-out scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/60 to-black/95"></div>
                 
-                {/* Powerful Cinematic Glows */}
-                <div className="absolute top-[-10%] left-[-5%] w-[60%] h-[50%] bg-[#FF2D2D]/15 blur-[160px] opacity-40 animate-pulse-slow"></div>
-                <div className="absolute bottom-[-10%] right-[-5%] w-[60%] h-[50%] bg-[#FF2D2D]/10 blur-[160px] opacity-30 animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
-                <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-white/5 blur-[120px] animate-float"></div>
+                {/* Powerful Cinematic Glows - Reduced on mobile for performance */}
+                <div className="absolute top-[-10%] left-[-5%] w-[60%] h-[50%] bg-[#FF2D2D]/15 blur-[60px] md:blur-[160px] opacity-40 md:animate-pulse-slow"></div>
+                <div className="absolute bottom-[-10%] right-[-5%] w-[60%] h-[50%] bg-[#FF2D2D]/10 blur-[60px] md:blur-[160px] opacity-30 md:animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+                <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-white/5 blur-[50px] md:blur-[120px] md:animate-float"></div>
             </div>
 
             <div className="relative z-10 w-full max-w-[1800px] mx-auto p-4 md:p-6 min-h-screen flex flex-col perspective-1000">
@@ -1212,16 +1213,16 @@ export default function App() {
                                     {/* Combined Cracked Text Container */}
                                     <div className="relative inline-block hover:scale-110 transition-transform duration-700 cursor-default">
 
-                                        <div className="absolute inset-[-60%] bg-gradient-to-r from-[#FF2D2D]/0 via-[#FF2D2D]/5 to-[#FF2D2D]/0 blur-[150px] opacity-0 group-hover/name:opacity-100 transition-opacity duration-1000"></div>
-                                        <div className="absolute inset-[-50%] [background:radial-gradient(circle,rgba(255,255,255,0.08),transparent)] blur-[130px] opacity-0 group-hover/name:opacity-100 transition-opacity duration-1000 animate-pulse"></div>
+                                        <div className="absolute inset-[-60%] bg-gradient-to-r from-[#FF2D2D]/0 via-[#FF2D2D]/5 to-[#FF2D2D]/0 blur-[60px] md:blur-[150px] opacity-0 group-hover/name:opacity-100 transition-opacity duration-1000"></div>
+                                        <div className="absolute inset-[-50%] [background:radial-gradient(circle,rgba(255,255,255,0.08),transparent)] blur-[50px] md:blur-[130px] opacity-0 group-hover/name:opacity-100 transition-opacity duration-1000 md:animate-pulse"></div>
 
                                         {/* Layer 2: Top Half (Split Upwards) */}
-                                        <div className="relative z-10 -translate-y-1 -translate-x-1 group-hover/name:animate-glitch group-hover/name:-translate-y-4 group-hover/name:-translate-x-2 transition-transform duration-500"
+                                        <div className="relative z-10 -translate-y-1 -translate-x-1 md:group-hover/name:animate-glitch group-hover/name:-translate-y-4 group-hover/name:-translate-x-2 transition-transform duration-500"
                                             style={{ clipPath: 'polygon(-10% -10%, 110% -10%, 110% 35%, 90% 48%, 82% 52%, 75% 38%, 68% 32%, 60% 42%, 52% 38%, 45% 45%, 38% 42%, 30% 58%, 22% 55%, 15% 62%, 10% 60%, -10% 65%)' }}>
 
                                             {/* Main Text with Heavy Stroke - Adjusted for Mobile */}
                                             <span className="relative">
-                                                <span style={{ color: '#FF2D2D', textShadow: '0 0 30px rgba(255, 45, 45, 0.3)' }} className="[-webkit-text-stroke:2px_black] md:[-webkit-text-stroke:6px_black] [paint-order:stroke_fill]">i</span>
+                                                <span style={{ color: '#FF2D2D' }} className="[-webkit-text-stroke:2px_black] md:[-webkit-text-stroke:6px_black] [paint-order:stroke_fill] md:[text-shadow:0_0_30px_rgba(255,45,45,0.3)]">i</span>
                                                 <span className="text-white [-webkit-text-stroke:2px_black] md:[-webkit-text-stroke:6px_black] [paint-order:stroke_fill]">ABS</span>
                                             </span>
 
@@ -1230,12 +1231,12 @@ export default function App() {
                                         </div>
 
                                         {/* Layer 3: Bottom Half (Split Downwards) */}
-                                        <div className="absolute inset-0 z-10 translate-y-1 translate-x-1 group-hover/name:animate-glitch [animation-delay:0.1s] group-hover/name:translate-y-4 group-hover/name:translate-x-2 transition-transform duration-500"
+                                        <div className="absolute inset-0 z-10 translate-y-1 translate-x-1 md:group-hover/name:animate-glitch [animation-delay:0.1s] group-hover/name:translate-y-4 group-hover/name:translate-x-2 transition-transform duration-500"
                                             style={{ clipPath: 'polygon(-10% 65%, 10% 60%, 15% 62%, 22% 55%, 30% 58%, 38% 42%, 45% 45%, 52% 38%, 60% 42%, 68% 32%, 75% 38%, 82% 52%, 90% 48%, 110% 35%, 110% 110%, -10% 110%)' }}>
 
                                             {/* Main Text with Heavy Stroke - Adjusted for Mobile */}
                                             <span className="relative">
-                                                <span style={{ color: '#FF2D2D', textShadow: '0 0 30px rgba(255, 45, 45, 0.3)' }} className="[-webkit-text-stroke:2px_black] md:[-webkit-text-stroke:6px_black] [paint-order:stroke_fill]">i</span>
+                                                <span style={{ color: '#FF2D2D' }} className="[-webkit-text-stroke:2px_black] md:[-webkit-text-stroke:6px_black] [paint-order:stroke_fill] md:[text-shadow:0_0_30px_rgba(255,45,45,0.3)]">i</span>
                                                 <span className="text-white [-webkit-text-stroke:1px_black] md:[-webkit-text-stroke:3px_black] [paint-order:stroke_fill]">ABS</span>
                                             </span>
                                         </div>
@@ -1268,41 +1269,42 @@ export default function App() {
                                                 </mask>
                                             </defs>
 
+                                            {/* Only show the glowing and moving crack on desktop, on mobile keep it static and lightweight */}
                                             <g mask="url(#crack-mask)">
-                                                {/* Outer Glow Path */}
+                                                {/* Outer Glow Path - Static on mobile */}
                                                 <path d="M0 65 L10 60 L15 62 L22 55 L30 58 L38 42 L45 45 L52 38 L60 42 L68 32 L75 38 L82 52 L90 48 L100 35"
-                                                    stroke="#FF2D2D" strokeWidth="4" fill="none" opacity="0.15" filter="url(#crack-glow-heavy)" />
+                                                    stroke="#FF2D2D" strokeWidth="4" fill="none" opacity="0.15" className="hidden md:block" filter="url(#crack-glow-heavy)" />
 
                                                 {/* Main Realistic Jagged Crack */}
                                                 <path d="M0 65 L10 60 L15 62 L22 55 L30 58 L38 42 L45 45 L52 38 L60 42 L68 32 L75 38 L82 52 L90 48 L100 35"
                                                     stroke="url(#crack-gradient-v2)" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"
-                                                    className="animate-pulse" filter="url(#crack-glow-heavy)" />
+                                                    className="md:animate-pulse" filter="url(#crack-glow-heavy)" />
 
                                                 {/* Black Crack Core - Emerging from the red 'i' */}
                                                 <path d="M0 65 L8 62 L12 64 L18 58 L25 61 L32 48 L40 52 L45 45"
                                                     stroke="black" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round"
-                                                    className="animate-pulse" opacity="0.8" />
+                                                    className="md:animate-pulse" opacity="0.8" />
 
                                                 {/* Inner Energy Core - Hot White */}
                                                 <path d="M0 65 L10 60 L15 62 L22 55 L30 58 L38 42 L45 45 L52 38 L60 42 L68 32 L75 38 L82 52 L90 48 L100 35"
                                                     stroke="white" strokeWidth="0.3" fill="none" strokeLinecap="round" strokeLinejoin="round"
-                                                    className="animate-pulse [animation-delay:0.2s]" />
+                                                    className="md:animate-pulse [animation-delay:0.2s]" />
 
-                                                {/* Traveling Energy Bolt */}
-                                                <circle r="1.2" fill="white" className="shadow-[0_0_15px_white]">
+                                                {/* Traveling Energy Bolt - Disable on mobile to prevent requestAnimationFrame/paint lag */}
+                                                <circle r="1.2" fill="white" className="hidden md:block shadow-[0_0_15px_white]">
                                                     <animateMotion
                                                         path="M0 65 L10 60 L15 62 L22 55 L30 58 L38 42 L45 45 L52 38 L60 42 L68 32 L75 38 L82 52 L90 48 L100 35"
                                                         dur="2.5s" repeatCount="indefinite" />
                                                 </circle>
                                             </g>
 
-                                            {/* Energy Sparks - Responsive */}
-                                            <circle cx="38" cy="42" r="1.5" fill="#FF2D2D" className="animate-ping shadow-[0_0_20px_#FF2D2D]" />
-                                            <circle cx="68" cy="32" r="1" fill="white" className="animate-ping [animation-delay:0.4s] shadow-[0_0_20px_white]" />
+                                            {/* Energy Sparks - Reduced on mobile (hidden) */}
+                                            <circle cx="38" cy="42" r="1.5" fill="#FF2D2D" className="hidden md:block animate-ping shadow-[0_0_20px_#FF2D2D]" />
+                                            <circle cx="68" cy="32" r="1" fill="white" className="hidden md:block animate-ping [animation-delay:0.4s] shadow-[0_0_20px_white]" />
                                         </svg>
 
-                                        {/* Floating Tech Particles */}
-                                        <div className="absolute inset-0 pointer-events-none overflow-visible">
+                                        {/* Floating Tech Particles - Hidden on mobile */}
+                                        <div className="absolute inset-0 pointer-events-none overflow-visible hidden md:block">
                                             <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-[#FF2D2D] opacity-0 group-hover/name:opacity-100 transition-all duration-500 translate-x-4 -translate-y-4"></div>
                                             <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-white opacity-0 group-hover/name:opacity-100 transition-all duration-500 -translate-x-4 translate-y-4"></div>
 

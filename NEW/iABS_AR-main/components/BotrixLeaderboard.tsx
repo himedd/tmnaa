@@ -158,8 +158,8 @@ const BotrixLeaderboard: React.FC<BotrixLeaderboardProps> = ({ lang }) => {
     <div className="w-full animate-fade-in-up">
       <div className="group relative flex flex-col rounded-[28px] md:rounded-[36px] overflow-hidden transition-all duration-700 bg-[#070707] backdrop-blur-lg border border-white/[0.06] shadow-[0_0_80px_-20px_rgba(83,252,24,0.06)] hover:border-white/[0.12] hover:shadow-[0_0_100px_-15px_rgba(83,252,24,0.1)]">
 
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#53FC18] opacity-[0.03] blur-[120px] pointer-events-none rounded-full"></div>
-        <div className="absolute bottom-0 right-0 w-[300px] h-[200px] bg-[#FF2D2D] opacity-[0.02] blur-[100px] pointer-events-none rounded-full"></div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#53FC18] opacity-[0.03] blur-[40px] md:blur-[120px] pointer-events-none rounded-full"></div>
+        <div className="absolute bottom-0 right-0 w-[300px] h-[200px] bg-[#FF2D2D] opacity-[0.02] blur-[40px] md:blur-[100px] pointer-events-none rounded-full"></div>
 
         <div className="relative p-5 md:p-8 z-10">
           <div className="flex items-center gap-4">

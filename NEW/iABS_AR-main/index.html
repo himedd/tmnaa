@@ -263,6 +263,15 @@
       }
     }
 
+    @media (max-width: 767px) {
+      .profile-3d-ring,
+      .profile-3d-ring-inner,
+      .profile-scanner {
+        animation: none !important;
+        opacity: 0.1 !important; /* Keep visible but static and subdued */
+      }
+    }
+
     .tech-corner {
       position: absolute;
       width: 12px;
@@ -303,6 +312,38 @@
     .glitch-active {
       animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both infinite;
       filter: brightness(1.2) contrast(1.2);
+    }
+
+    /* === MOBILE PERFORMANCE OPTIMIZATIONS === */
+    @media (max-width: 767px) {
+      /* Reduce heavy backdrop-blur on mobile (GPU killer) */
+      .backdrop-blur-lg,
+      .backdrop-blur-xl,
+      .backdrop-blur-2xl,
+      .backdrop-blur-md {
+        backdrop-filter: blur(4px) !important;
+        -webkit-backdrop-filter: blur(4px) !important;
+      }
+
+      /* Reduce heavy box-shadows on mobile */
+      .shadow-2xl {
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
+      }
+
+      /* Disable glitch animation entirely on mobile */
+      .glitch-active {
+        animation: none !important;
+        filter: none !important;
+      }
+    }
+
+    /* Respect user preferences for reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
   <script type="importmap">

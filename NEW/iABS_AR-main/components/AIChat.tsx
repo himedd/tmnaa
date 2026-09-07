@@ -62,10 +62,14 @@ inormal, yousef1098, ireim, shaddoh, sipdai, maryamqa, imiro97, iali5, lena81l, 
 ## شقة اليرموك:
 شقة غثت امنا، مساحتها 10x10، الفرش زبالة من عز أو ابو سعود.
 
+## أوامر وتفاعلات خاصة (مهم جداً جداً نفذها بحذافيرها!):
+1. إذا سألك أي شخص عن موقع MT أو سيرفر MT (MT RP) أو ذكر كلمة MT، يجب أن تعطيه هذا الرابط: https://www.mtrp.gg/ ومعه هذا الاستيكر حصراً: [img:https://www.mtrp.gg/assets/MT.Avatar_1771104723139-yBcHNWFs.png]
+2. إذا سألك أي شخص عن "متعب" أو جاب طاريه، يجب أن يكون ردك: "تعتع، تعتوعي وكمان صديقي في كل مكان ويكون جميل [emote:5607341:Miteb]"
+
 ## قواعد الرد (قواعد صارمة جداً!):
 1. إياك ثم إياك تتحدث باللغة العربية الفصحى أو تستخدم كلمات إنجليزية للردود العادية (مثل news أو hello أو hi). تحدث باللغة العربية (الأحرف العربية) فقط. ممنوع استخدام أي لغات أخرى أو أحرف غريبة.
 2. كلامك لازم يكون 100% لهجة سعودية (عامية، جنوبية، شبابية بحتة).
-3. استخدم مصطلحات أبو سعد باستمرار: "ارحب ألوف"، "يا ورع"، "اذلف"، "طال عمرك"، "هطف"، "ابك"، "ياقدعان"، "وش تحس به"، "يرحم امك"، "اسوق امها".
+3. استخدم مصطلحات تمنا باستمرار: "ارحب ألوف"، "يا ورع"، "اذلف"، "طال عمرك"، "هطف"، "ابك"، "ياقدعان"، "وش تحس به"، ".
 4. لا تكن مؤدباً بزيادة أو رسمياً أبداً. الردود لازم تكون عفوية، زاحفة، وفيها طقطقة وهياط مضحك كأنك تسولف في البث.
 5. إذا قال لك "مرحبا" أو "كيف حالك"، لا ترد بردود فصحى. رد مثلاً: "ارحب ألوف يا ورع! بخير طال عمرك، اخلص وش عندك؟"
 6. اختصر الردود (سطرين إلى 3 كحد أقصى).
@@ -110,13 +114,13 @@ interface Message {
 
 const renderFormattedText = (text: string) => {
   const parts: React.ReactNode[] = [];
-  const combinedRegex = /(\[social[:\s]*([a-zA-Z0-9_]+):([^:]+):(https?:\/\/[^\]]+)\])|(\[emote:(\d+):([\w\s\-]+)\])|(\*\*\*(.*?)\*\*\*|\*\*(.*?)\*\*|\*(.*?)\*)/g;
+  const combinedRegex = /(\[social[:\s]*([a-zA-Z0-9_]+):([^:]+):(https?:\/\/[^\]]+)\])|(\[emote:(\d+):([\w\s\-]+)\])|(\[img:([^\]]+)\])|(\*\*\*(.*?)\*\*\*|\*\*(.*?)\*\*|\*(.*?)\*)/g;
   let lastIndex = 0;
   let match;
   let key = 0;
 
   const renderPlain = (t: string) => {
-    const engRegex = /[a-zA-Z0-9]+(?:\.(?:com|net|org|io|sa|tv))?(?:[/\w-]*)?/g;
+    const engRegex = /[a-zA-Z0-9]+(?:\.(?:com|net|org|io|sa|tv|gg))?(?:[/\w.-]*)?/g;
     const plainParts: React.ReactNode[] = [];
     let pLast = 0;
     let pMatch;
@@ -178,12 +182,22 @@ const renderFormattedText = (text: string) => {
           />
         </span>
       );
-    } else if (match[8]?.startsWith('***')) {
-      parts.push(<span key={key++} className="font-bold italic text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.15)]">{match[9]}</span>);
-    } else if (match[8]?.startsWith('**')) {
-      parts.push(<strong key={key++} className="font-black text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.12)]">{match[10]}</strong>);
-    } else if (match[8]?.startsWith('*')) {
-      parts.push(<em key={key++} className="italic text-white/80">{match[11]}</em>);
+    } else if (match[8]) {
+      parts.push(
+        <span key={`img${key++}`} className="inline-flex items-center justify-center w-14 h-14 md:w-16 md:h-16 mx-1 rounded-xl bg-gradient-to-br from-white/[0.05] to-transparent border border-[#FF2D2D]/30 shadow-[0_0_20px_rgba(255,45,45,0.2)] hover:border-[#FF2D2D]/70 hover:scale-110 transition-all duration-300 align-middle overflow-hidden">
+          <img
+            src={match[9]}
+            alt="Sticker"
+            className="w-full h-full object-contain p-1"
+          />
+        </span>
+      );
+    } else if (match[10]?.startsWith('***')) {
+      parts.push(<span key={key++} className="font-bold italic text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.15)]">{match[11]}</span>);
+    } else if (match[10]?.startsWith('**')) {
+      parts.push(<strong key={key++} className="font-black text-white drop-shadow-[0_0_6px_rgba(255,255,255,0.12)]">{match[12]}</strong>);
+    } else if (match[10]?.startsWith('*')) {
+      parts.push(<em key={key++} className="italic text-white/80">{match[13]}</em>);
     }
     lastIndex = combinedRegex.lastIndex;
   }
@@ -648,8 +662,8 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
           }}
         ></div>
 
-        {/* Top Glow */}
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-[#FF2D2D]/10 blur-[100px] animate-pulse-slow pointer-events-none" style={{ animation: 'glow-pulse 4s ease-in-out infinite' }}></div>
+        {/* Top Glow - Reduced on mobile */}
+        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-[#FF2D2D]/10 blur-[40px] md:blur-[100px] pointer-events-none hidden md:block" style={{ animation: 'glow-pulse 4s ease-in-out infinite' }}></div>
 
         {/* Header */}
         <div className="relative h-16 bg-gradient-to-r from-[#FF2D2D]/20 via-[#FF2D2D]/5 to-transparent border-b border-white/5 flex items-center justify-between px-5 shrink-0 backdrop-blur-sm">
