@@ -9,6 +9,7 @@
     "preview": "vite preview --config vite.config.ts --host 0.0.0.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
     "@tanstack/react-query": "^5.101.2",
     "hls.js": "^1.6.16",
     "pusher-js": "7.6.0"
