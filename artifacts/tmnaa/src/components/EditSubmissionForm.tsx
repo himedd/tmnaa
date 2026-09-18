@@ -23,6 +23,7 @@ const uploadErrors: Record<string, string> = {
   invalid_fields: 'Please check your name and caption.',
   missing_file: 'Choose a file to upload or switch to "Paste Link".',
   unauthorized: 'Your admin session expired — sign in again.',
+  supabase_not_configured: 'The wall database is not configured yet on this server.',
 };
 
 export function EditSubmissionForm({ onSubmitted }: Props) {
