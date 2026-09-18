@@ -1,0 +1,71 @@
+# Optional Blueprint for deploying the api-server on a separate Node host.
+# The frontend (Vercel) calls this backend via the VITE_API_URL env var on Vercel.
+# Uploads live here because Vercel's serverless functions cap request bodies
+# around 4.5 MB. Fill the sync:false env vars in the Render dashboard.
+services:
+  - type: web
+    name: tmnaa-api
+    runtime: node
+    plan: free
+    buildCommand: cd artifacts/api-server && pnpm run build
+    startCommand: cd artifacts/api-server && node --enable-source-maps ./dist/index.mjs
+    healthCheckPath: /api/healthz
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 22.12.0
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      # --- copy real values from artifacts/api-server/.env -------------------
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE
+        sync: false
+      - key: STORJ1_ACCESS_KEY
+        sync: false
+      - key: STORJ1_SECRET_KEY
+        sync: false
+      - key: STORJ1_ENDPOINT
+        sync: false
+      - key: STORJ1_BUCKET
+        sync: false
+      - key: STORJ2_ACCESS_KEY
+        sync: false
+      - key: STORJ2_SECRET_KEY
+        sync: false
+      - key: STORJ2_ENDPOINT
+        sync: false
+      - key: STORJ2_BUCKET
+        sync: false
+      - key: STORJ3_ACCESS_KEY
+        sync: false
+      - key: STORJ3_SECRET_KEY
+        sync: false
+      - key: STORJ3_ENDPOINT
+        sync: false
+      - key: STORJ3_BUCKET
+        sync: false
+      - key: STORJ4_ACCESS_KEY
+        sync: false
+      - key: STORJ4_SECRET_KEY
+        sync: false
+      - key: STORJ4_ENDPOINT
+        sync: false
+      - key: STORJ4_BUCKET
+        sync: false
+      - key: ADMIN_JWT_SECRET
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: MEDIA_MAX_BYTES
+        sync: false
+      - key: RATE_LIMIT_MAX
+        sync: false
+      - key: RATE_LIMIT_WINDOW_MS
+        sync: false
+      - key: ADMIN_RATE_LIMIT_MAX
+        sync: false
+      - key: ADMIN_RATE_LIMIT_WINDOW_MS
+        sync: false

@@ -1,0 +1,23 @@
+{
+  "buildCommand": "pnpm --filter @workspace/tmnaa build",
+  "outputDirectory": "artifacts/tmnaa/dist/public",
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/index.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+      ]
+    }
+  ],
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

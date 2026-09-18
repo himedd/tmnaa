@@ -1,0 +1,3275 @@
+
+
+
+
+You are an elite Senior UI/UX Designer, Brand Designer and Front-End Developer.
+
+
+
+Your mission is to create a PREMIUM, AAA-quality, cinematic gaming website for a streamer/content creator named:
+
+
+
+TMNAA
+
+
+
+The website should look better than 99.9% of gaming websites on the internet.
+
+
+
+DO NOT create a normal website.
+
+
+
+Create a legendary experience.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+STYLE
+
+
+
+Dark Fantasy
+
+Volcanic
+
+Dragon Theme
+
+Luxury
+
+Premium
+
+Cinematic
+
+Modern
+
+Minimal but Rich
+
+High-End
+
+AAA Game Website
+
+
+
+Inspired by:
+
+
+
+• Diablo IV
+
+• Elden Ring
+
+• Black Myth Wukong
+
+• League of Legends
+
+• Riot Games
+
+• Call of Duty
+
+• Blizzard
+
+• SteelSeries
+
+• ASUS ROG
+
+• HyperX
+
+• Alienware
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+BRANDING
+
+
+
+Use the provided logo.
+
+
+
+The logo is the heart of the website.
+
+
+
+Everything should match the logo colors.
+
+
+
+Primary Colors
+
+
+
+#0d0d0d
+
+#151515
+
+#1b1b1b
+
+
+
+Accent Colors
+
+
+
+Molten Gold
+
+Burning Orange
+
+Dark Red
+
+Fire Glow
+
+
+
+Use glowing effects only where needed.
+
+
+
+Never overdo them.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+BACKGROUND
+
+
+
+Use the provided Dragon Background.
+
+
+
+Make it cinematic.
+
+
+
+Add:
+
+
+
+Volcanic smoke
+
+
+
+Moving fog
+
+
+
+Fire embers
+
+
+
+Flying sparks
+
+
+
+Lava glow
+
+
+
+Atmospheric depth
+
+
+
+Light rays
+
+
+
+Dark mountains
+
+
+
+Ruins
+
+
+
+Chains
+
+
+
+The dragon should appear huge.
+
+
+
+Everything should feel alive.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+HEADER
+
+
+
+Transparent Glass Header
+
+
+
+Blur Background
+
+
+
+Premium borders
+
+
+
+Golden corners
+
+
+
+Height around 90px
+
+
+
+Logo centered.
+
+
+
+Navigation:
+
+
+
+الرئيسية
+
+
+
+من أنا
+
+
+
+جدول البث
+
+
+
+المعرض
+
+
+
+المجتمع
+
+
+
+الدعم
+
+
+
+التواصل
+
+
+
+Right side:
+
+
+
+Search
+
+
+
+Language Switch
+
+
+
+Notifications
+
+
+
+Discord status (optional)
+
+
+
+Online indicator
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+HERO SECTION
+
+
+
+Huge.
+
+
+
+Very cinematic.
+
+
+
+Center:
+
+
+
+TMNAA Logo
+
+
+
+Large title
+
+
+
+Subtitle
+
+
+
+Arabic text:
+
+
+
+"اصنع المستحيل... واترك بصمتك."
+
+
+
+Small description:
+
+
+
+"صانع محتوى وبثوث مباشرة يقدم الألعاب، التحديات، والمحتوى الترفيهي بأعلى جودة."
+
+
+
+Below:
+
+
+
+2 Premium Buttons
+
+
+
+Button 1
+
+
+
+🔥 شاهد البث المباشر
+
+
+
+Button 2
+
+
+
+👑 انضم للمجتمع
+
+
+
+Buttons should look like forged metal from a fantasy game.
+
+
+
+Not normal rounded buttons.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+SOCIAL CARDS
+
+
+
+Create 4 Premium Cards.
+
+
+
+Each card should look like forged stone + glowing gold frame.
+
+
+
+Hover animation.
+
+
+
+Fire particles.
+
+
+
+Icons large.
+
+
+
+Links:
+
+
+
+YouTube
+
+
+
+https://www.youtube.com/@tmnaa1
+
+
+
+TikTok
+
+
+
+https://www.tiktok.com/@tmnaa0
+
+
+
+Instagram
+
+
+
+https://www.instagram.com/tmnaa16
+
+
+
+X
+
+
+
+https://x.com/tmnaa16
+
+
+
+Each card should have:
+
+
+
+Large Icon
+
+
+
+Arabic Name
+
+
+
+Small Description
+
+
+
+Follow Button
+
+
+
+Glow Animation
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+SUPPORT CARD
+
+
+
+Create a premium Support section.
+
+
+
+Large golden button.
+
+
+
+Text:
+
+
+
+ادعم صانع المحتوى
+
+
+
+Link:
+
+
+
+https://creators.sa/tmnaa
+
+
+
+Include:
+
+
+
+Luxury border
+
+
+
+Golden shine
+
+
+
+Animated glow
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+TYPOGRAPHY
+
+
+
+Everything in Arabic.
+
+
+
+RTL Layout.
+
+
+
+Use premium Arabic fonts.
+
+
+
+Recommended:
+
+
+
+IBM Plex Sans Arabic
+
+
+
+Cairo
+
+
+
+Alexandria
+
+
+
+Tajawal
+
+
+
+Do NOT use default fonts.
+
+
+
+Titles should feel powerful.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+BUTTON DESIGN
+
+
+
+Buttons should NOT look modern flat.
+
+
+
+Instead create:
+
+
+
+Forged Metal
+
+
+
+Ancient Fantasy
+
+
+
+Golden edges
+
+
+
+Burning glow
+
+
+
+Stone texture
+
+
+
+Slight scratches
+
+
+
+Embossed details
+
+
+
+Animated reflections
+
+
+
+Hover:
+
+
+
+Fire glow
+
+
+
+Scale 1.05
+
+
+
+Golden shine moving across button
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+ANIMATIONS
+
+
+
+Smooth.
+
+
+
+Very premium.
+
+
+
+GSAP preferred.
+
+
+
+Animations:
+
+
+
+Fade
+
+
+
+Parallax
+
+
+
+Mouse movement
+
+
+
+Floating embers
+
+
+
+Fog movement
+
+
+
+Lava glow
+
+
+
+Fire particles
+
+
+
+Logo glow
+
+
+
+Buttons glow
+
+
+
+Smooth scrolling
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+GLASSMORPHISM
+
+
+
+Use only where appropriate.
+
+
+
+Never overuse.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+SECTIONS
+
+
+
+Hero
+
+
+
+Social Links
+
+
+
+About Me
+
+
+
+Streaming Schedule
+
+
+
+Gallery
+
+
+
+Community
+
+
+
+Support
+
+
+
+Footer
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+FOOTER
+
+
+
+Dark.
+
+
+
+Elegant.
+
+
+
+Golden Logo.
+
+
+
+Quick Links.
+
+
+
+Social Links.
+
+
+
+Copyright.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+DESIGN QUALITY
+
+
+
+The entire website should feel like the official website of a AAA game.
+
+
+
+Not a streamer template.
+
+
+
+Not a portfolio.
+
+
+
+It should feel expensive.
+
+
+
+Cinematic.
+
+
+
+Legendary.
+
+
+
+Memorable.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+TECH STACK
+
+
+
+React
+
+
+
+Next.js
+
+
+
+TypeScript
+
+
+
+TailwindCSS
+
+
+
+Framer Motion
+
+
+
+GSAP
+
+
+
+Lenis Smooth Scroll
+
+
+
+Responsive
+
+
+
+Desktop First
+
+
+
+Perfect Mobile Version
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+MOBILE VERSION
+
+
+
+Completely redesigned.
+
+
+
+Not just scaled down.
+
+
+
+Custom mobile navigation.
+
+
+
+Beautiful drawer menu.
+
+
+
+Premium animations.
+
+
+
+Large buttons.
+
+
+
+Easy touch targets.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+SPECIAL EFFECTS
+
+
+
+Volcanic fog
+
+
+
+Fire particles
+
+
+
+Floating ashes
+
+
+
+Animated lava
+
+
+
+Smoke
+
+
+
+Glow
+
+
+
+Gold reflections
+
+
+
+Mouse reactive lighting
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+IMPORTANT
+
+
+
+Never use generic UI.
+
+
+
+Never use basic cards.
+
+
+
+Never use normal gradients.
+
+
+
+Everything should look handcrafted.
+
+
+
+Every component must have premium details.
+
+
+
+The website should impress users within the first 3 seconds.
+
+
+
+Think like Blizzard's design team.
+
+
+
+Think like Riot Games.
+
+
+
+Think like a cinematic game launch website.
+
+
+
+Build something unforgettable.
+
+# ROLE
+
+
+
+You are one of the world's best UI/UX Designers, Art Directors, Brand Designers, Front-End Engineers and Creative Directors.
+
+
+
+You have worked for:
+
+
+
+Blizzard
+
+Riot Games
+
+Naughty Dog
+
+Rockstar Games
+
+Santa Monica Studio
+
+Epic Games
+
+Infinity Ward
+
+
+
+Your mission is NOT to create a website.
+
+
+
+Your mission is to create an unforgettable digital experience.
+
+
+
+The visitor should immediately feel like they entered the official website of a AAA fantasy game.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+PROJECT NAME
+
+
+
+TMNAA
+
+
+
+Streamer
+
+Gaming
+
+Content Creator
+
+
+
+Language:
+
+Arabic (RTL)
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+VERY IMPORTANT
+
+
+
+I will provide:
+
+
+
+• Official Logo
+
+• Dragon Background
+
+• Wallpapers
+
+• Assets
+
+
+
+You MUST use them perfectly.
+
+
+
+Never replace them.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+DESIGN PHILOSOPHY
+
+
+
+The design must feel like:
+
+
+
+Power
+
+
+
+Luxury
+
+
+
+Dark Fantasy
+
+
+
+Ancient Kingdom
+
+
+
+Volcanic World
+
+
+
+Dragon Empire
+
+
+
+Premium Gaming
+
+
+
+Royal
+
+
+
+Legendary
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+INSPIRATION
+
+
+
+Diablo IV
+
+
+
+League of Legends
+
+
+
+Elden Ring
+
+
+
+Black Myth Wukong
+
+
+
+God of War Ragnarok
+
+
+
+World of Warcraft
+
+
+
+Riot Games
+
+
+
+SteelSeries
+
+
+
+Alienware
+
+
+
+HyperX
+
+
+
+Call Of Duty
+
+
+
+ASUS ROG
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+THE USER EXPERIENCE
+
+
+
+The visitor must feel:
+
+
+
+"I have never seen a streamer website this beautiful."
+
+
+
+Everything should feel alive.
+
+
+
+Nothing should feel static.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+COLOR PALETTE
+
+
+
+Background
+
+
+
+#050505
+
+
+
+#090909
+
+
+
+#111111
+
+
+
+#171717
+
+
+
+Gold
+
+
+
+#FFD98A
+
+
+
+#F2C66D
+
+
+
+#CFA347
+
+
+
+Fire
+
+
+
+#FF4A1C
+
+
+
+#FF5C21
+
+
+
+#E02E0B
+
+
+
+Lava
+
+
+
+#9A1E05
+
+
+
+#5A1200
+
+
+
+Text
+
+
+
+#FFFFFF
+
+
+
+#D7D7D7
+
+
+
+Muted
+
+
+
+#888888
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+TEXTURES
+
+
+
+Everything should include premium textures.
+
+
+
+Burned Metal
+
+
+
+Forged Steel
+
+
+
+Old Stone
+
+
+
+Ancient Gold
+
+
+
+Scratches
+
+
+
+Ash
+
+
+
+Volcanic Rock
+
+
+
+Never use flat colors.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+BACKGROUND
+
+
+
+Use the provided Dragon Background.
+
+
+
+Enhance it with:
+
+
+
+Animated Fog
+
+
+
+Volcanic Smoke
+
+
+
+Flying Ash
+
+
+
+Fire Sparks
+
+
+
+Burning Embers
+
+
+
+Light Rays
+
+
+
+Depth Blur
+
+
+
+Soft Cinematic Bloom
+
+
+
+Moving Lava
+
+
+
+Dark Mountains
+
+
+
+Ruined Castles
+
+
+
+Chains
+
+
+
+Everything must feel like a living world.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+HEADER
+
+
+
+Transparent
+
+
+
+Glassmorphism
+
+
+
+Blur 20px
+
+
+
+Height 90px
+
+
+
+Golden Border
+
+
+
+Metal Frame
+
+
+
+Logo in center
+
+
+
+Navigation:
+
+
+
+الرئيسية
+
+
+
+من أنا
+
+
+
+المعرض
+
+
+
+البث المباشر
+
+
+
+الجدول
+
+
+
+المجتمع
+
+
+
+الدعم
+
+
+
+Right Side
+
+
+
+Search
+
+
+
+Language
+
+
+
+Notifications
+
+
+
+Profile
+
+
+
+Online Status
+
+
+
+Hover:
+
+
+
+Golden Glow
+
+
+
+Smooth Animation
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+HERO SECTION
+
+
+
+Massive.
+
+
+
+Very cinematic.
+
+
+
+Center:
+
+
+
+Large TMNAA Logo
+
+
+
+Dragon behind logo
+
+
+
+Huge title
+
+
+
+Arabic slogan
+
+
+
+اصنع المستحيل...
+
+واترك بصمتك.
+
+
+
+Description
+
+
+
+مرحبًا بك في عالم TMNAA، حيث يلتقي الإبداع مع الألعاب، والبث المباشر مع الاحتراف، لتجربة لا تُنسى.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+PRIMARY BUTTON
+
+
+
+Text
+
+
+
+🔥 شاهد البث المباشر
+
+
+
+Style
+
+
+
+Forged Metal
+
+
+
+Gold Border
+
+
+
+Inner Glow
+
+
+
+Animated Reflection
+
+
+
+Fire Glow
+
+
+
+Hover
+
+
+
+Orange Glow
+
+
+
+Scale
+
+
+
+1.05
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+SECOND BUTTON
+
+
+
+👑 انضم للمجتمع
+
+
+
+Black Metal
+
+
+
+Gold Frame
+
+
+
+Soft Fire Animation
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+SOCIAL SECTION
+
+
+
+Create four premium cards.
+
+
+
+Each card must feel like a legendary artifact.
+
+
+
+Cards:
+
+
+
+YouTube
+
+
+
+TikTok
+
+
+
+Instagram
+
+
+
+X
+
+
+
+Links:
+
+
+
+YouTube
+
+
+
+https://www.youtube.com/@tmnaa1
+
+
+
+TikTok
+
+
+
+https://www.tiktok.com/@tmnaa0
+
+
+
+Instagram
+
+
+
+https://www.instagram.com/tmnaa16
+
+
+
+X
+
+
+
+https://x.com/tmnaa16
+
+
+
+Each Card
+
+
+
+Large Icon
+
+
+
+Arabic Title
+
+
+
+Small Description
+
+
+
+Premium Button
+
+
+
+Hover Animation
+
+
+
+Fire Glow
+
+
+
+Moving Reflection
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+SUPPORT SECTION
+
+
+
+Large Premium Card
+
+
+
+Golden Border
+
+
+
+Volcanic Background
+
+
+
+Title
+
+
+
+ادعم صانع المحتوى
+
+
+
+Description
+
+
+
+ساهم في دعم المحتوى واستمرار تقديم أفضل البثوث والمقاطع.
+
+
+
+Button
+
+
+
+ادعم الآن
+
+
+
+Link
+
+
+
+https://creators.sa/tmnaa
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+ABOUT SECTION
+
+
+
+Luxury Card
+
+
+
+Golden Frame
+
+
+
+Profile Image
+
+
+
+Arabic Typography
+
+
+
+Story
+
+
+
+Achievements
+
+
+
+Experience
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+STREAM SCHEDULE
+
+
+
+Beautiful Timeline
+
+
+
+Premium Cards
+
+
+
+Animated Border
+
+
+
+Today
+
+
+
+Tomorrow
+
+
+
+Weekend
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+GALLERY
+
+
+
+Huge Grid
+
+
+
+3D Hover
+
+
+
+Golden Frame
+
+
+
+Smooth Animation
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+COMMUNITY
+
+
+
+Discord Style
+
+
+
+Social Numbers
+
+
+
+Community Statistics
+
+
+
+Live Counter
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+FOOTER
+
+
+
+Black
+
+
+
+Minimal
+
+
+
+Luxury
+
+
+
+Golden Logo
+
+
+
+Quick Links
+
+
+
+Social Links
+
+
+
+Copyright
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+TYPOGRAPHY
+
+
+
+Arabic Only
+
+
+
+RTL
+
+
+
+Fonts
+
+
+
+Alexandria
+
+
+
+IBM Plex Sans Arabic
+
+
+
+Cairo
+
+
+
+Tajawal
+
+
+
+Titles
+
+
+
+Bold
+
+
+
+Luxury
+
+
+
+Elegant
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+ANIMATIONS
+
+
+
+Framer Motion
+
+
+
+GSAP
+
+
+
+Lenis
+
+
+
+Parallax
+
+
+
+Mouse Light
+
+
+
+Floating Fire
+
+
+
+Smoke
+
+
+
+Fog
+
+
+
+Sparkles
+
+
+
+Glow
+
+
+
+Golden Reflection
+
+
+
+Smooth Scroll
+
+
+
+Everything must feel alive.
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+BUTTON DESIGN
+
+
+
+DO NOT use rounded modern buttons.
+
+
+
+Instead:
+
+
+
+Ancient Metal
+
+
+
+Forged Gold
+
+
+
+Stone
+
+
+
+Scratches
+
+
+
+Engraving
+
+
+
+Glow
+
+
+
+Fire
+
+
+
+Reflection
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+ICONS
+
+
+
+Premium
+
+
+
+Lucide
+
+
+
+Heroicons
+
+
+
+Custom Gold Icons
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+MOBILE DESIGN
+
+
+
+Do NOT simply resize.
+
+
+
+Create a completely new layout.
+
+
+
+Bottom Navigation
+
+
+
+Beautiful Drawer
+
+
+
+Large Buttons
+
+
+
+Premium Cards
+
+
+
+Smooth Animation
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+PERFORMANCE
+
+
+
+Lazy Loading
+
+
+
+Image Optimization
+
+
+
+Responsive
+
+
+
+Accessibility
+
+
+
+SEO
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+TECH STACK
+
+
+
+Next.js
+
+
+
+React
+
+
+
+TypeScript
+
+
+
+TailwindCSS
+
+
+
+Framer Motion
+
+
+
+GSAP
+
+
+
+Lenis
+
+
+
+React Icons
+
+
+
+Lucide
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+QUALITY CHECKLIST
+
+
+
+❌ No generic cards
+
+
+
+❌ No basic gradients
+
+
+
+❌ No boring shadows
+
+
+
+❌ No bootstrap style
+
+
+
+❌ No template feeling
+
+
+
+✔ Premium
+
+
+
+✔ AAA
+
+
+
+✔ Cinematic
+
+
+
+✔ Luxury
+
+
+
+✔ Fantasy
+
+
+
+✔ Gaming
+
+
+
+✔ Interactive
+
+
+
+✔ Responsive
+
+
+
+✔ Pixel Perfect
+
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+FINAL GOAL
+
+
+
+Build a website that looks so premium people think it belongs to a major AAA game studio.
+
+
+
+Every section must impress.
+
+
+
+Every hover must feel satisfying.
+
+
+
+Every animation must have purpose.
+
+
+
+Every pixel must feel handcrafted.
+
+
+
+The website should be unforgettable.
+
+
+
+الاقسام :
+
+# 📜 WEBSITE STRUCTURE (Mandatory)
+
+
+
+```text
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+WEBSITE STRUCTURE
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+The website should NOT feel like a normal landing page.
+
+
+
+Instead, create a complete premium platform.
+
+
+
+The sections order should be:
+
+
+
+1. Hero
+
+
+
+2. Social Links
+
+
+
+3. Live Status
+
+
+
+4. YouTube
+
+
+
+5. Support & Donation
+
+
+
+6. Followers
+
+
+
+7. Subscribers
+
+
+
+8. Top Gifters
+
+
+
+9. Recent Clips
+
+
+
+10. Past Streams
+
+
+
+11. Community
+
+
+
+12. About
+
+
+
+13. Footer
+
+```
+
+
+
+---
+
+
+
+# 🎥 HERO
+
+
+
+```text
+
+Huge cinematic hero.
+
+
+
+Dragon background.
+
+
+
+Fog.
+
+
+
+Fire.
+
+
+
+Animated particles.
+
+
+
+Large TMNAA logo.
+
+
+
+Two premium buttons:
+
+
+
+🔥 شاهد البث المباشر
+
+
+
+👑 انضم للمجتمع
+
+
+
+Small text:
+
+
+
+صانع محتوى وبثوث مباشرة
+
+```
+
+
+
+---
+
+
+
+# 🌐 SOCIAL LINKS
+
+
+
+```text
+
+Create 4 legendary cards.
+
+
+
+TikTok
+
+
+
+YouTube
+
+
+
+Instagram
+
+
+
+X
+
+
+
+Each card includes:
+
+
+
+Large Icon
+
+
+
+Username
+
+
+
+Animated Border
+
+
+
+Golden Frame
+
+
+
+Hover Fire Effect
+
+
+
+Direct Link
+
+
+
+Use these links:
+
+
+
+YouTube
+
+https://www.youtube.com/@tmnaa1
+
+
+
+TikTok
+
+https://www.tiktok.com/@tmnaa0
+
+
+
+Instagram
+
+https://www.instagram.com/tmnaa16
+
+
+
+X
+
+https://x.com/tmnaa16
+
+```
+
+
+
+---
+
+
+
+# 🔴 LIVE STATUS
+
+
+
+```text
+
+Use Kick API.
+
+
+
+Display:
+
+
+
+LIVE
+
+
+
+OFFLINE
+
+
+
+Game
+
+
+
+Viewers
+
+
+
+Category
+
+
+
+Stream Title
+
+
+
+Current Thumbnail
+
+
+
+Live Duration
+
+
+
+Animated Green Status
+
+
+
+If offline:
+
+
+
+Show beautiful Offline Card.
+
+```
+
+
+
+---
+
+
+
+# 📺 YOUTUBE SECTION
+
+
+
+```text
+
+Fetch automatically.
+
+
+
+Latest 6 Videos.
+
+
+
+Large thumbnails.
+
+
+
+Premium cards.
+
+
+
+Hover Animation.
+
+
+
+Duration.
+
+
+
+Views.
+
+
+
+Published Date.
+
+
+
+Watch Button.
+
+```
+
+
+
+---
+
+
+
+# 💎 SUPPORT & DONATION
+
+
+
+```text
+
+Large Premium Section.
+
+
+
+Volcanic Background.
+
+
+
+Golden Border.
+
+
+
+Animated Fire.
+
+
+
+Title
+
+
+
+ادعم TMNAA
+
+
+
+Description
+
+
+
+يمكنك دعم المحتوى واستمرار تطويره.
+
+
+
+Button
+
+
+
+ادعم الآن
+
+
+
+Link
+
+
+
+https://creators.sa/tmnaa
+
+```
+
+
+
+---
+
+
+
+# 👥 FOLLOWERS
+
+
+
+```text
+
+Display live counters.
+
+
+
+Kick Followers
+
+
+
+YouTube Subscribers
+
+
+
+TikTok Followers
+
+
+
+Instagram Followers
+
+
+
+X Followers
+
+
+
+Animated Counter
+
+
+
+Count-up Animation
+
+
+
+Premium Cards.
+
+```
+
+
+
+---
+
+
+
+# 👑 SUB BADGES
+
+
+
+```text
+
+Beautiful Gallery.
+
+
+
+Display all subscriber badges.
+
+
+
+Arrange from:
+
+
+
+Tier 1
+
+
+
+Tier 2
+
+
+
+Tier 3
+
+
+
+VIP
+
+
+
+Legend
+
+
+
+Hover:
+
+
+
+Glow
+
+
+
+Rotate
+
+
+
+Scale
+
+
+
+Golden Effect.
+
+```
+
+
+
+---
+
+
+
+# 🎬 RECENT CLIPS
+
+
+
+```text
+
+Automatically fetch latest clips.
+
+
+
+Large cards.
+
+
+
+Video Preview
+
+
+
+Duration
+
+
+
+Views
+
+
+
+Share Button
+
+
+
+Watch Button
+
+
+
+Hover Fire Effect.
+
+```
+
+
+
+---
+
+
+
+# 📹 PAST STREAMS
+
+
+
+```text
+
+Display previous streams.
+
+
+
+Thumbnail
+
+
+
+Title
+
+
+
+Game
+
+
+
+Date
+
+
+
+Duration
+
+
+
+Views
+
+
+
+Watch Replay
+
+
+
+Beautiful horizontal cards.
+
+```
+
+
+
+---
+
+
+
+# 🎁 TOP GIFTERS
+
+
+
+```text
+
+Premium Leaderboard.
+
+
+
+Gold
+
+
+
+Silver
+
+
+
+Bronze
+
+
+
+Display:
+
+
+
+Avatar
+
+
+
+Username
+
+
+
+Gift Amount
+
+
+
+Ranking
+
+
+
+Animated Crown
+
+
+
+Fire Border
+
+
+
+Top 3 should have unique cards.
+
+```
+
+
+
+---
+
+
+
+# 👤 ABOUT
+
+
+
+```text
+
+Premium Story Card.
+
+
+
+Large Portrait.
+
+
+
+Description.
+
+
+
+Gaming History.
+
+
+
+Experience.
+
+
+
+Languages.
+
+
+
+Country.
+
+
+
+Beautiful Timeline.
+
+```
+
+
+
+---
+
+
+
+# 📡 COMMUNITY
+
+
+
+```text
+
+Latest announcements.
+
+
+
+Community Stats.
+
+
+
+Discord Button (future ready)
+
+
+
+Telegram (future ready)
+
+
+
+WhatsApp (future ready)
+
+
+
+Beautiful News Cards.
+
+```
+
+
+
+---
+
+
+
+# ⚙ API
+
+
+
+```text
+
+IMPORTANT
+
+
+
+Everything should be dynamic.
+
+
+
+Do NOT hardcode data.
+
+
+
+Fetch data using APIs.
+
+
+
+Kick API
+
+
+
+Latest Stream
+
+
+
+Live Status
+
+
+
+Followers
+
+
+
+Past Streams
+
+
+
+Top Gifters
+
+
+
+Recent Clips
+
+
+
+YouTube Data API v3
+
+
+
+Latest Videos
+
+
+
+Views
+
+
+
+Duration
+
+
+
+Subscribers
+
+
+
+TikTok API (or server-side integration if available)
+
+
+
+Followers
+
+
+
+Instagram Graph API (when available)
+
+
+
+Followers
+
+
+
+X API
+
+
+
+Followers
+
+
+
+Use caching.
+
+
+
+Refresh automatically.
+
+
+
+Show loading skeletons.
+
+
+
+Show beautiful empty states if APIs fail.
+
+```
+
+
+
+---
+
+
+
+# ✨ PREMIUM EFFECTS
+
+
+
+```text
+
+Use:
+
+
+
+Framer Motion
+
+
+
+GSAP
+
+
+
+Lenis
+
+
+
+Mouse Lighting
+
+
+
+Animated Fog
+
+
+
+Volcanic Smoke
+
+
+
+Fire Particles
+
+
+
+Lava Glow
+
+
+
+Golden Reflection
+
+
+
+Hover Glow
+
+
+
+Smooth Scroll
+
+
+
+Magnetic Buttons
+
+
+
+Cursor Effects
+
+
+
+Parallax
+
+
+
+Every section should feel alive.
+
+```
+
+
+
+ 
