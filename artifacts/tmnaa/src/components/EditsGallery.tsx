@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Play, ExternalLink, X, Link2, Image as ImageIcon, Film, Volume2, VolumeX, Loader2, Flag, Download } from 'lucide-react';
+import { Heart, Play, Pause, ExternalLink, X, Link2, Image as ImageIcon, Film, Volume2, VolumeX, Loader2, Flag, Download } from 'lucide-react';
 import {
   hostOf,
   tiktokEmbedUrl,
@@ -301,6 +301,7 @@ function Lightbox({
   onReport: (sub: WallItem) => void;
 }) {
   const [muted, setMuted] = useState(false);
+  const [playing, setPlaying] = useState(true);
   const [buffering, setBuffering] = useState(false);
   const [broken, setBroken] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -324,6 +325,18 @@ function Lightbox({
     setMuted((m) => !m);
     const v = videoRef.current;
     if (v) v.muted = !v.muted;
+  };
+
+  const togglePlay = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      v.play().catch(() => {});
+      setPlaying(true);
+    } else {
+      v.pause();
+      setPlaying(false);
+    }
   };
 
   return (
@@ -361,18 +374,29 @@ function Lightbox({
                 muted={muted}
                 preload="auto"
                 onWaiting={() => setBuffering(true)}
-                onPlaying={() => setBuffering(false)}
+                onPlaying={() => { setBuffering(false); setPlaying(true); }}
+                onPause={() => setPlaying(false)}
                 onCanPlay={() => setBuffering(false)}
                 onError={() => setBroken(true)}
               />
-              <button
-                type="button"
-                onClick={toggleMute}
-                aria-label={muted ? 'Unmute' : 'Mute'}
-                className="absolute top-3 left-3 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center transition-all duration-300 hover:scale-105 hover:bg-black/70"
-              >
-                {muted ? <VolumeX className="w-4 h-4 text-white/70" /> : <Volume2 className="w-4 h-4 text-[#D9A441]" />}
-              </button>
+              <div className="absolute top-3 left-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={togglePlay}
+                  aria-label={playing ? 'Pause video' : 'Play video'}
+                  className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center transition-all duration-300 hover:scale-105 hover:bg-black/70"
+                >
+                  {playing ? <Pause className="w-4 h-4 text-white/70" /> : <Play className="w-4 h-4 text-[#D9A441]" />}
+                </button>
+                <button
+                  type="button"
+                  onClick={toggleMute}
+                  aria-label={muted ? 'Unmute' : 'Mute'}
+                  className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center transition-all duration-300 hover:scale-105 hover:bg-black/70"
+                >
+                  {muted ? <VolumeX className="w-4 h-4 text-white/70" /> : <Volume2 className="w-4 h-4 text-[#D9A441]" />}
+                </button>
+              </div>
             </>
           ) : sub.mediaType === 'video' && sub.posterUrl ? (
             <>
