@@ -25,8 +25,9 @@ export default async function handler(request) {
     let input;
     try {
       input = await request.json();
-    } catch {
-      return json({ error: 'invalid_fields' }, 400);
+    } catch (parseErr) {
+      const raw = await request.text().catch(() => '');
+      return json({ error: 'invalid_fields', detail: `body_unreadable:${String(parseErr?.message ?? parseErr).slice(0, 80)}:${raw.slice(0, 200)}` }, 400);
     }
     if (!input || typeof input !== 'object') {
       return json({ error: 'invalid_fields' }, 400);
