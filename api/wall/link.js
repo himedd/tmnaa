@@ -1,5 +1,4 @@
 import { createRow } from '../_lib/supabase.js';
-import { allowSubmissionBurst, ipOf, submissionGuard } from '../_lib/limit.js';
 
 export const config = {
   runtime: 'edge',
@@ -44,14 +43,6 @@ export default async function handler(request) {
     }
     if (!['http:', 'https:'].includes(parsed.protocol)) return json({ error: 'invalid_fields' }, 400);
 
-    // Anti-abuse: same quotas/flood protection as file uploads.
-    const ip = ipOf(request);
-    if (!allowSubmissionBurst(deviceId, ip)) return json({ error: 'too_many_uploads' }, 429);
-    const guardError = await submissionGuard(deviceId, ip);
-    if (guardError) {
-      return json({ error: guardError }, guardError === 'queue_full' ? 503 : 429);
-    }
-
     const id = crypto.randomUUID();
     const row = {
       id,
@@ -63,7 +54,6 @@ export default async function handler(request) {
       link_url: url,
       size_bytes: 0,
       device_id: deviceId,
-      submitter_ip: ip,
       file_hash: fileHash || null,
       phash: null,
       created_at: new Date().toISOString(),
@@ -74,7 +64,7 @@ export default async function handler(request) {
     } catch (err) {
       // migration #2 not applied yet — retry without the moderation columns
       if (/PGRST204|Could not find the/.test(String(err?.message ?? ''))) {
-        const { device_id, submitter_ip, file_hash, phash, ...base } = row;
+        const { device_id, file_hash, phash, ...base } = row;
         try {
           await createRow(base);
         } catch {
