@@ -19,7 +19,7 @@ import {
 export const wallRouter = Router();
 
 const MAX_IMAGE_MB = Number(process.env["MAX_IMAGE_MB"] || "12");
-const MAX_VIDEO_MB = Number(process.env["MAX_VIDEO_MB"] || "150");
+const MAX_VIDEO_MB = Number(process.env["MAX_VIDEO_MB"] || "500");
 const MAX_POSTER_BYTES = 4 * 1024 * 1024;
 
 const upload = multer({

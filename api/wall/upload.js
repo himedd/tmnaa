@@ -1,5 +1,6 @@
 import { randomAccount, presignPut, KEY_PREFIX } from '../_lib/storj.js';
 import { createRow } from '../_lib/supabase.js';
+import { allowSubmissionBurst, ipOf, submissionGuard } from '../_lib/limit.js';
 
 export const config = {
   runtime: 'edge',
@@ -15,7 +16,7 @@ function json(data, status) {
 function mediaLimits() {
   return {
     image: (Number(process.env.MAX_IMAGE_MB) || 12) * 1024 * 1024,
-    video: (Number(process.env.MAX_VIDEO_MB) || 150) * 1024 * 1024,
+    video: (Number(process.env.MAX_VIDEO_MB) || 500) * 1024 * 1024,
   };
 }
 
@@ -66,6 +67,15 @@ export default async function handler(request) {
     if (mediaType === 'image' && sizeBytes > limits.image) return json({ error: 'image_too_large' }, 413);
     if (mediaType === 'video' && sizeBytes > limits.video) return json({ error: 'file_too_large' }, 413);
 
+    // Anti-abuse: burst guard (per instance) + DB-backed daily/hourly quotas
+    // and a pending-queue cap so no one can flood the server or the mod queue.
+    const ip = ipOf(request);
+    if (!allowSubmissionBurst(deviceId, ip)) return json({ error: 'too_many_uploads' }, 429);
+    const guardError = await submissionGuard(deviceId, ip);
+    if (guardError) {
+      return json({ error: guardError }, guardError === 'queue_full' ? 503 : 429);
+    }
+
     const account = randomAccount();
     if (!account) return json({ error: 'storage_not_configured' }, 503);
 
@@ -98,6 +108,7 @@ export default async function handler(request) {
         height,
         transcoded,
         device_id: deviceId,
+        submitter_ip: ip,
         file_hash: fileHash || null,
         phash: phash || null,
         created_at: new Date().toISOString(),
@@ -107,7 +118,7 @@ export default async function handler(request) {
       } catch (err) {
         // migration #2 not applied yet — retry without the moderation columns
         if (/PGRST204|Could not find the/.test(String(err?.message ?? ''))) {
-          const { device_id, file_hash, phash, ...base } = payload;
+          const { device_id, submitter_ip, file_hash, phash, ...base } = payload;
           try {
             await createRow(base);
           } catch {

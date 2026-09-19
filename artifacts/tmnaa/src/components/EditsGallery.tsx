@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Play, ExternalLink, X, Link2, Image as ImageIcon, Film, Volume2, VolumeX, Loader2, Flag } from 'lucide-react';
+import { Heart, Play, ExternalLink, X, Link2, Image as ImageIcon, Film, Volume2, VolumeX, Loader2, Flag, Download } from 'lucide-react';
 import {
   hostOf,
   tiktokEmbedUrl,
@@ -456,6 +456,18 @@ function Lightbox({
               <Flag className={`w-3.5 h-3.5 ${reported ? 'fill-[#FF9A3C]' : ''}`} />
               {reported ? 'Reported' : 'Report'}
             </button>
+            {sub.mediaType === 'video' && sub.mediaUrl && (
+              <a
+                href={sub.mediaUrl}
+                download={`tmnaa-${(sub.name || 'edit').replace(/[^a-z0-9_-]+/gi, '-').slice(0, 40)}.mp4`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:inline-flex items-center gap-2 h-10 px-4 rounded-full text-[12px] font-bold transition-all duration-300 hover:scale-105"
+                style={{ border: '1px solid rgba(217,164,65,0.35)', color: '#D9A441', background: 'rgba(217,164,65,0.06)' }}
+              >
+                <Download className="w-3.5 h-3.5" /> Download
+              </a>
+            )}
             {sub.mediaType === 'link' && sub.url && (
               <a
                 href={sub.url}
@@ -464,7 +476,7 @@ function Lightbox({
                 className="hidden sm:inline-flex items-center gap-2 h-10 px-4 rounded-full text-[12px] font-bold transition-all duration-300 hover:scale-105"
                 style={{ border: '1px solid rgba(217,164,65,0.35)', color: '#D9A441', background: 'rgba(217,164,65,0.06)' }}
               >
-                <ExternalLink className="w-3.5 h-3.5" /> Open
+                <Download className="w-3.5 h-3.5" /> Download
               </a>
             )}
             <button

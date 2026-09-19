@@ -18,7 +18,8 @@ const uploadErrors: Record<string, string> = {
   storage_unavailable: 'We could not reach the storage right now. Please try again.',
   database_unavailable: 'We could not reach the wall database. Please try again.',
   too_many_uploads: 'You have submitted a lot recently. Wait a bit and try again.',
-  file_too_large: 'That file is too large. Videos up to 150MB, images up to 12MB.',
+  queue_full: 'The wall is full right now — come back in a little while.',
+  file_too_large: 'That file is too large. Videos up to 500MB, images up to 12MB.',
   image_too_large: 'That image is too large. Max 12MB.',
   unsupported_file: 'That file type is not supported. Use MP4, WEBM, JPG, PNG or GIF.',
   invalid_fields: 'Please check your name and caption.',
@@ -324,7 +325,7 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
             Submit Your Edit
           </h3>
           <p className="text-[12px]" style={{ color: 'rgba(247,243,238,0.4)' }}>
-            Upload a clip or paste a video link to join the wall.
+            Upload a clip, paste a downloadable video link, or drop a direct video file.
           </p>
         </div>
       </div>
@@ -397,7 +398,7 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
                     Drag & drop or <span style={{ color: '#D9A441' }}>browse</span>
                   </span>
                   <span className="text-[11px]" style={{ color: 'rgba(247,243,238,0.3)' }}>
-                    Images or videos — MP4, WEBM, JPG, PNG
+                    Images or videos — MP4, WEBM, JPG, PNG · videos up to 500MB
                   </span>
                 </button>
               ) : (
@@ -479,7 +480,7 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
                 />
               </div>
               <p className="mt-2 text-[11px]" style={{ color: 'rgba(247,243,238,0.3)' }}>
-                TikTok, YouTube, Twitch or any direct video link.
+                TikTok, YouTube, Twitch or any direct download link. Viewers can open &amp; download it from the source.
               </p>
             </motion.div>
           )}

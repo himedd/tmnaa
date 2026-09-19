@@ -70,8 +70,8 @@ function FollowerProgress() {
 const guidelines = [
   'Original edits, posters and clips only.',
   'Keep it respectful — no hate or inappropriate content.',
-  'Upload a file or paste a video link from TikTok or YouTube.',
-  'Submissions are reviewed before they appear on the wall.',
+  'Upload a file (videos up to 500MB) or paste a downloadable video link from TikTok or YouTube.',
+  'Submissions are reviewed by the admins before they appear on the wall.',
 ];
 
 export default function CelebrationPage() {

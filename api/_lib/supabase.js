@@ -85,6 +85,62 @@ export async function statusCounts() {
   return totals;
 }
 
+/** Exact count of rows created by a device within a rolling window (anti-spam). */
+export async function submissionCountForDevice(deviceId, sinceMs) {
+  return submissionCountFor(deviceId, null, sinceMs);
+}
+
+/**
+ * Exact count of rows created by the same device OR the same submitter IP
+ * within a rolling window. Used by the anti-abuse guards — counting on either
+ * dimension stops attackers who try to evade by rotating device IDs. If the
+ * submitter_ip column does not exist yet, falls back to device-only counting.
+ */
+export async function submissionCountFor(deviceId, ip, sinceMs) {
+  assertConfigured();
+  const since = new Date(Date.now() - sinceMs).toISOString();
+  const orParts = [];
+  if (deviceId) orParts.push(`device_id.eq.${deviceId}`);
+  const normIp = (ip ?? '').trim();
+  if (normIp && normIp !== 'unknown') orParts.push(`submitter_ip.eq.${normIp}`);
+  if (orParts.length === 0) return null;
+
+  const query = async (filters) => {
+    const qs = encodeURIComponent(`or=(${filters.join(',')})`);
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${TABLE}?select=id&created_at=gte.${encodeURIComponent(since)}&${qs}&limit=1`,
+      { headers: { ...authHeaders(), Prefer: 'count=exact' } },
+    );
+    if (!res.ok) return null;
+    const rows = await res.json();
+    const range = res.headers.get('content-range') ?? '';
+    const match = range.match(/\/(\d+)$/);
+    return match ? Number(match[1]) : Array.isArray(rows) ? rows.length : 0;
+  };
+
+  const full = await query(orParts);
+  if (full != null) return full;
+  if (deviceId) {
+    const deviceOnly = await query([`device_id.eq.${deviceId}`]);
+    if (deviceOnly != null) return deviceOnly;
+  }
+  return null;
+}
+
+/** Exact count of rows still awaiting moderation (queues flood protection). */
+export async function pendingSubmissionCount() {
+  assertConfigured();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/${TABLE}?select=id&status=eq.pending&limit=1`,
+    { headers: { ...authHeaders(), Prefer: 'count=exact' } },
+  );
+  if (!res.ok) return null;
+  const rows = await res.json();
+  const range = res.headers.get('content-range') ?? '';
+  const match = range.match(/\/(\d+)$/);
+  return match ? Number(match[1]) : Array.isArray(rows) ? rows.length : 0;
+}
+
 /** Resolve a Supabase Auth access token to a user object, or null. */
 export async function userFromToken(token) {
   if (!token) return null;

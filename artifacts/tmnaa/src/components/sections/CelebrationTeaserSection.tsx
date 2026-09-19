@@ -2,19 +2,82 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { ArrowLeft, Sparkles } from 'lucide-react';
-import { loadSubmissions, type EditSubmission } from '@/lib/submissionsStore';
+import { fetchWall, type WallItem } from '@/lib/wallApi';
 
 const easeOut = [0.22, 1, 0.36, 1] as const;
 
+interface Tile {
+  key: string;
+  name: string;
+  image: string | null;
+}
+
+const FALLBACK_TILES: Tile[] = Array.from({ length: 4 }, (_, i) => ({
+  key: `fallback-${i}`,
+  name: 'TMNAA',
+  image: '/assets/dragon-banner.jpg',
+}));
+
+/** Cryptographically-random Fisher-Yates sample of `n` unique items. */
+function randomSample<T>(items: T[], n: number): T[] {
+  const pool = [...items];
+  for (let i = pool.length - 1; i > 0; i--) {
+    let j: number;
+    if (typeof crypto !== 'undefined' && 'getRandomValues' in crypto) {
+      const buf = new Uint32Array(1);
+      crypto.getRandomValues(buf);
+      j = buf[0] % (i + 1);
+    } else {
+      j = Math.floor(Math.random() * (i + 1));
+    }
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, n);
+}
+
 export function CelebrationTeaserSection() {
   const [, navigate] = useLocation();
-  const [previews, setPreviews] = useState<EditSubmission[]>([]);
+  const [tiles, setTiles] = useState<Tile[]>([]);
 
   useEffect(() => {
-    const approved = loadSubmissions()
-      .filter((s) => s.approved)
-      .sort((a, b) => b.createdAt - a.createdAt);
-    setPreviews(approved.slice(0, 4));
+    let cancelled = false;
+    const apply = (next: Tile[]) => {
+      if (cancelled) return;
+      // "very random" — re-roll on every visit / refresh by choosing each mount.
+      setTiles(next);
+    };
+
+    fetchWall()
+      .then((items: WallItem[]) => {
+        if (cancelled) return;
+        const approved = items.filter((s) => s.status === 'approved');
+        const withMedia = approved.filter((s) => s.posterUrl || s.url);
+        const withPoster = approved.filter((s) => s.posterUrl);
+        const pool = withPoster.length >= 4 ? withPoster : withMedia;
+        if (pool.length === 0) {
+          apply(FALLBACK_TILES);
+          return;
+        }
+        const chosen = randomSample(pool, 4);
+        if (chosen.length === 0) {
+          apply(FALLBACK_TILES);
+          return;
+        }
+        apply(
+          chosen.map((s) => ({
+            key: s.id,
+            name: s.name,
+            image: s.posterUrl,
+          })),
+        );
+      })
+      .catch(() => {
+        apply(FALLBACK_TILES);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const go = () => navigate('/300k');
@@ -72,7 +135,7 @@ export function CelebrationTeaserSection() {
           </p>
         </motion.div>
 
-        {previews.length > 0 && (
+        {tiles.length > 0 && (
           <motion.div
             initial={{ y: 30, opacity: 0 }}
             whileInView={{ y: 0, opacity: 1 }}
@@ -80,9 +143,9 @@ export function CelebrationTeaserSection() {
             transition={{ duration: 0.8, delay: 0.15, ease: easeOut }}
             className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-10"
           >
-            {previews.map((sub, i) => (
+            {tiles.map((tile, i) => (
               <motion.button
-                key={sub.id}
+                key={tile.key}
                 type="button"
                 onClick={go}
                 whileHover={{ y: -6, scale: 1.03 }}
@@ -91,8 +154,8 @@ export function CelebrationTeaserSection() {
                 className="group relative aspect-video rounded-[18px] overflow-hidden border border-[rgba(217,164,65,0.15)] hover:border-[#D9A441]/50 transition-colors duration-400"
                 style={{ background: 'rgba(9,8,7,0.7)', boxShadow: '0 8px 24px rgba(0,0,0,0.4)' }}
               >
-                {sub.thumb ? (
-                  <img src={sub.thumb} alt={sub.caption || sub.name} loading="lazy" className="w-full h-full object-cover opacity-75 group-hover:opacity-100 transition-all duration-500 group-hover:scale-110" />
+                {tile.image ? (
+                  <img src={tile.image} alt={tile.name} loading="lazy" className="w-full h-full object-cover opacity-75 group-hover:opacity-100 transition-all duration-500 group-hover:scale-110" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(45,27,20,0.9), rgba(14,10,8,0.95))' }}>
                     <Sparkles className="w-5 h-5 text-[#D9A441]/70" />
@@ -101,7 +164,7 @@ export function CelebrationTeaserSection() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-transparent" />
                 <div className="absolute bottom-0 inset-x-0 p-2.5 text-right">
                   <span className="text-[10px] font-black uppercase tracking-[0.15em] truncate block" style={{ color: '#D9A441' }}>
-                    @{sub.name}
+                    @{tile.name}
                   </span>
                 </div>
                 <span className="absolute top-2 left-2 text-[10px] font-black" style={{ color: 'rgba(217,164,65,0.45)' }}>

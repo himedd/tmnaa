@@ -198,7 +198,7 @@ export async function submitUpload(input: SubmitUploadInput): Promise<WallItem> 
   const isVideo = mime.startsWith('video/');
   if (!isImage && !isVideo) throw new Error('unsupported_file');
   const maxImage = 12 * 1024 * 1024;
-  const maxVideo = 150 * 1024 * 1024;
+  const maxVideo = 500 * 1024 * 1024;
   if (isImage && input.file.size > maxImage) throw new Error('image_too_large');
   if (isVideo && input.file.size > maxVideo) throw new Error('file_too_large');
 
