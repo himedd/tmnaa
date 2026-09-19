@@ -1,17 +1,15 @@
 import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UploadCloud, Link2, Check, X, Image as ImageIcon, Film, Loader2, Sparkles } from 'lucide-react';
-import { compressImageFile, isValidHttpUrl } from '@/lib/submissionsStore';
+import { UploadCloud, Check, X, Image as ImageIcon, Film, Loader2, Sparkles } from 'lucide-react';
+import { compressImageFile } from '@/lib/submissionsStore';
 import { probeVideoFile, shouldTranscode, transcodeVideo, captureVideoPoster } from '@/lib/videoNorm';
-import { submitUpload, submitLink, type WallItem } from '@/lib/wallApi';
+import { submitUpload, type WallItem } from '@/lib/wallApi';
 
 const easeOut = [0.22, 1, 0.36, 1] as const;
 
 interface Props {
   onSubmitted: () => void;
 }
-
-type Tab = 'upload' | 'link';
 
 const uploadErrors: Record<string, string> = {
   storage_not_configured: 'Storage is not ready yet — try again in a moment.',
@@ -23,13 +21,12 @@ const uploadErrors: Record<string, string> = {
   image_too_large: 'That image is too large. Max 12MB.',
   unsupported_file: 'That file type is not supported. Use MP4, WEBM, JPG, PNG or GIF.',
   invalid_fields: 'Please check your name and caption.',
-  missing_file: 'Choose a file to upload or switch to "Paste Link".',
+  missing_file: 'Choose a file to upload.',
   unauthorized: 'Your admin session expired — sign in again.',
   supabase_not_configured: 'The wall database is not configured yet on this server.',
 };
 
 export function EditSubmissionForm({ onSubmitted }: Props) {
-  const [tab, setTab] = useState<Tab>('upload');
   const [name, setName] = useState('');
   const [caption, setCaption] = useState('');
   const [file, setFile] = useState<File | null>(null);
@@ -39,7 +36,6 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
   const [progressPct, setProgressPct] = useState<number | null>(null);
   const [mediaDims, setMediaDims] = useState<{ width: number; height: number } | null>(null);
   const [transcoded, setTranscoded] = useState(false);
-  const [link, setLink] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -56,7 +52,6 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
     setProgressPct(null);
     setMediaDims(null);
     setTranscoded(false);
-    setLink('');
     setError('');
     setProcessing(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -166,44 +161,25 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
       return;
     }
 
-    if (tab === 'upload') {
-      if (!file) {
-        setError('Choose a file to upload or switch to "Paste Link".');
-        return;
-      }
-      if (!thumb && previewKind === 'image') {
-        setError('Still processing your image, one moment.');
-        return;
-      }
-      setSubmitting(true);
-      try {
-        const item = await submitUpload({
-          file,
-          name,
-          caption,
-          poster: thumb || undefined,
-          width: mediaDims?.width,
-          height: mediaDims?.height,
-          transcoded,
-        });
-        setSuccess(item);
-        onSubmitted();
-        resetForm();
-      } catch (e) {
-        displayError((e as Error).message);
-      } finally {
-        setSubmitting(false);
-      }
+    if (!file) {
+      setError('Choose a file to upload.');
       return;
     }
-
-    if (!link.trim() || !isValidHttpUrl(link.trim())) {
-      setError('Paste a valid video link (it should start with http).');
+    if (!thumb && previewKind === 'image') {
+      setError('Still processing your image, one moment.');
       return;
     }
     setSubmitting(true);
     try {
-      const item = await submitLink({ name, caption, url: link.trim() });
+      const item = await submitUpload({
+        file,
+        name,
+        caption,
+        poster: thumb || undefined,
+        width: mediaDims?.width,
+        height: mediaDims?.height,
+        transcoded,
+      });
       setSuccess(item);
       onSubmitted();
       resetForm();
@@ -277,26 +253,6 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
     );
   }
 
-  const tabButton = (value: Tab, label: string, icon: React.ReactNode) => {
-    const active = tab === value;
-    return (
-      <button
-        type="button"
-        onClick={() => { setTab(value); setError(''); }}
-        className="relative flex-1 flex items-center justify-center gap-2 h-[46px] rounded-full text-[13px] font-bold tracking-wide transition-all duration-300"
-        style={{
-          fontFamily: 'Cairo, sans-serif',
-          color: active ? '#0d0906' : 'rgba(247,243,238,0.6)',
-          background: active ? 'linear-gradient(135deg, #E8B45C, #D9A441, #b3421f)' : 'transparent',
-          boxShadow: active ? '0 0 20px rgba(217,164,65,0.35), inset 0 1px 0 rgba(255,255,255,0.2)' : 'none',
-        }}
-      >
-        {icon}
-        {label}
-      </button>
-    );
-  };
-
   return (
     <div
       className="relative rounded-[32px] overflow-hidden p-6 md:p-8"
@@ -325,16 +281,9 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
             Submit Your Edit
           </h3>
           <p className="text-[12px]" style={{ color: 'rgba(247,243,238,0.4)' }}>
-            Upload a clip, paste a downloadable video link, or drop a direct video file.
+            Upload a clip or drop a direct video file.
           </p>
         </div>
-      </div>
-
-      <div className="relative flex gap-1.5 p-1.5 rounded-full mb-6"
-        style={{ background: 'rgba(9,8,7,0.6)', border: '1px solid rgba(217,164,65,0.14)' }}
-      >
-        {tabButton('upload', 'Upload File', <UploadCloud className="w-4 h-4" />)}
-        {tabButton('link', 'Paste Link', <Link2 className="w-4 h-4" />)}
       </div>
 
       <div className="relative space-y-5">
@@ -358,133 +307,94 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
           />
         </div>
 
-        <AnimatePresence mode="wait">
-          {tab === 'upload' ? (
-            <motion.div
-              key="upload"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25 }}
+        <div>
+          <label className="block text-[11px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: 'rgba(217,164,65,0.7)' }}>
+            Your Edit
+          </label>
+          {!file ? (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                const dropped = e.dataTransfer.files?.[0];
+                if (dropped) handleFile(dropped);
+              }}
+              className="w-full rounded-2xl flex flex-col items-center justify-center gap-3 py-10 px-6 transition-all duration-300"
+              style={{
+                background: dragOver ? 'rgba(217,164,65,0.08)' : 'rgba(9,8,7,0.5)',
+                border: `1.5px dashed ${dragOver ? 'rgba(217,164,65,0.6)' : 'rgba(217,164,65,0.25)'}`,
+                boxShadow: dragOver ? '0 0 30px rgba(255,122,24,0.15)' : 'none',
+              }}
             >
-              <label className="block text-[11px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: 'rgba(217,164,65,0.7)' }}>
-                Your Edit
-              </label>
-              {!file ? (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                  onDragLeave={() => setDragOver(false)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDragOver(false);
-                    const dropped = e.dataTransfer.files?.[0];
-                    if (dropped) handleFile(dropped);
-                  }}
-                  className="w-full rounded-2xl flex flex-col items-center justify-center gap-3 py-10 px-6 transition-all duration-300"
-                  style={{
-                    background: dragOver ? 'rgba(217,164,65,0.08)' : 'rgba(9,8,7,0.5)',
-                    border: `1.5px dashed ${dragOver ? 'rgba(217,164,65,0.6)' : 'rgba(217,164,65,0.25)'}`,
-                    boxShadow: dragOver ? '0 0 30px rgba(255,122,24,0.15)' : 'none',
-                  }}
-                >
-                  <div className="w-14 h-14 rounded-full flex items-center justify-center"
-                    style={{ background: 'rgba(217,164,65,0.08)', border: '1px solid rgba(217,164,65,0.25)' }}
-                  >
-                    <UploadCloud className="w-6 h-6 text-[#D9A441]" />
-                  </div>
-                  <span className="text-sm font-bold" style={{ color: 'rgba(247,243,238,0.7)' }}>
-                    Drag & drop or <span style={{ color: '#D9A441' }}>browse</span>
-                  </span>
-                  <span className="text-[11px]" style={{ color: 'rgba(247,243,238,0.3)' }}>
-                    Images or videos — MP4, WEBM, JPG, PNG · videos up to 500MB
-                  </span>
-                </button>
-              ) : (
-                <div
-                  className="relative rounded-2xl overflow-hidden flex items-center gap-4 p-3"
-                  style={{ background: 'rgba(9,8,7,0.5)', border: '1px solid rgba(217,164,65,0.2)' }}
-                >
-                  <div className="relative w-24 aspect-video rounded-xl overflow-hidden shrink-0 bg-black/60 flex items-center justify-center"
-                    style={{ border: '1px solid rgba(217,164,65,0.15)' }}
-                  >
-                    {thumb ? (
-                      <img src={thumb} alt="preview" className="w-full h-full object-cover" />
-                    ) : processing ? (
-                      <Loader2 className="w-5 h-5 text-[#D9A441] animate-spin" />
-                    ) : previewKind === 'video' ? (
-                      <Film className="w-5 h-5 text-[#D9A441]" />
-                    ) : (
-                      <ImageIcon className="w-5 h-5 text-[#D9A441]" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-bold truncate" style={{ color: '#F7F3EE' }}>{file.name}</p>
-                    <p className="text-[11px] mt-0.5" style={{ color: 'rgba(247,243,238,0.35)' }}>
-                      {previewKind === 'video' ? 'Video' : 'Image'} • {(file.size / (1024 * 1024)).toFixed(1)} MB
-                      {processing
-                        ? progressPct != null
-                          ? ` • normalising… ${progressPct}%`
-                          : ' • normalising…'
-                        : transcoded
-                          ? ' • normalised (1080p max)'
-                          : ''}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={clearFile}
-                    className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300 hover:bg-white/10"
-                    style={{ border: '1px solid rgba(217,164,65,0.2)' }}
-                    aria-label="Remove file"
-                  >
-                    <X className="w-4 h-4 text-white/60" />
-                  </button>
-                </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,video/*"
-                className="hidden"
-                onChange={(e) => {
-                  const picked = e.target.files?.[0];
-                  if (picked) handleFile(picked);
-                }}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="link"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25 }}
-            >
-              <label className="block text-[11px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: 'rgba(217,164,65,0.7)' }}>
-                Video Link
-              </label>
-              <div
-                className="flex items-center gap-3 h-[50px] px-4 rounded-2xl transition-all duration-300 focus-within:ring-1 focus-within:ring-[#D9A441]/40"
-                style={{ background: 'rgba(9,8,7,0.7)', border: '1px solid rgba(217,164,65,0.16)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)' }}
+              <div className="w-14 h-14 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(217,164,65,0.08)', border: '1px solid rgba(217,164,65,0.25)' }}
               >
-                <Link2 className="w-4 h-4 text-[#D9A441]/70 shrink-0" />
-                <input
-                  value={link}
-                  onChange={(e) => setLink(e.target.value)}
-                  placeholder="https://www.tiktok.com/@you/video/..."
-                  dir="ltr"
-                  className="flex-1 bg-transparent text-[13.5px] outline-none placeholder:text-[rgba(247,243,238,0.2)]"
-                  style={{ color: '#F7F3EE' }}
-                />
+                <UploadCloud className="w-6 h-6 text-[#D9A441]" />
               </div>
-              <p className="mt-2 text-[11px]" style={{ color: 'rgba(247,243,238,0.3)' }}>
-                TikTok, YouTube, Twitch or any direct download link. Viewers can open &amp; download it from the source.
-              </p>
-            </motion.div>
+              <span className="text-sm font-bold" style={{ color: 'rgba(247,243,238,0.7)' }}>
+                Drag & drop or <span style={{ color: '#D9A441' }}>browse</span>
+              </span>
+              <span className="text-[11px]" style={{ color: 'rgba(247,243,238,0.3)' }}>
+                Images or videos — MP4, WEBM, JPG, PNG · videos up to 500MB
+              </span>
+            </button>
+          ) : (
+            <div
+              className="relative rounded-2xl overflow-hidden flex items-center gap-4 p-3"
+              style={{ background: 'rgba(9,8,7,0.5)', border: '1px solid rgba(217,164,65,0.2)' }}
+            >
+              <div className="relative w-24 aspect-video rounded-xl overflow-hidden shrink-0 bg-black/60 flex items-center justify-center"
+                style={{ border: '1px solid rgba(217,164,65,0.15)' }}
+              >
+                {thumb ? (
+                  <img src={thumb} alt="preview" className="w-full h-full object-cover" />
+                ) : processing ? (
+                  <Loader2 className="w-5 h-5 text-[#D9A441] animate-spin" />
+                ) : previewKind === 'video' ? (
+                  <Film className="w-5 h-5 text-[#D9A441]" />
+                ) : (
+                  <ImageIcon className="w-5 h-5 text-[#D9A441]" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-bold truncate" style={{ color: '#F7F3EE' }}>{file.name}</p>
+                <p className="text-[11px] mt-0.5" style={{ color: 'rgba(247,243,238,0.35)' }}>
+                  {previewKind === 'video' ? 'Video' : 'Image'} • {(file.size / (1024 * 1024)).toFixed(1)} MB
+                  {processing
+                    ? progressPct != null
+                      ? ` • normalising… ${progressPct}%`
+                      : ' • normalising…'
+                    : transcoded
+                      ? ' • normalised (1080p max)'
+                      : ''}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={clearFile}
+                className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300 hover:bg-white/10"
+                style={{ border: '1px solid rgba(217,164,65,0.2)' }}
+                aria-label="Remove file"
+              >
+                <X className="w-4 h-4 text-white/60" />
+              </button>
+            </div>
           )}
-        </AnimatePresence>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            className="hidden"
+            onChange={(e) => {
+              const picked = e.target.files?.[0];
+              if (picked) handleFile(picked);
+            }}
+          />
+        </div>
 
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-[0.2em] mb-2" style={{ color: 'rgba(217,164,65,0.7)' }}>
