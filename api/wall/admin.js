@@ -115,6 +115,41 @@ async function rowsToItems(rows) {
 // moderation actions (throw on failure; return { state } when gracefully skipped)
 // ---------------------------------------------------------------------------
 
+/**
+ * Best-effort shadow copy of a stored object into another moderation folder.
+ * Legacy/unprefixed keys (whose path has no pending/approved segment) get a
+ * shadow path under `300kedits/<folder>/<rowId>/...` instead. A broken/missing
+ * source object is not fatal: return { copied:false } so moderation can still
+ * proceed (the original key is kept; the item is simply hidden/unpublished).
+ */
+async function shadowCopy(account, src, folder, rowId) {
+  if (!src) return { copied: false, dst: null, src };
+  const parts = src.split('/');
+  const hit = parts.findIndex((p) => p === 'pending' || p === 'approved');
+  let dst;
+  if (hit >= 0) {
+    parts[hit] = folder;
+    dst = parts.join('/');
+  } else {
+    dst = `300kedits/${folder}/${rowId}/${src.split('/').pop()}`;
+  }
+  if (dst === src) return { copied: false, dst: null, src };
+  try {
+    await copyObject(account, src, dst);
+    return { copied: true, dst, src };
+  } catch {
+    return { copied: false, dst: null, src };
+  }
+}
+
+async function safeDelete(account, keys) {
+  try {
+    await deleteObjects(account, keys);
+  } catch {
+    // deletion is best-effort
+  }
+}
+
 async function moderateApprove(id, admin) {
   const row = await getRow(id);
   if (!row) return { state: 'not_found' };
@@ -124,16 +159,12 @@ async function moderateApprove(id, admin) {
   if (!account) throw Object.assign(new Error('storage_not_configured'), { code: 'storage_not_configured' });
 
   const updates = {};
+  const toDelete = [];
   for (const col of ['media_key', 'poster_key']) {
-    const src = row[col];
-    if (!src) continue;
-    const dst = src.replace('pending/', 'approved/');
-    try {
-      await copyObject(account, src, dst);
-    } catch {
-      throw Object.assign(new Error('storage_unavailable'), { code: 'storage_unavailable' });
-    }
-    updates[col] = dst;
+    const r = await shadowCopy(account, row[col], 'approved', row.id);
+    if (!r.copied) continue;
+    updates[col] = r.dst;
+    toDelete.push(r.src);
   }
 
   const now = new Date().toISOString();
@@ -148,7 +179,7 @@ async function moderateApprove(id, admin) {
     trash_media_key: null,
     trash_poster_key: null,
   });
-  await deleteObjects(account, [row.media_key, row.poster_key].filter(Boolean));
+  await safeDelete(account, toDelete);
   await insertAction({
     submissionId: id,
     action: 'approve',
@@ -169,16 +200,12 @@ async function moderateReject(id, admin, reasonInput, metaFrom = 'pending') {
 
   const reason = safeReason(reasonInput);
   const trash = {};
+  const toDelete = [];
   for (const col of ['media_key', 'poster_key']) {
-    const src = row[col];
-    if (!src) continue;
-    const dst = src.replace(`${metaFrom}/`, 'rejected/');
-    try {
-      await copyObject(account, src, dst);
-    } catch {
-      throw Object.assign(new Error('storage_unavailable'), { code: 'storage_unavailable' });
-    }
-    trash[col === 'media_key' ? 'trash_media_key' : 'trash_poster_key'] = dst;
+    const r = await shadowCopy(account, row[col], 'rejected', row.id);
+    if (!r.copied) continue;
+    trash[col === 'media_key' ? 'trash_media_key' : 'trash_poster_key'] = r.dst;
+    toDelete.push(r.src);
   }
 
   const now = new Date().toISOString();
@@ -191,7 +218,7 @@ async function moderateReject(id, admin, reasonInput, metaFrom = 'pending') {
     reviewing_at: null,
     ...trash,
   });
-  await deleteObjects(account, [row.media_key, row.poster_key].filter(Boolean));
+  await safeDelete(account, toDelete);
   await insertAction({
     submissionId: id,
     action: metaFrom === 'approved' ? 'unpublish' : 'reject',
@@ -221,16 +248,10 @@ async function moderateUndo(id, admin) {
     const updates = {};
     const toDelete = [];
     for (const col of ['media_key', 'poster_key']) {
-      const src = row[col];
-      if (!src) continue;
-      const dst = src.replace('approved/', 'pending/');
-      try {
-        await copyObject(account, src, dst);
-      } catch {
-        throw Object.assign(new Error('storage_unavailable'), { code: 'storage_unavailable' });
-      }
-      updates[col] = dst;
-      toDelete.push(src);
+      const r = await shadowCopy(account, row[col], 'pending', row.id);
+      if (!r.copied) continue;
+      updates[col] = r.dst;
+      toDelete.push(r.src);
     }
     await updateRow(id, {
       ...updates,
@@ -243,7 +264,7 @@ async function moderateUndo(id, admin) {
       trash_media_key: null,
       trash_poster_key: null,
     });
-    await deleteObjects(account, toDelete);
+    await safeDelete(account, toDelete);
     await insertAction({
       submissionId: id,
       action: 'undo',
@@ -263,10 +284,10 @@ async function moderateUndo(id, admin) {
     if (!trashKey || !orig) continue;
     try {
       await copyObject(account, trashKey, orig);
+      trashKeys.push(trashKey);
     } catch {
-      throw Object.assign(new Error('storage_unavailable'), { code: 'storage_unavailable' });
+      // keep the trash key so the media is not lost; status restore is enough
     }
-    trashKeys.push(trashKey);
   }
   await updateRow(id, {
     status: metaFrom,
@@ -276,7 +297,7 @@ async function moderateUndo(id, admin) {
     trash_media_key: null,
     trash_poster_key: null,
   });
-  await deleteObjects(account, trashKeys);
+  await safeDelete(account, trashKeys);
   await insertAction({
     submissionId: id,
     action: 'undo',
@@ -387,20 +408,14 @@ async function handlePost(request, admin) {
     return json({ ok: true }, 200);
   }
   if (action === 'reject') {
-    const reason = input.reason;
-    if (!['string'].includes(typeof reason) || !String(reason ?? '').trim()) {
-      return json({ error: 'reason_required' }, 400);
-    }
+    const reason = typeof input.reason === 'string' ? input.reason : 'Other';
     const res = await moderateReject(id, admin, reason, 'pending');
     if (res.state === 'not_found') return json({ error: 'not_found' }, 404);
     if (res.state === 'skipped') return json({ error: 'invalid_state' }, 409);
     return json({ ok: true }, 200);
   }
   if (action === 'unpublish') {
-    const reason = input.reason;
-    if (!['string'].includes(typeof reason) || !String(reason ?? '').trim()) {
-      return json({ error: 'reason_required' }, 400);
-    }
+    const reason = typeof input.reason === 'string' ? input.reason : 'Other';
     const res = await moderateReject(id, admin, reason, 'approved');
     if (res.state === 'not_found') return json({ error: 'not_found' }, 404);
     if (res.state === 'skipped') return json({ error: 'invalid_state' }, 409);
