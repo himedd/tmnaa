@@ -187,7 +187,8 @@ export function AdminPanel() {
     return list;
   }, [items, tab, query, typeFilter, dateFilter, sort]);
 
-  const modalIndex = modalId ? filtered.findIndex((i) => i.id === modalId) : -1;
+  const pool = tab === 'flagged' ? flagged : filtered;
+  const modalIndex = modalId ? pool.findIndex((i) => i.id === modalId) : -1;
 
   const allNames = useMemo(() => {
     const m = new Map<string, string>();
@@ -293,20 +294,20 @@ export function AdminPanel() {
 
   const goNext = async () => {
     if (modalIndex < 0) return;
-    const next = filtered[modalIndex + 1];
+    const next = pool[modalIndex + 1];
     if (!next) {
-      await closeItem(filtered[modalIndex].id);
+      await closeItem(pool[modalIndex].id);
       return;
     }
-    await adminEndReview(filtered[modalIndex].id).catch(() => {});
+    await adminEndReview(pool[modalIndex].id).catch(() => {});
     setModalId(next.id);
     await adminBeginReview(next.id).catch(() => {});
   };
 
   const goPrev = async () => {
     if (modalIndex <= 0) return;
-    const prev = filtered[modalIndex - 1];
-    await adminEndReview(filtered[modalIndex].id).catch(() => {});
+    const prev = pool[modalIndex - 1];
+    await adminEndReview(pool[modalIndex].id).catch(() => {});
     setModalId(prev.id);
     await adminBeginReview(prev.id).catch(() => {});
   };
@@ -562,7 +563,7 @@ export function AdminPanel() {
       ) : (
         <ListView
           tab={tab}
-          items={tab === 'flagged' ? flagged : filtered}
+          items={pool}
           badges={badges}
           selected={selected}
           busy={busy}
@@ -584,7 +585,7 @@ export function AdminPanel() {
       <AnimatePresence>
         {modalId && modalIndex >= 0 && (
           <ReviewModal
-            item={filtered[modalIndex]}
+            item={pool[modalIndex]}
             who={who}
             badge={badges.get(modalId)}
             position={{ index: modalIndex, total: filtered.length }}
