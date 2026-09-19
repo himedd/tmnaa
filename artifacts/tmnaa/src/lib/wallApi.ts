@@ -199,27 +199,24 @@ export async function submitUpload(input: SubmitUploadInput): Promise<WallItem> 
     posterKey = presign.posterKey;
   }
 
-  const { data, error } = await supabase
-    .from('wall_submissions')
-    .insert({
-      id: presign.id,
-      name: input.name,
-      caption: input.caption,
-      kind: 'upload',
-      media_type: isVideo ? 'video' : 'image',
-      status: 'pending',
-      provider: presign.provider,
-      bucket: presign.bucket,
-      media_key: presign.mediaKey,
-      poster_key: posterKey,
-      size_bytes: input.file.size,
-    })
-    .select()
-    .single();
-  if (error) {
-    throw new Error('database_unavailable');
-  }
-  return rowToItem(data as WallRow);
+  return rowToItem({
+    id: presign.id as string,
+    name: input.name,
+    caption: input.caption,
+    kind: 'upload',
+    media_type: isVideo ? 'video' : 'image',
+    status: 'pending',
+    likes: 0,
+    created_at: new Date().toISOString(),
+    link_url: null,
+    provider: presign.provider ?? null,
+    bucket: presign.bucket ?? null,
+    media_key: presign.mediaKey ?? null,
+    poster_key: posterKey,
+    size_bytes: input.file.size,
+    reviewed_at: null,
+    reviewer: null,
+  });
 }
 
 export async function submitLink(input: {
@@ -227,21 +224,14 @@ export async function submitLink(input: {
   caption: string;
   url: string;
 }): Promise<WallItem> {
-  const { data, error } = await supabase
-    .from('wall_submissions')
-    .insert({
-      name: input.name,
-      caption: input.caption,
-      kind: 'link',
-      media_type: 'link',
-      status: 'pending',
-      link_url: input.url,
-      size_bytes: 0,
-    })
-    .select()
-    .single();
-  if (error) throw new Error('database_unavailable');
-  return rowToItem(data as WallRow);
+  const res = await fetch(apiUrl('/api/wall/link'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  const body = (await res.json().catch(() => ({}))) as Partial<WallItem> & { error?: string };
+  if (!res.ok || !body.id) throw new Error(body.error ?? 'database_unavailable');
+  return body as WallItem;
 }
 
 // ---------------------------------------------------------------------------

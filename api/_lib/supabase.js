@@ -29,6 +29,21 @@ export async function getRow(id) {
   return rows[0];
 }
 
+export async function createRow(payload) {
+  assertConfigured();
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
+    method: 'POST',
+    headers: { ...authHeaders(), Prefer: 'return=minimal' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok && res.status !== 201) {
+    const text = await res.text().catch(() => '');
+    const err = new Error(`DB_INSERT_FAILED:${res.status}:${text.slice(0, 200)}`);
+    err.code = 'DB_INSERT_FAILED';
+    throw err;
+  }
+}
+
 export async function updateRow(id, patch) {
   assertConfigured();
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${encodeURIComponent(id)}`, {

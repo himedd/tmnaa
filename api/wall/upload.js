@@ -1,4 +1,5 @@
 import { randomAccount, presignPut, KEY_PREFIX } from '../_lib/storj.js';
+import { createRow } from '../_lib/supabase.js';
 
 export const config = {
   runtime: 'edge',
@@ -64,6 +65,26 @@ export default async function handler(request) {
         posterKey = `${KEY_PREFIX}pending/${id}/poster`;
         posterUrl = await presignPut(account, posterKey, String(input.posterContentType));
       }
+
+      try {
+        await createRow({
+          id,
+          name,
+          caption,
+          kind: 'upload',
+          media_type: mediaType,
+          status: 'pending',
+          provider: account.index,
+          bucket: account.bucket,
+          media_key: mediaKey,
+          poster_key: posterKey,
+          size_bytes: sizeBytes,
+          created_at: new Date().toISOString(),
+        });
+      } catch {
+        return json({ error: 'database_unavailable' }, 500);
+      }
+
       return json(
         {
           id,
