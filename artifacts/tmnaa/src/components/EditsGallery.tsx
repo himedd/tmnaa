@@ -300,7 +300,7 @@ function Lightbox({
   onToggleLike: (sub: WallItem) => void;
   onReport: (sub: WallItem) => void;
 }) {
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
   const [buffering, setBuffering] = useState(false);
   const [broken, setBroken] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -358,7 +358,7 @@ function Lightbox({
                 autoPlay
                 loop
                 playsInline
-                muted
+                muted={muted}
                 preload="auto"
                 onWaiting={() => setBuffering(true)}
                 onPlaying={() => setBuffering(false)}
