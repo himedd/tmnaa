@@ -72,7 +72,9 @@ export async function statusCounts() {
   for (const status of ['pending', 'approved', 'rejected']) {
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/${TABLE}?select=id&status=eq.${status}&limit=1`,
-      { headers: authHeaders() },
+      {
+        headers: { ...authHeaders(), Prefer: 'count=exact' },
+      },
     );
     if (!res.ok) continue;
     const rows = await res.json();
