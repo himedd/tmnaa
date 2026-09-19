@@ -423,7 +423,7 @@ export async function adminSetNote(id: string, note: string): Promise<void> {
 }
 
 export async function adminBulk(
-  op: 'approve' | 'reject',
+  op: 'approve' | 'reject' | 'unpublish',
   ids: string[],
   reason?: string,
 ): Promise<{ id: string; state: string; error?: string }[]> {

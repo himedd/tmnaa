@@ -217,9 +217,20 @@ export function AdminPanel() {
         else if (kind === 'reject') await adminReject(id, reason ?? 'Other');
         else await adminUnpublish(id, reason ?? 'Other');
       } else {
-        const results = await adminBulk(kind === 'reject' ? 'reject' : 'approve', ids, reason);
+        const op =
+          kind === 'approve' ? 'approve' : kind === 'reject' ? 'reject' : 'unpublish';
+        const results = await adminBulk(op, ids, reason);
         const failed = results.filter((r) => r.state === 'failed').length;
+        const skipped = results.filter((r) => r.state === 'skipped').length;
         if (failed > 0) notify(`${failed} item${failed > 1 ? 's' : ''} failed to ${kind}.`, true);
+        else if (skipped > 0) {
+          notify(
+            skipped === results.length
+              ? `Nothing changed — ${kind} already applied to ${results.length === 1 ? 'that item' : 'all of them'}.`
+              : `${skipped} item${skipped > 1 ? 's' : ''} were already in that state and were skipped.`,
+            true,
+          );
+        }
       }
       const label =
         kind === 'approve'
@@ -521,12 +532,12 @@ export function AdminPanel() {
           )}
           {(tab === 'queue' || tab === 'approved') && (
             <button
-              onClick={() => setConfirm({ kind: 'reject', ids: [...selected] })}
+              onClick={() => setConfirm({ kind: tab === 'approved' ? 'unpublish' : 'reject', ids: [...selected] })}
               disabled={busy}
               className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-[12px] font-bold transition-all duration-300 hover:scale-105 disabled:opacity-50"
               style={{ border: '1px solid rgba(255,122,122,0.4)', color: '#FF8A8A', background: 'rgba(255,80,80,0.08)' }}
             >
-              <Trash2 className="w-3.5 h-3.5" /> Reject
+              <Trash2 className="w-3.5 h-3.5" /> {tab === 'approved' ? 'Take Down' : 'Reject'}
             </button>
           )}
           <button
@@ -915,7 +926,7 @@ function ConfirmDialog({ confirm, reason, setReason, busy, onCancel, onConfirm }
             ? `Approve ${isBulk ? `${confirm.ids.length} edits` : 'this edit'}?`
             : confirm.kind === 'reject'
               ? `Reject ${isBulk ? `${confirm.ids.length} edits` : 'this edit'}?`
-              : `Take down this edit?`}
+              : `Take down ${isBulk ? `${confirm.ids.length} edits` : 'this edit'}?`}
         </h3>
         <p className="mt-1 text-[12.5px]" style={{ color: 'rgba(247,243,238,0.5)' }}>
           {confirm.kind === 'approve'

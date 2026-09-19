@@ -378,7 +378,7 @@ async function handlePost(request, admin) {
   const action = String(input?.action ?? '');
 
   if (action === 'bulk') {
-    const op = input.op === 'approve' ? 'approve' : input.op === 'reject' ? 'reject' : '';
+    const op = input.op === 'approve' ? 'approve' : input.op === 'reject' ? 'reject' : input.op === 'unpublish' ? 'unpublish' : '';
     const ids = Array.isArray(input.ids)
       ? input.ids.map(String).filter(Boolean).slice(0, 100)
       : [];
@@ -389,7 +389,9 @@ async function handlePost(request, admin) {
         const res =
           op === 'approve'
             ? await moderateApprove(id, admin)
-            : await moderateReject(id, admin, input.reason || 'Other');
+            : op === 'unpublish'
+              ? await moderateReject(id, admin, input.reason || 'Other', 'approved')
+              : await moderateReject(id, admin, input.reason || 'Other', 'pending');
         results.push({ id, state: res.state });
       } catch (e) {
         results.push({ id, state: 'failed', error: e.code || 'failed' });
