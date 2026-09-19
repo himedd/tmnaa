@@ -3,8 +3,7 @@ import { getRow } from '../_lib/supabase.js';
 import { authenticate } from '../_lib/supabase.js';
 
 export const config = {
-  runtime: 'nodejs',
-  maxDuration: 30,
+  runtime: 'edge',
 };
 
 function json(data, status) {

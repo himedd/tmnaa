@@ -47,11 +47,11 @@ export function approvedKey(pendingKey) {
   return pendingKey.replace('pending/', 'approved/');
 }
 
-export function presignPut(account, key, contentType, expiresIn = 3600) {
+export async function presignPut(account, key, contentType, expiresIn = 3600) {
   return presignedUrl(account, key, 'PUT', expiresIn);
 }
 
-export function presignGet(account, key, expiresIn = 3600) {
+export async function presignGet(account, key, expiresIn = 3600) {
   return presignedUrl(account, key, 'GET', expiresIn);
 }
 

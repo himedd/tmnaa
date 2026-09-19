@@ -1,9 +1,7 @@
-import { randomUUID } from 'node:crypto';
 import { randomAccount, presignPut, KEY_PREFIX } from '../_lib/storj.js';
 
 export const config = {
-  runtime: 'nodejs',
-  maxDuration: 30,
+  runtime: 'edge',
 };
 
 function json(data, status) {
@@ -53,7 +51,7 @@ export default async function handler(request) {
     const account = randomAccount();
     if (!account) return json({ error: 'storage_not_configured' }, 503);
 
-    const id = randomUUID();
+    const id = crypto.randomUUID();
     const mediaKey = `${KEY_PREFIX}pending/${id}/media`;
     const wantPoster = Boolean(input.poster) && mediaType === 'video' && input.posterContentType;
 
