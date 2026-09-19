@@ -165,7 +165,13 @@ export function addSubmission(input: AddSubmissionInput): EditSubmission {
   return sub;
 }
 
-export function compressImageFile(file: File, maxDim = 1600, quality = 0.72): Promise<string> {
+export interface CompressedImage {
+  dataUrl: string;
+  width: number;
+  height: number;
+}
+
+export function compressImageFile(file: File, maxDim = 1600, quality = 0.72): Promise<CompressedImage> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -184,7 +190,7 @@ export function compressImageFile(file: File, maxDim = 1600, quality = 0.72): Pr
       }
       ctx.drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL('image/jpeg', quality));
+      resolve({ dataUrl: canvas.toDataURL('image/jpeg', quality), width: w, height: h });
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);

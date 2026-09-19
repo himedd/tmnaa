@@ -115,3 +115,69 @@ export async function authenticate(request) {
   const user = await userFromToken(token);
   return isAdminUser(user) ? user : null;
 }
+
+// ---------------------------------------------------------------------------
+// per-device likes
+// ---------------------------------------------------------------------------
+
+const LIKES_TABLE = 'wall_likes';
+
+export async function findLike(submissionId, deviceId) {
+  assertConfigured();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/${LIKES_TABLE}?select=id&submission_id=eq.${encodeURIComponent(submissionId)}&device_id=eq.${encodeURIComponent(deviceId)}&limit=1`,
+    { headers: authHeaders() },
+  );
+  if (!res.ok) return null;
+  const rows = await res.json();
+  return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+}
+
+export async function createLike(submissionId, deviceId) {
+  assertConfigured();
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${LIKES_TABLE}`, {
+    method: 'POST',
+    headers: { ...authHeaders(), Prefer: 'return=minimal' },
+    body: JSON.stringify({ submission_id: submissionId, device_id: deviceId }),
+  });
+  return res.ok || res.status === 201 || res.status === 409;
+}
+
+export async function deleteLike(submissionId, deviceId) {
+  assertConfigured();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/${LIKES_TABLE}?submission_id=eq.${encodeURIComponent(submissionId)}&device_id=eq.${encodeURIComponent(deviceId)}`,
+    { method: 'DELETE', headers: authHeaders() },
+  );
+  return res.ok || res.status === 204;
+}
+
+export async function likedIdsForDevice(deviceId) {
+  assertConfigured();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/${LIKES_TABLE}?select=submission_id&device_id=eq.${encodeURIComponent(deviceId)}&limit=2000`,
+    { headers: authHeaders() },
+  );
+  if (!res.ok) return [];
+  const rows = await res.json();
+  if (!Array.isArray(rows)) return [];
+  return rows.map((r) => String(r.submission_id));
+}
+
+/** Atomic like-counter adjustment via the adjust_likes RPC. Returns new count, or null. */
+export async function adjustLikes(submissionId, delta) {
+  assertConfigured();
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/adjust_likes`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ target: submissionId, delta }),
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  if (Array.isArray(data)) return Number(data[0] ?? 0);
+  if (data && typeof data === 'object') {
+    const v = Object.values(data)[0];
+    return Number(v ?? 0);
+  }
+  return Number(data ?? 0);
+}

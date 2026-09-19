@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, Link2, Check, X, Image as ImageIcon, Film, Loader2, Sparkles } from 'lucide-react';
-import { compressImageFile, videoToPoster, isValidHttpUrl } from '@/lib/submissionsStore';
+import { compressImageFile, isValidHttpUrl } from '@/lib/submissionsStore';
+import { probeVideoFile, shouldTranscode, transcodeVideo, captureVideoPoster } from '@/lib/videoNorm';
 import { submitUpload, submitLink, type WallItem } from '@/lib/wallApi';
 
 const easeOut = [0.22, 1, 0.36, 1] as const;
@@ -34,6 +35,9 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
   const [thumb, setThumb] = useState<string | null>(null);
   const [previewKind, setPreviewKind] = useState<'image' | 'video' | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [progressPct, setProgressPct] = useState<number | null>(null);
+  const [mediaDims, setMediaDims] = useState<{ width: number; height: number } | null>(null);
+  const [transcoded, setTranscoded] = useState(false);
   const [link, setLink] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState('');
@@ -48,9 +52,25 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
     setFile(null);
     setThumb(null);
     setPreviewKind(null);
+    setProgressPct(null);
+    setMediaDims(null);
+    setTranscoded(false);
     setLink('');
     setError('');
     setProcessing(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const clearFile = () => {
+    processToken.current++;
+    setFile(null);
+    setThumb(null);
+    setPreviewKind(null);
+    setProgressPct(null);
+    setMediaDims(null);
+    setTranscoded(false);
+    setProcessing(false);
+    setError('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -64,30 +84,73 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
     }
     const token = ++processToken.current;
     setProcessing(true);
-    setFile(picked);
+    setProgressPct(null);
     setThumb(null);
+    setMediaDims(null);
+    setTranscoded(false);
+    setFile(picked);
     setPreviewKind(isImage ? 'image' : 'video');
+
     try {
-      const result = isImage ? await compressImageFile(picked) : await videoToPoster(picked);
+      if (isImage) {
+        const result = await compressImageFile(picked);
+        if (token !== processToken.current) return;
+        setThumb(result.dataUrl);
+        setMediaDims({ width: result.width, height: result.height });
+        return;
+      }
+
+      // video: capture dims, normalise to H.264/AAC MP4 (≤1080p) when needed
+      const meta = await probeVideoFile(picked);
       if (token !== processToken.current) return;
-      setThumb(result);
+      setMediaDims({ width: meta.width, height: meta.height });
+
+      let finalFile = picked;
+      let finalDims = { width: meta.width, height: meta.height };
+      let wasTranscoded = false;
+
+      if (shouldTranscode(picked, meta)) {
+        try {
+          const result = await transcodeVideo(
+            picked,
+            meta,
+            (pct) => {
+              if (token === processToken.current) setProgressPct(pct);
+            },
+          );
+          if (token !== processToken.current) return;
+          finalFile = new File([result.blob], picked.name.replace(/\.[^.]+$/, '') + '.mp4', {
+            type: 'video/mp4',
+          });
+          finalDims = { width: result.width, height: result.height };
+          wasTranscoded = true;
+        } catch {
+          if (token !== processToken.current) return;
+          finalFile = picked;
+          wasTranscoded = false;
+        }
+      }
+
+      if (token !== processToken.current) return;
+      setFile(finalFile);
+      setMediaDims(finalDims);
+      setTranscoded(wasTranscoded);
+
+      // poster frame ~2s in (best effort)
+      try {
+        const poster = await captureVideoPoster(finalFile, wasTranscoded ? 640 : 640);
+        if (token === processToken.current) setThumb(poster);
+      } catch {
+        if (token === processToken.current) setThumb(null);
+      }
     } catch {
       if (token !== processToken.current) return;
+      setFile(picked);
       setThumb(null);
       setError('We could not read that file. Try another one.');
     } finally {
       if (token === processToken.current) setProcessing(false);
     }
-  };
-
-  const clearFile = () => {
-    processToken.current++;
-    setFile(null);
-    setThumb(null);
-    setPreviewKind(null);
-    setProcessing(false);
-    setError('');
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const displayError = (code: unknown) => {
@@ -118,6 +181,9 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
           name,
           caption,
           poster: thumb || undefined,
+          width: mediaDims?.width,
+          height: mediaDims?.height,
+          transcoded,
         });
         setSuccess(item);
         onSubmitted();
@@ -356,7 +422,13 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
                     <p className="text-[13px] font-bold truncate" style={{ color: '#F7F3EE' }}>{file.name}</p>
                     <p className="text-[11px] mt-0.5" style={{ color: 'rgba(247,243,238,0.35)' }}>
                       {previewKind === 'video' ? 'Video' : 'Image'} • {(file.size / (1024 * 1024)).toFixed(1)} MB
-                      {processing ? ' • processing…' : ''}
+                      {processing
+                        ? progressPct != null
+                          ? ` • normalising… ${progressPct}%`
+                          : ' • normalising…'
+                        : transcoded
+                          ? ' • normalised (1080p max)'
+                          : ''}
                     </p>
                   </div>
                   <button

@@ -1,14 +1,98 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Play, ExternalLink, X, Link2, Image as ImageIcon, Film } from 'lucide-react';
+import { Heart, Play, ExternalLink, X, Link2, Image as ImageIcon, Film, Volume2, VolumeX, Loader2 } from 'lucide-react';
 import {
   hostOf,
   tiktokEmbedUrl,
   timeAgo,
+  fetchLikedIds,
+  toggleLike,
   type WallItem,
 } from '@/lib/wallApi';
 
 const easeOut = [0.22, 1, 0.36, 1] as const;
+const MIN_RATIO = 0.5625; // 9:16
+const MAX_RATIO = 1.85;
+
+type SortMode = 'shuffle' | 'newest' | 'top';
+
+function mediaRatio(sub: WallItem): number {
+  if (sub.width && sub.height) {
+    const r = sub.width / sub.height;
+    return Math.min(MAX_RATIO, Math.max(MIN_RATIO, r));
+  }
+  return 16 / 9;
+}
+
+function mediaCost(sub: WallItem): number {
+  return 1 / mediaRatio(sub);
+}
+
+function orientationOf(sub: WallItem): 'portrait' | 'landscape' | 'square' {
+  if (!sub.width || !sub.height) return 'square';
+  const r = sub.width / sub.height;
+  if (r > 1.05) return 'landscape';
+  if (r < 0.95) return 'portrait';
+  return 'square';
+}
+
+function mulberry32(seed: number) {
+  let a = seed;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function packColumns(items: WallItem[], n: number): WallItem[][] {
+  const cols: WallItem[][] = Array.from({ length: n }, () => []);
+  const heights = new Array(n).fill(0);
+  const lastOrient = new Array(n).fill(null as 'portrait' | 'landscape' | 'square' | null);
+
+  for (const item of items) {
+    const o = orientationOf(item);
+    let best = 0;
+    let bestScore = Infinity;
+    for (let c = 0; c < n; c++) {
+      const score = heights[c] + (lastOrient[c] === o ? 0.55 : 0);
+      if (score < bestScore) {
+        bestScore = score;
+        best = c;
+      }
+    }
+    cols[best].push(item);
+    heights[best] += mediaCost(item);
+    lastOrient[best] = o;
+  }
+  return cols;
+}
+
+function useColumnCount(): number {
+  const [count, setCount] = useState(() => {
+    if (typeof window === 'undefined') return 3;
+    const w = window.innerWidth;
+    if (w >= 1440) return 4;
+    if (w >= 1024) return 3;
+    if (w >= 768) return 2;
+    if (w >= 420) return 2;
+    return 1;
+  });
+
+  useEffect(() => {
+    const compute = () => {
+      const w = window.innerWidth;
+      setCount(w >= 1440 ? 4 : w >= 1024 ? 3 : w >= 768 ? 2 : w >= 420 ? 2 : 1);
+    };
+    compute();
+    window.addEventListener('resize', compute);
+    return () => window.removeEventListener('resize', compute);
+  }, []);
+
+  return count;
+}
 
 function Thumb({ sub, className }: { sub: WallItem; className?: string }) {
   if (sub.posterUrl) {
@@ -27,7 +111,175 @@ function Thumb({ sub, className }: { sub: WallItem; className?: string }) {
   );
 }
 
-function Lightbox({ sub, onClose }: { sub: WallItem; onClose: () => void }) {
+const hoverCapable = () =>
+  typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+/** Card media that plays inline (muted loop) on hover for desktop, poster otherwise. */
+function CardMedia({ sub }: { sub: WallItem }) {
+  const [showVideo, setShowVideo] = useState(false);
+  const [buffering, setBuffering] = useState(false);
+  const [broken, setBroken] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const isVideo = sub.mediaType === 'video' && !!sub.mediaUrl && !broken;
+
+  const start = useCallback(() => {
+    if (!hoverCapable() || !isVideo) return;
+    setShowVideo(true);
+    requestAnimationFrame(() => {
+      videoRef.current?.play().catch(() => {});
+    });
+  }, [isVideo]);
+
+  const stop = useCallback(() => {
+    videoRef.current?.pause();
+  }, []);
+
+  return (
+    <div
+      className="relative w-full overflow-hidden bg-black/50"
+      style={{ aspectRatio: `${mediaRatio(sub)}` }}
+      onMouseEnter={start}
+      onMouseLeave={stop}
+      onTouchStart={() => setShowVideo(false)}
+    >
+      {isVideo && showVideo ? (
+        <video
+          ref={videoRef}
+          src={sub.mediaUrl ?? undefined}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={sub.posterUrl ?? undefined}
+          onWaiting={() => setBuffering(true)}
+          onPlaying={() => setBuffering(false)}
+          onError={() => setBroken(true)}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      ) : (
+        <Thumb sub={sub} className="transition-transform duration-700 group-hover:scale-110" />
+      )}
+      {buffering && isVideo && showVideo && (
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+          <Loader2 className="w-7 h-7 text-[#D9A441] animate-spin" />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent pointer-events-none" />
+      {(sub.mediaType === 'video' || sub.mediaType === 'link') && (
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+          <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md border border-[#D9A441]/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+            {sub.mediaType === 'link' ? (
+              <ExternalLink className="w-5 h-5 text-[#D9A441]" />
+            ) : (
+              <Play className="w-5 h-5 text-[#D9A441] fill-[#D9A441] ml-0.5" />
+            )}
+          </div>
+        </div>
+      )}
+      {sub.kind === 'link' && (
+        <div className="absolute top-3 left-3 px-2.5 h-7 rounded-full bg-black/50 backdrop-blur-md border border-[#D9A441]/30 flex items-center gap-1 pointer-events-none">
+          <Link2 className="w-3 h-3 text-[#D9A441]" />
+          <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#D9A441' }}>Link</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface CardProps {
+  sub: WallItem;
+  liked: boolean;
+  likesOverride: number | null;
+  index: number;
+  onOpen: () => void;
+  onToggleLike: (sub: WallItem) => void;
+}
+
+function WallCard({ sub, liked, likesOverride, index, onOpen, onToggleLike }: CardProps) {
+  const likeCount = likesOverride ?? sub.likes;
+  return (
+    <motion.div
+      key={sub.id}
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.55, delay: Math.min(index, 6) * 0.05, ease: easeOut }}
+      className="group relative text-left w-full rounded-[22px] overflow-hidden transition-all duration-500 hover:-translate-y-1.5 border border-[rgba(217,164,65,0.14)] hover:border-[#D9A441]/50 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#D9A441]/60"
+      style={{
+        background: 'linear-gradient(160deg, rgba(26,18,13,0.95), rgba(16,11,8,0.92))',
+        boxShadow: '0 6px 22px rgba(0,0,0,0.4)',
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 14px 45px rgba(255,122,24,0.18), 0 0 60px rgba(217,164,65,0.08)';
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 22px rgba(0,0,0,0.4)';
+      }}
+    >
+      <CardMedia sub={sub} />
+      <div className="absolute top-3 right-3">
+        <button
+          type="button"
+          aria-label={liked ? 'Remove like' : 'Like'}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleLike(sub);
+          }}
+          className="flex items-center gap-1 px-2.5 h-7 rounded-full bg-black/50 backdrop-blur-md border transition-all duration-300 hover:scale-105"
+          style={{
+            borderColor: liked ? 'rgba(217,73,43,0.6)' : 'rgba(255,255,255,0.1)',
+            boxShadow: liked ? '0 0 14px rgba(217,73,43,0.35)' : 'none',
+          }}
+        >
+          <Heart
+            className={`w-3 h-3 transition-colors ${liked ? 'text-[#FF5C3D]' : 'text-white/80'}`}
+            fill={liked ? '#FF5C3D' : 'transparent'}
+          />
+          <span className="text-[11px] font-bold text-white/80">{likeCount}</span>
+        </button>
+      </div>
+      <div className="p-4">
+        <p className="text-[11px] font-black uppercase tracking-[0.18em] mb-1" style={{ color: '#D9A441' }}>
+          @{sub.name}
+        </p>
+        <p className="text-[13.5px] leading-relaxed line-clamp-2" style={{ color: 'rgba(247,243,238,0.7)', minHeight: '2.6em' }}>
+          {sub.caption || '300K celebration edit'}
+        </p>
+        <p className="mt-2 text-[10.5px] uppercase tracking-[0.15em]" style={{ color: 'rgba(247,243,238,0.25)' }}>
+          {timeAgo(sub.createdAt)}
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+function Lightbox({
+  sub,
+  liked,
+  likesOverride,
+  onClose,
+  onToggleLike,
+}: {
+  sub: WallItem;
+  liked: boolean;
+  likesOverride: number | null;
+  onClose: () => void;
+  onToggleLike: (sub: WallItem) => void;
+}) {
+  const [muted, setMuted] = useState(true);
+  const [buffering, setBuffering] = useState(false);
+  const [broken, setBroken] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -41,6 +293,13 @@ function Lightbox({ sub, onClose }: { sub: WallItem; onClose: () => void }) {
   }, [onClose]);
 
   const embed = sub.mediaType === 'link' && sub.url ? tiktokEmbedUrl(sub.url) : null;
+  const likeCount = likesOverride ?? sub.likes;
+
+  const toggleMute = () => {
+    setMuted((m) => !m);
+    const v = videoRef.current;
+    if (v) v.muted = !v.muted;
+  };
 
   return (
     <motion.div
@@ -64,14 +323,42 @@ function Lightbox({ sub, onClose }: { sub: WallItem; onClose: () => void }) {
       >
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#D4A84A]/40 to-transparent" />
 
-        <div className="relative aspect-video bg-black flex items-center justify-center overflow-hidden">
-          {sub.mediaType === 'video' && sub.mediaUrl ? (
-            <video src={sub.mediaUrl} className="w-full h-full object-contain" controls autoPlay playsInline preload="metadata" />
-          ) : sub.mediaType === 'video' ? (
-            <div className="relative w-full h-full">
-              {sub.posterUrl && <img src={sub.posterUrl} alt={sub.name} className="w-full h-full object-contain opacity-40" />}
-              <Film className="absolute inset-0 m-auto w-9 h-9 text-[#D9A441]/70" />
-            </div>
+        <div className="relative h-[min(70vh,680px)] bg-black flex flex-col items-center justify-center overflow-hidden">
+          {sub.mediaType === 'video' && sub.mediaUrl && !broken ? (
+            <>
+              <video
+                ref={videoRef}
+                src={sub.mediaUrl}
+                className="w-full h-full object-contain"
+                autoPlay
+                loop
+                playsInline
+                muted
+                preload="auto"
+                onWaiting={() => setBuffering(true)}
+                onPlaying={() => setBuffering(false)}
+                onCanPlay={() => setBuffering(false)}
+                onError={() => setBroken(true)}
+              />
+              <button
+                type="button"
+                onClick={toggleMute}
+                aria-label={muted ? 'Unmute' : 'Mute'}
+                className="absolute top-3 left-3 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/10 flex items-center justify-center transition-all duration-300 hover:scale-105 hover:bg-black/70"
+              >
+                {muted ? <VolumeX className="w-4 h-4 text-white/70" /> : <Volume2 className="w-4 h-4 text-[#D9A441]" />}
+              </button>
+            </>
+          ) : sub.mediaType === 'video' && sub.posterUrl ? (
+            <>
+              <img src={sub.posterUrl} alt={sub.name} className="w-full h-full object-contain opacity-40" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+                <Film className="w-9 h-9 text-[#D9A441]/70" />
+                <span className="text-[12px] font-bold" style={{ color: 'rgba(247,243,238,0.6)' }}>
+                  This video can&apos;t be played on your device.
+                </span>
+              </div>
+            </>
           ) : embed ? (
             <iframe
               src={embed}
@@ -82,18 +369,26 @@ function Lightbox({ sub, onClose }: { sub: WallItem; onClose: () => void }) {
             />
           ) : sub.mediaType === 'link' ? (
             <div className="relative w-full h-full flex flex-col items-center justify-center gap-4 px-6 text-center">
-              <>
-                <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'rgba(217,164,65,0.08)', border: '1px solid rgba(217,164,65,0.3)' }}>
-                  <Link2 className="w-7 h-7 text-[#D9A441]" />
-                </div>
-                <span className="text-sm font-bold text-white/70">Hosted on {hostOf(sub.url)}</span>
-              </>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'rgba(217,164,65,0.08)', border: '1px solid rgba(217,164,65,0.3)' }}>
+                <Link2 className="w-7 h-7 text-[#D9A441]" />
+              </div>
+              <span className="text-sm font-bold text-white/70">Hosted on {hostOf(sub.url)}</span>
             </div>
           ) : sub.posterUrl ? (
             <img src={sub.posterUrl} alt={sub.caption || sub.name} className="w-full h-full object-contain" />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <ImageIcon className="w-9 h-9 text-white/30" />
+            </div>
+          )}
+          {buffering && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(217,164,65,0.35)' }}
+              >
+                <Loader2 className="w-7 h-7 text-[#D9A441] animate-spin" />
+              </div>
             </div>
           )}
           <div className="absolute inset-0 pointer-events-none ring-1 ring-white/5" />
@@ -107,9 +402,17 @@ function Lightbox({ sub, onClose }: { sub: WallItem; onClose: () => void }) {
               <span className="w-1 h-1 rounded-full bg-white/20" />
               <span className="text-[11px] text-white/40">{timeAgo(sub.createdAt)}</span>
               <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span className="text-[11px] text-white/40 inline-flex items-center gap-1">
-                <Heart className="w-3 h-3 text-[#D94A2B]" /> {sub.likes}
-              </span>
+              <button
+                type="button"
+                onClick={() => onToggleLike(sub)}
+                className="text-[11px] text-white/40 inline-flex items-center gap-1.5 transition-colors hover:text-white"
+              >
+                <Heart
+                  className={`w-3 h-3 ${liked ? 'text-[#FF5C3D]' : 'text-[#D94A2B]'}`}
+                  fill={liked ? '#FF5C3D' : 'transparent'}
+                />
+                <span>{likeCount}</span>
+              </button>
             </div>
           </div>
 
@@ -139,22 +442,103 @@ function Lightbox({ sub, onClose }: { sub: WallItem; onClose: () => void }) {
   );
 }
 
-export function EditsGallery({ submissions }: { submissions: WallItem[] }) {
-  const [sort, setSort] = useState<'newest' | 'top'>('newest');
-  const [selected, setSelected] = useState<WallItem | null>(null);
+const LIKED_STORAGE = 'tmnaa_liked_ids';
 
-  const visible = useMemo(() => {
+export function EditsGallery({ submissions }: { submissions: WallItem[] }) {
+  const [sort, setSort] = useState<SortMode>('shuffle');
+  const [selected, setSelected] = useState<WallItem | null>(null);
+  const [likedIds, setLikedIds] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem(LIKED_STORAGE);
+      if (raw) return new Set(JSON.parse(raw) as string[]);
+    } catch {
+      /* ignore */
+    }
+    return new Set();
+  });
+  const [likesOverrides, setLikesOverrides] = useState<Record<string, number>>({});
+  const columns = useColumnCount();
+
+  const ordered = useMemo(() => {
     if (sort === 'newest') {
       return [...submissions].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
     }
-    return [...submissions].sort((a, b) => b.likes - a.likes);
+    if (sort === 'top') {
+      return [...submissions].sort((a, b) => b.likes - a.likes);
+    }
+    // balanced shuffle: deterministic random order, reseeded when the wall changes
+    let seed = 7;
+    for (let i = 0; i < submissions.length; i++) {
+      seed = (seed * 31 + submissions[i].id.length) | 0;
+    }
+    const rnd = mulberry32(seed);
+    const arr = [...submissions];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submissions, sort]);
+
+  const packed = useMemo(() => packColumns(ordered, columns), [ordered, columns]);
+
+  useEffect(() => {
+    fetchLikedIds().then((ids) => {
+      setLikedIds(new Set(ids));
+      try {
+        localStorage.setItem(LIKED_STORAGE, JSON.stringify(ids));
+      } catch {
+        /* ignore */
+      }
+    }).catch(() => {
+      /* offline — keep cached state */
+    });
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LIKED_STORAGE, JSON.stringify([...likedIds]));
+    } catch {
+      /* ignore */
+    }
+  }, [likedIds]);
 
   const onClose = useCallback(() => setSelected(null), []);
 
-  const sortBtn = (value: 'newest' | 'top', label: string) => {
+  const onToggleLike = useCallback(async (sub: WallItem) => {
+    const target = likedIds.has(sub.id) ? false : true;
+    setLikedIds((prev) => {
+      const next = new Set(prev);
+      if (target) next.add(sub.id);
+      else next.delete(sub.id);
+      return next;
+    });
+    setLikesOverrides((prev) => ({
+      ...prev,
+      [sub.id]: Math.max(0, (prev[sub.id] ?? sub.likes) + (target ? 1 : -1)),
+    }));
+    try {
+      const result = await toggleLike(sub.id, target);
+      setLikesOverrides((prev) => ({ ...prev, [sub.id]: result.likes }));
+    } catch {
+      // revert optimistic state
+      setLikedIds((prev) => {
+        const next = new Set(prev);
+        if (target) next.delete(sub.id);
+        else next.add(sub.id);
+        return next;
+      });
+      setLikesOverrides((prev) => ({
+        ...prev,
+        [sub.id]: Math.max(0, (prev[sub.id] ?? sub.likes) + (target ? -1 : 1)),
+      }));
+    }
+  }, [likedIds]);
+
+  const sortBtn = (value: SortMode, label: string) => {
     const active = sort === value;
     return (
       <button
@@ -181,85 +565,54 @@ export function EditsGallery({ submissions }: { submissions: WallItem[] }) {
             The Wall
           </h2>
           <span className="text-sm font-bold" style={{ color: 'rgba(217,164,65,0.7)' }}>
-            {visible.length} {visible.length === 1 ? 'edit' : 'edits'}
+            {ordered.length} {ordered.length === 1 ? 'edit' : 'edits'}
           </span>
         </div>
         <div className="flex items-center gap-2">
+          {sortBtn('shuffle', 'Balanced')}
           {sortBtn('newest', 'Newest')}
           {sortBtn('top', 'Most Liked')}
         </div>
       </div>
 
-      {visible.length === 0 ? (
+      {ordered.length === 0 ? (
         <div className="rounded-[28px] py-16 text-center" style={{ background: 'rgba(9,8,7,0.6)', border: '1px solid rgba(217,164,65,0.12)' }}>
           <p className="text-sm font-bold" style={{ color: 'rgba(247,243,238,0.5)' }}>No edits yet — be the first to submit.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {visible.map((sub, i) => (
-            <motion.button
-              key={sub.id}
-              type="button"
-              onClick={() => setSelected(sub)}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.55, delay: Math.min(i, 6) * 0.05, ease: easeOut }}
-              className="group relative text-left w-full rounded-[22px] overflow-hidden transition-all duration-500 hover:-translate-y-1.5 border border-[rgba(217,164,65,0.14)] hover:border-[#D9A441]/50"
-              style={{
-                background: 'linear-gradient(160deg, rgba(26,18,13,0.95), rgba(16,11,8,0.92))',
-                boxShadow: '0 6px 22px rgba(0,0,0,0.4)',
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.boxShadow = '0 14px 45px rgba(255,122,24,0.18), 0 0 60px rgba(217,164,65,0.08)';
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 22px rgba(0,0,0,0.4)';
-              }}
-            >
-              <div className="relative aspect-video overflow-hidden bg-black/50">
-                <Thumb sub={sub} className="transition-transform duration-700 group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
-                {(sub.mediaType === 'video' || sub.mediaType === 'link') && (
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-md border border-[#D9A441]/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      {sub.mediaType === 'link' ? (
-                        <ExternalLink className="w-5 h-5 text-[#D9A441]" />
-                      ) : (
-                        <Play className="w-5 h-5 text-[#D9A441] fill-[#D9A441] ml-0.5" />
-                      )}
-                    </div>
-                  </div>
-                )}
-                <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 h-7 rounded-full bg-black/50 backdrop-blur-md border border-white/10">
-                  <Heart className="w-3 h-3 text-[#D94A2B]" />
-                  <span className="text-[11px] font-bold text-white/80">{sub.likes}</span>
-                </div>
-                {sub.kind === 'link' && (
-                  <div className="absolute top-3 left-3 px-2.5 h-7 rounded-full bg-black/50 backdrop-blur-md border border-[#D9A441]/30 flex items-center gap-1">
-                    <Link2 className="w-3 h-3 text-[#D9A441]" />
-                    <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#D9A441' }}>Link</span>
-                  </div>
-                )}
-              </div>
-              <div className="p-4">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] mb-1" style={{ color: '#D9A441' }}>
-                  @{sub.name}
-                </p>
-                <p className="text-[13.5px] leading-relaxed line-clamp-2" style={{ color: 'rgba(247,243,238,0.7)', minHeight: '2.6em' }}>
-                  {sub.caption || '300K celebration edit'}
-                </p>
-                <p className="mt-2 text-[10.5px] uppercase tracking-[0.15em]" style={{ color: 'rgba(247,243,238,0.25)' }}>
-                  {timeAgo(sub.createdAt)}
-                </p>
-              </div>
-            </motion.button>
+        <div className="flex items-start gap-3">
+          {packed.map((col, ci) => (
+            <div key={ci} className="flex-1 min-w-0 flex flex-col gap-3">
+              {col.map((sub, i) => (
+                <WallCard
+                  key={sub.id}
+                  sub={sub}
+                  index={i * columns + ci}
+                  liked={likedIds.has(sub.id)}
+                  likesOverride={likesOverrides[sub.id] ?? null}
+                  onOpen={() => setSelected(sub)}
+                  onToggleLike={onToggleLike}
+                />
+              ))}
+            </div>
           ))}
         </div>
       )}
 
+      <p className="mt-8 text-center text-[11px] tracking-[0.15em]" style={{ color: 'rgba(247,243,238,0.3)' }}>
+        Like once per device — one like per edit, keep it fair. ♥
+      </p>
+
       <AnimatePresence>
-        {selected && <Lightbox sub={selected} onClose={onClose} />}
+        {selected && (
+          <Lightbox
+            sub={selected}
+            liked={likedIds.has(selected.id)}
+            likesOverride={likesOverrides[selected.id] ?? null}
+            onClose={onClose}
+            onToggleLike={onToggleLike}
+          />
+        )}
       </AnimatePresence>
     </div>
   );

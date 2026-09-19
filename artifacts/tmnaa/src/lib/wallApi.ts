@@ -17,6 +17,9 @@ export interface WallItem {
   url: string | null;
   posterUrl: string | null;
   mediaUrl: string | null;
+  width: number | null;
+  height: number | null;
+  transcoded: boolean;
 }
 
 const ADMIN_TOKEN_KEY = 'tmnaa_admin_token';
@@ -89,6 +92,9 @@ interface WallRow {
   media_key: string | null;
   poster_key: string | null;
   size_bytes: number | null;
+  width: number | null;
+  height: number | null;
+  transcoded: boolean | null;
   reviewed_at: string | null;
   reviewer: string | null;
 }
@@ -110,6 +116,9 @@ function rowToItem(row: WallRow): WallItem {
     url: row.link_url,
     posterUrl: isLink ? null : media('poster'),
     mediaUrl: row.media_type === 'video' && row.media_key ? media('media') : null,
+    width: row.width ?? null,
+    height: row.height ?? null,
+    transcoded: Boolean(row.transcoded),
   };
 }
 
@@ -136,6 +145,9 @@ export interface SubmitUploadInput {
   name: string;
   caption: string;
   poster?: string;
+  width?: number;
+  height?: number;
+  transcoded?: boolean;
 }
 
 async function storagePut(url: string, body: Blob, contentType: string): Promise<void> {
@@ -173,6 +185,9 @@ export async function submitUpload(input: SubmitUploadInput): Promise<WallItem> 
       mediaType: isVideo ? 'video' : 'image',
       contentType: mime,
       sizeBytes: input.file.size,
+      width: Number.isFinite(input.width) ? input.width : null,
+      height: Number.isFinite(input.height) ? input.height : null,
+      transcoded: Boolean(input.transcoded),
       poster: posterBlob ? true : undefined,
       posterContentType: posterBlob ? posterContentType : undefined,
     }),
@@ -214,6 +229,9 @@ export async function submitUpload(input: SubmitUploadInput): Promise<WallItem> 
     media_key: presign.mediaKey ?? null,
     poster_key: posterKey,
     size_bytes: input.file.size,
+    width: typeof input.width === 'number' ? input.width : null,
+    height: typeof input.height === 'number' ? input.height : null,
+    transcoded: Boolean(input.transcoded),
     reviewed_at: null,
     reviewer: null,
   });
@@ -315,4 +333,56 @@ export async function adminReject(id: string): Promise<void> {
     method: 'POST',
     body: JSON.stringify({ action: 'reject', id }),
   });
+}
+
+// ---------------------------------------------------------------------------
+// per-device likes
+// ---------------------------------------------------------------------------
+
+const DEVICE_KEY = 'tmnaa_device_id';
+
+export function getDeviceId(): string {
+  try {
+    let id = localStorage.getItem(DEVICE_KEY);
+    if (!id) {
+      id =
+        typeof crypto !== 'undefined' && 'randomUUID' in crypto
+          ? crypto.randomUUID()
+          : `d_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+      localStorage.setItem(DEVICE_KEY, id);
+    }
+    return id;
+  } catch {
+    return `d_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+}
+
+/** Which submission ids this device has already liked (server truth). */
+export async function fetchLikedIds(): Promise<string[]> {
+  const deviceId = getDeviceId();
+  const res = await fetch(apiUrl(`/api/wall/like?device_id=${encodeURIComponent(deviceId)}`));
+  if (!res.ok) return [];
+  const body = (await res.json().catch(() => ({}))) as { ids?: string[] };
+  return body.ids ?? [];
+}
+
+export interface LikeResult {
+  liked: boolean;
+  likes: number;
+}
+
+export async function toggleLike(submissionId: string, liked: boolean): Promise<LikeResult> {
+  const deviceId = getDeviceId();
+  const res = await fetch(apiUrl('/api/wall/like'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: liked ? 'like' : 'unlike',
+      submission_id: submissionId,
+      device_id: deviceId,
+    }),
+  });
+  const body = (await res.json().catch(() => ({}))) as Partial<LikeResult> & { error?: string };
+  if (!res.ok) throw new Error(body.error ?? 'like_failed');
+  return { liked: Boolean(body.liked), likes: Number(body.likes ?? 0) };
 }

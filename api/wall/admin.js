@@ -37,6 +37,9 @@ function toItem(row) {
     url: isLink ? row.link_url : null,
     posterUrl: null,
     mediaUrl: null,
+    width: row.width ?? null,
+    height: row.height ?? null,
+    transcoded: Boolean(row.transcoded),
   };
 }
 

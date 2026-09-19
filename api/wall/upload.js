@@ -40,6 +40,14 @@ export default async function handler(request) {
     const contentType = String(input.contentType ?? '');
     const sizeBytes = Number(input.sizeBytes ?? 0);
 
+    let width = null;
+    let height = null;
+    const rawW = Number(input.width);
+    const rawH = Number(input.height);
+    if (Number.isInteger(rawW) && rawW > 0 && rawW <= 8192) width = rawW;
+    if (Number.isInteger(rawH) && rawH > 0 && rawH <= 8192) height = rawH;
+    const transcoded = input.transcoded === true || input.transcoded === 'true';
+
     if (!name || name.length > 40) return json({ error: 'invalid_fields' }, 400);
     if (caption.length > 180) return json({ error: 'invalid_fields' }, 400);
     if (mediaType !== 'image' && mediaType !== 'video') return json({ error: 'unsupported_file' }, 400);
@@ -79,6 +87,9 @@ export default async function handler(request) {
           media_key: mediaKey,
           poster_key: posterKey,
           size_bytes: sizeBytes,
+          width,
+          height,
+          transcoded,
           created_at: new Date().toISOString(),
         });
       } catch {
