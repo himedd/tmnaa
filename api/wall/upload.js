@@ -40,6 +40,14 @@ export default async function handler(request) {
     const contentType = String(input.contentType ?? '');
     const sizeBytes = Number(input.sizeBytes ?? 0);
 
+    const DEVICE_RE = /^[A-Za-z0-9_-]{8,128}$/;
+    const deviceId = String(input.deviceId ?? '').trim();
+    const fileHash = String(input.fileHash ?? '').trim();
+    const phash = String(input.phash ?? '').trim();
+    if (!DEVICE_RE.test(deviceId)) return json({ error: 'invalid_fields' }, 400);
+    if (fileHash && !/^[0-9a-f]{16,128}$/i.test(fileHash)) return json({ error: 'invalid_fields' }, 400);
+    if (phash && !/^[0-9a-f]{16,64}$/i.test(phash)) return json({ error: 'invalid_fields' }, 400);
+
     let width = null;
     let height = null;
     const rawW = Number(input.width);
@@ -74,26 +82,40 @@ export default async function handler(request) {
         posterUrl = await presignPut(account, posterKey, String(input.posterContentType));
       }
 
+      const payload = {
+        id,
+        name,
+        caption,
+        kind: 'upload',
+        media_type: mediaType,
+        status: 'pending',
+        provider: account.index,
+        bucket: account.bucket,
+        media_key: mediaKey,
+        poster_key: posterKey,
+        size_bytes: sizeBytes,
+        width,
+        height,
+        transcoded,
+        device_id: deviceId,
+        file_hash: fileHash || null,
+        phash: phash || null,
+        created_at: new Date().toISOString(),
+      };
       try {
-        await createRow({
-          id,
-          name,
-          caption,
-          kind: 'upload',
-          media_type: mediaType,
-          status: 'pending',
-          provider: account.index,
-          bucket: account.bucket,
-          media_key: mediaKey,
-          poster_key: posterKey,
-          size_bytes: sizeBytes,
-          width,
-          height,
-          transcoded,
-          created_at: new Date().toISOString(),
-        });
-      } catch {
-        return json({ error: 'database_unavailable' }, 500);
+        await createRow(payload);
+      } catch (err) {
+        // migration #2 not applied yet — retry without the moderation columns
+        if (/PGRST204|Could not find the/.test(String(err?.message ?? ''))) {
+          const { device_id, file_hash, phash, ...base } = payload;
+          try {
+            await createRow(base);
+          } catch {
+            return json({ error: 'database_unavailable' }, 500);
+          }
+        } else {
+          return json({ error: 'database_unavailable' }, 500);
+        }
       }
 
       return json(

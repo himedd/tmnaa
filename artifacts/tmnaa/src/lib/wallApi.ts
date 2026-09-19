@@ -1,5 +1,6 @@
 import { supabase, ADMIN_EMAIL } from './supabaseClient';
 import { apiUrl } from './apiBase';
+import { sha256File, sha256Text, dhashFromDataUrl } from './hash';
 
 export type WallMediaType = 'image' | 'video' | 'link';
 export type WallKind = 'upload' | 'link';
@@ -20,6 +21,20 @@ export interface WallItem {
   width: number | null;
   height: number | null;
   transcoded: boolean;
+  /** moderation fields (admin only; null on the public wall) */
+  deviceId?: string | null;
+  fileHash?: string | null;
+  phash?: string | null;
+  rejectReason?: string | null;
+  internalNote?: string | null;
+  reviewingBy?: string | null;
+  reviewingAt?: string | null;
+  reviewedAt?: string | null;
+  reviewer?: string | null;
+  /** flag section (flagged list only) */
+  flagCount?: number;
+  flagReasons?: string[];
+  reports?: { deviceId: string; reason: string; createdAt: string }[];
 }
 
 const ADMIN_TOKEN_KEY = 'tmnaa_admin_token';
@@ -97,28 +112,46 @@ interface WallRow {
   transcoded: boolean | null;
   reviewed_at: string | null;
   reviewer: string | null;
+  device_id: string | null;
+  file_hash: string | null;
+  phash: string | null;
+  reject_reason: string | null;
+  internal_note: string | null;
+  reviewing_by: string | null;
+  reviewing_at: string | null;
+  trash_media_key: string | null;
+  trash_poster_key: string | null;
 }
 
 /** Approved items render through the /api/wall/media redirect (serverless presign). */
-function rowToItem(row: WallRow): WallItem {
+function rowToItem(row: Partial<WallRow>): WallItem {
   const isLink = row.media_type === 'link';
   const mediaBase = apiUrl('/api/wall/media');
-  const media = (kind: 'poster' | 'media') => `${mediaBase}?id=${encodeURIComponent(row.id)}&kind=${kind}`;
-  return {
-    id: row.id,
-    name: row.name,
+  const media = (kind: 'poster' | 'media') => `${mediaBase}?id=${encodeURIComponent(row.id ?? '')}&kind=${kind}`;
+return {
+    id: row.id ?? '',
+    name: row.name ?? '',
     caption: row.caption ?? '',
-    kind: row.kind,
-    mediaType: row.media_type,
+    kind: row.kind ?? 'upload',
+    mediaType: row.media_type ?? 'image',
     status: row.status,
     likes: row.likes ?? 0,
-    createdAt: row.created_at,
-    url: row.link_url,
+    createdAt: row.created_at ?? '',
+    url: row.link_url ?? null,
     posterUrl: isLink ? null : media('poster'),
     mediaUrl: row.media_type === 'video' && row.media_key ? media('media') : null,
     width: row.width ?? null,
     height: row.height ?? null,
     transcoded: Boolean(row.transcoded),
+    deviceId: row.device_id ?? null,
+    fileHash: row.file_hash ?? null,
+    phash: row.phash ?? null,
+    rejectReason: row.reject_reason ?? null,
+    internalNote: row.internal_note ?? null,
+    reviewingBy: row.reviewing_by ?? null,
+    reviewingAt: row.reviewing_at ?? null,
+    reviewedAt: row.reviewed_at ?? null,
+    reviewer: row.reviewer ?? null,
   };
 }
 
@@ -129,7 +162,7 @@ function rowToItem(row: WallRow): WallItem {
 export async function fetchWall(): Promise<WallItem[]> {
   const { data, error } = await supabase
     .from('wall_submissions')
-    .select('*')
+    .select('id,name,caption,kind,media_type,status,likes,created_at,link_url,media_key,poster_key,width,height,transcoded')
     .eq('status', 'approved')
     .order('created_at', { ascending: false });
   if (error) throw new Error(String(error.message ?? 'wall_fetch_failed'));
@@ -176,6 +209,18 @@ export async function submitUpload(input: SubmitUploadInput): Promise<WallItem> 
     posterContentType = posterBlob.type || 'image/jpeg';
   }
 
+  // content fingerprinting – exact file hash always, phash for images
+  let fileHash = '';
+  let phash: string | undefined;
+  try {
+    fileHash = await sha256File(input.file);
+    if (isImage && input.poster) {
+      phash = (await dhashFromDataUrl(input.poster).catch(() => null)) ?? undefined;
+    }
+  } catch {
+    fileHash = '';
+  }
+
   const presignRes = await fetch(apiUrl('/api/wall/upload'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -188,6 +233,9 @@ export async function submitUpload(input: SubmitUploadInput): Promise<WallItem> 
       width: Number.isFinite(input.width) ? input.width : null,
       height: Number.isFinite(input.height) ? input.height : null,
       transcoded: Boolean(input.transcoded),
+      deviceId: getDeviceId(),
+      fileHash: fileHash || undefined,
+      phash,
       poster: posterBlob ? true : undefined,
       posterContentType: posterBlob ? posterContentType : undefined,
     }),
@@ -242,10 +290,16 @@ export async function submitLink(input: {
   caption: string;
   url: string;
 }): Promise<WallItem> {
+  let fileHash = '';
+  try {
+    fileHash = await sha256Text(`url:${input.url.trim()}`);
+  } catch {
+    fileHash = '';
+  }
   const res = await fetch(apiUrl('/api/wall/link'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
+    body: JSON.stringify({ ...input, deviceId: getDeviceId(), fileHash: fileHash || undefined }),
   });
   const body = (await res.json().catch(() => ({}))) as Partial<WallItem> & { error?: string };
   if (!res.ok || !body.id) throw new Error(body.error ?? 'database_unavailable');
@@ -328,11 +382,131 @@ export async function adminApprove(id: string): Promise<void> {
   });
 }
 
-export async function adminReject(id: string): Promise<void> {
+export async function adminReject(id: string, reason: string): Promise<void> {
   await adminFetch('/api/wall/admin', {
     method: 'POST',
-    body: JSON.stringify({ action: 'reject', id }),
+    body: JSON.stringify({ action: 'reject', id, reason }),
   });
+}
+
+export async function adminUnpublish(id: string, reason: string): Promise<void> {
+  await adminFetch('/api/wall/admin', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'unpublish', id, reason }),
+  });
+}
+
+export async function adminUndo(id: string): Promise<{ restored?: string }> {
+  const data = (await adminFetch('/api/wall/admin', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'undo', id }),
+  })) as { restored?: string };
+  return { restored: data.restored };
+}
+
+export async function adminUpdate(
+  id: string,
+  patch: { name?: string; caption?: string },
+): Promise<WallItem> {
+  const data = (await adminFetch('/api/wall/admin', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'update', id, ...patch }),
+  })) as { item?: WallItem };
+  return data.item as WallItem;
+}
+
+export async function adminSetNote(id: string, note: string): Promise<void> {
+  await adminFetch('/api/wall/admin', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'set_note', id, note }),
+  });
+}
+
+export async function adminBulk(
+  op: 'approve' | 'reject',
+  ids: string[],
+  reason?: string,
+): Promise<{ id: string; state: string; error?: string }[]> {
+  const data = (await adminFetch('/api/wall/admin', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'bulk', op, ids, reason: reason || 'Other' }),
+  })) as { results?: { id: string; state: string; error?: string }[] };
+  return data.results ?? [];
+}
+
+export async function adminBeginReview(id: string): Promise<{ locked: boolean; lockedBy?: string }> {
+  const data = (await adminFetch('/api/wall/admin', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'begin_review', id }),
+  })) as { locked?: boolean; lockedBy?: string };
+  return { locked: Boolean(data.locked), lockedBy: data.lockedBy };
+}
+
+export async function adminEndReview(id: string): Promise<void> {
+  await adminFetch('/api/wall/admin', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'end_review', id }),
+  });
+}
+
+export async function adminClearReports(id: string): Promise<void> {
+  await adminFetch('/api/wall/admin', {
+    method: 'POST',
+    body: JSON.stringify({ action: 'clear_reports', id }),
+  });
+}
+
+export async function adminAll(): Promise<WallItem[]> {
+  const data = (await adminFetch('/api/wall/admin?action=all')) as { items?: WallItem[] };
+  return data.items ?? [];
+}
+
+export interface AdminAction {
+  id: string;
+  submission_id: string;
+  action: string;
+  admin: string | null;
+  reason: string | null;
+  note: string | null;
+  meta: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export async function adminAudit(): Promise<AdminAction[]> {
+  const data = (await adminFetch('/api/wall/admin?action=audit')) as { actions?: AdminAction[] };
+  return data.actions ?? [];
+}
+
+export async function adminFlagged(): Promise<{ items: WallItem[]; totalReports: number }> {
+  const data = (await adminFetch('/api/wall/admin?action=flagged')) as {
+    items?: WallItem[];
+    totalReports?: number;
+  };
+  return { items: data.items ?? [], totalReports: data.totalReports ?? 0 };
+}
+
+export async function adminWhoami(): Promise<string> {
+  const data = (await adminFetch('/api/wall/admin?action=whoami')) as { admin?: string };
+  return data.admin ?? '';
+}
+
+/** Public report flag — routes a wall edit into the admin "Flagged" tab. */
+export async function reportSubmission(input: {
+  submissionId: string;
+  reason: string;
+}): Promise<{ already?: boolean }> {
+  const res = await fetch(apiUrl('/api/wall/report'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      submission_id: input.submissionId,
+      device_id: getDeviceId(),
+      reason: input.reason,
+    }),
+  });
+  const body = (await res.json().catch(() => ({}))) as { error?: string; already?: boolean };
+  if (!res.ok) throw new Error(body.error ?? 'report_failed');
+  return { already: Boolean(body.already) };
 }
 
 // ---------------------------------------------------------------------------

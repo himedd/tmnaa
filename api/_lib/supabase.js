@@ -164,6 +164,98 @@ export async function likedIdsForDevice(deviceId) {
   return rows.map((r) => String(r.submission_id));
 }
 
+// ---------------------------------------------------------------------------
+// moderation: audit log (wall_actions) + report flags (wall_reports)
+// ---------------------------------------------------------------------------
+
+const ACTIONS_TABLE = 'wall_actions';
+const REPORTS_TABLE = 'wall_reports';
+
+function text(v, max) {
+  return typeof v === 'string' ? v.slice(0, max ?? 2000) : v ?? null;
+}
+
+export async function insertAction({ submissionId, action, admin, reason, note, meta }) {
+  assertConfigured();
+  const payload = { submission_id: submissionId, action, admin, reason, note };
+  if (meta && typeof meta === 'object') payload.meta = meta;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${ACTIONS_TABLE}`, {
+    method: 'POST',
+    headers: { ...authHeaders(), Prefer: 'return=minimal' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok && res.status !== 201) throw new Error('DB_INSERT_FAILED');
+  return payload;
+}
+
+export async function latestAction(submissionId) {
+  assertConfigured();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/${ACTIONS_TABLE}?select=id,action,admin,reason,note,meta,created_at&submission_id=eq.${encodeURIComponent(submissionId)}&order=created_at.desc&limit=1`,
+    { headers: authHeaders() },
+  );
+  if (!res.ok) return null;
+  const rows = await res.json();
+  return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+}
+
+export async function listActions(limit = 500) {
+  assertConfigured();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/${ACTIONS_TABLE}?select=id,submission_id,action,admin,reason,note,meta,created_at&order=created_at.desc&limit=${limit}`,
+    { headers: authHeaders() },
+  );
+  if (!res.ok) return [];
+  const rows = await res.json();
+  return Array.isArray(rows) ? rows : [];
+}
+
+export async function listReports(limit = 500) {
+  assertConfigured();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/${REPORTS_TABLE}?select=id,submission_id,device_id,reason,created_at&order=created_at.desc&limit=${limit}`,
+    { headers: authHeaders() },
+  );
+  if (!res.ok) return [];
+  const rows = await res.json();
+  return Array.isArray(rows) ? rows : [];
+}
+
+export async function findReport(submissionId, deviceId) {
+  assertConfigured();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/${REPORTS_TABLE}?select=id&submission_id=eq.${encodeURIComponent(submissionId)}&device_id=eq.${encodeURIComponent(deviceId)}&limit=1`,
+    { headers: authHeaders() },
+  );
+  if (!res.ok) return null;
+  const rows = await res.json();
+  return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+}
+
+export async function deleteReports(submissionId) {
+  assertConfigured();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/${REPORTS_TABLE}?submission_id=eq.${encodeURIComponent(submissionId)}`,
+    { method: 'DELETE', headers: authHeaders() },
+  );
+  return res.ok || res.status === 204;
+}
+
+/** Count reports created by a device within `sinceMs` (used for public rate limiting). */
+export async function reportCountForDevice(deviceId, sinceMs = 24 * 60 * 60 * 1000) {
+  assertConfigured();
+  const since = new Date(Date.now() - sinceMs).toISOString();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/${REPORTS_TABLE}?select=id&device_id=eq.${encodeURIComponent(deviceId)}&created_at=gte.${encodeURIComponent(since)}&limit=1`,
+    { headers: authHeaders() },
+  );
+  if (!res.ok) return 999;
+  const rows = await res.json();
+  const range = res.headers.get('content-range') ?? '';
+  const match = range.match(/\/(\d+)$/);
+  return match ? Number(match[1]) : Array.isArray(rows) ? rows.length : 0;
+}
+
 /** Atomic like-counter adjustment via the adjust_likes RPC. Returns new count, or null. */
 export async function adjustLikes(submissionId, delta) {
   assertConfigured();
