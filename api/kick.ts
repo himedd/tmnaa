@@ -30,7 +30,7 @@ export default async function handler(request: Request) {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 's-maxage=60, stale-while-revalidate=300',
+        'Cache-Control': 'no-store',
       },
     });
   } catch (error: any) {

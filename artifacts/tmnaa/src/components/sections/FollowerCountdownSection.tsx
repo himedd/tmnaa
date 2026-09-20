@@ -58,11 +58,44 @@ interface LiveState {
   mode: 'server' | 'local' | null;
 }
 
+const SAMPLE_CAP = 600;
+const MAX_KEEP_MS = 2 * 24 * 60 * 60_000;
+const HISTORY_KEY = 'tmnaa_follower_history_v1';
+
+interface PersistedHistory {
+  samples: Sample[];
+  launchCount: number | null;
+}
+
+function loadHistory(): PersistedHistory {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return { samples: [], launchCount: null };
+    const p = JSON.parse(raw) as Partial<PersistedHistory>;
+    const samples = Array.isArray(p.samples)
+      ? p.samples.filter((s) => Number.isFinite(s.t) && Number.isFinite(s.c))
+      : [];
+    const launchCount = typeof p.launchCount === 'number' ? p.launchCount : null;
+    return { samples, launchCount };
+  } catch {
+    return { samples: [], launchCount: null };
+  }
+}
+
+function saveHistory(history: PersistedHistory): void {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  } catch {
+    // storage unavailable — ignore
+  }
+}
+
 function useLiveFollowerCount(): LiveState {
   const [count, setCount] = useState<number | null>(null);
   const [stats, setStats] = useState<FollowerStats>(EMPTY_STATS);
   const [mode, setMode] = useState<'server' | 'local' | null>(null);
   const samplesRef = useRef<Sample[]>([]);
+  const launchCountRef = useRef<number | null>(null);
 
   useEffect(() => {
     let disposed = false;
@@ -70,6 +103,18 @@ function useLiveFollowerCount(): LiveState {
     let pollTimer: number | null = null;
     let gotData = false;
     let errCount = 0;
+
+    // Rehydrate the rolling history from localStorage so a page refresh doesn't
+    // wipe the sample window (growth/ETA/today/peak stay warm) and the
+    // campaign-launch baseline survives across visits.
+    const initial = loadHistory();
+    const keepFrom = Date.now() - MAX_KEEP_MS;
+    samplesRef.current = initial.samples.filter((s) => s.t >= keepFrom);
+    launchCountRef.current = initial.launchCount;
+
+    const persist = () => {
+      saveHistory({ samples: samplesRef.current, launchCount: launchCountRef.current });
+    };
 
     // Kicks in when the SSE stream is unreachable or keeps dropping. Every
     // visitor polls independently, so the number still updates live for all —
@@ -89,7 +134,11 @@ function useLiveFollowerCount(): LiveState {
           if (!Number.isFinite(n) || n < 0) return;
           const now = Date.now();
           samplesRef.current.push({ t: now, c: n });
-          if (samplesRef.current.length > 400) samplesRef.current.shift();
+          if (samplesRef.current.length > SAMPLE_CAP) samplesRef.current.shift();
+          // First ever-observed count doubles as the campaign baseline while the
+          // server (which owns the authoritative one) is unreachable.
+          if (launchCountRef.current === null) launchCountRef.current = n;
+          persist();
           setMode('local');
           setCount(n);
           setStats(
@@ -98,7 +147,7 @@ function useLiveFollowerCount(): LiveState {
               now,
               TARGET,
               n,
-              null, // launch baseline lives server-side; unknown in fallback
+              launchCountRef.current,
             ),
           );
         });
@@ -119,7 +168,9 @@ function useLiveFollowerCount(): LiveState {
         setCount(n);
         const s = (j?.stats ?? null) === null ? null : (j.stats as FollowerStats);
         if (s) setStats(s);
+        // Server is authoritative; local samples are only a fallback.
         samplesRef.current = [];
+        persist();
       } catch {
         // ignore malformed frame
       }
