@@ -1,9 +1,18 @@
-import { randomAccount, presignPut, KEY_PREFIX } from '../_lib/storj.js';
+import {
+  getAccount,
+  objectExists,
+  presignPut,
+  randomAccount,
+  KEY_PREFIX,
+} from '../_lib/storj.js';
 import { createRow } from '../_lib/supabase.js';
 
 export const config = {
   runtime: 'edge',
 };
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const DEVICE_RE = /^[A-Za-z0-9_-]{8,128}$/;
 
 function json(data, status) {
   return new Response(JSON.stringify(data), {
@@ -17,6 +26,173 @@ function mediaLimits() {
     image: (Number(process.env.MAX_IMAGE_MB) || 12) * 1024 * 1024,
     video: (Number(process.env.MAX_VIDEO_MB) || 500) * 1024 * 1024,
   };
+}
+
+/** Shared validation for both phases. Returns { error } or normalized fields. */
+function validateInput(input) {
+  const name = String(input.name ?? '').trim();
+  const caption = String(input.caption ?? '').trim();
+  const mediaType = String(input.mediaType ?? '');
+  const contentType = String(input.contentType ?? '');
+  const sizeBytes = Number(input.sizeBytes ?? 0);
+
+  const deviceId = String(input.deviceId ?? '').trim();
+  const fileHash = String(input.fileHash ?? '').trim();
+  const phash = String(input.phash ?? '').trim();
+  if (!DEVICE_RE.test(deviceId)) return { error: 'invalid_fields' };
+  if (fileHash && !/^[0-9a-f]{16,128}$/i.test(fileHash)) return { error: 'invalid_fields' };
+  if (phash && !/^[0-9a-f]{16,64}$/i.test(phash)) return { error: 'invalid_fields' };
+
+  let width = null;
+  let height = null;
+  const rawW = Number(input.width);
+  const rawH = Number(input.height);
+  if (Number.isInteger(rawW) && rawW > 0 && rawW <= 8192) width = rawW;
+  if (Number.isInteger(rawH) && rawH > 0 && rawH <= 8192) height = rawH;
+  const transcoded = input.transcoded === true || input.transcoded === 'true';
+
+  if (!name || name.length > 40) return { error: 'invalid_fields' };
+  if (caption.length > 180) return { error: 'invalid_fields' };
+  if (mediaType !== 'image' && mediaType !== 'video') return { error: 'unsupported_file' };
+  if (!contentType || !contentType.startsWith(`${mediaType}/`)) {
+    return { error: 'unsupported_file' };
+  }
+  const limits = mediaLimits();
+  if (mediaType === 'image' && sizeBytes > limits.image) return { error: 'image_too_large' };
+  if (mediaType === 'video' && sizeBytes > limits.video) return { error: 'file_too_large' };
+
+  return {
+    name,
+    caption,
+    mediaType,
+    contentType,
+    sizeBytes,
+    deviceId,
+    fileHash: fileHash || null,
+    phash: phash || null,
+    width,
+    height,
+    transcoded,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Phase 1 — request signed PUT urls. Does NOT touch the database yet: a bad or
+// abandoned upload must never leave a pending row pointing at a missing object.
+// ---------------------------------------------------------------------------
+async function handlePresign(input) {
+  const v = validateInput(input);
+  if (v.error) {
+    return json({ error: v.error }, v.error === 'file_too_large' || v.error === 'image_too_large' ? 413 : 400);
+  }
+
+  const account = randomAccount();
+  if (!account) return json({ error: 'storage_not_configured' }, 503);
+
+  const id = crypto.randomUUID();
+  const mediaKey = `${KEY_PREFIX}pending/${id}/media`;
+  const wantPoster = Boolean(input.poster) && v.mediaType === 'video' && input.posterContentType;
+
+  try {
+    const mediaUrl = await presignPut(account, mediaKey, v.contentType);
+    let posterKey = null;
+    let posterUrl = null;
+    if (wantPoster) {
+      posterKey = `${KEY_PREFIX}pending/${id}/poster`;
+      posterUrl = await presignPut(account, posterKey, String(input.posterContentType));
+    }
+
+    return json(
+      {
+        id,
+        provider: account.index,
+        bucket: account.bucket,
+        mediaKey,
+        posterKey,
+        mediaUrl,
+        posterUrl,
+      },
+      200,
+    );
+  } catch {
+    return json({ error: 'storage_unavailable' }, 502);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2 — the client uploaded the bytes. Only now create the DB row, and only
+// if the media object actually exists (no phantom "NoSuchKey" rows in admin).
+// ---------------------------------------------------------------------------
+async function handleConfirm(input) {
+  const v = validateInput(input);
+  if (v.error) return json({ error: v.error }, 400);
+
+  const id = String(input.id ?? '');
+  const provider = Number(input.provider);
+  if (!UUID_RE.test(id)) return json({ error: 'invalid_fields' }, 400);
+  if (!Number.isInteger(provider) || provider < 1 || provider > 4) {
+    return json({ error: 'invalid_fields' }, 400);
+  }
+
+  const account = getAccount(provider);
+  if (!account) return json({ error: 'storage_not_configured' }, 503);
+
+  const mediaKey = `${KEY_PREFIX}pending/${id}/media`;
+  const wantPoster = v.mediaType === 'video' && input.poster === true;
+  const posterKey = wantPoster ? `${KEY_PREFIX}pending/${id}/poster` : null;
+
+  if (!(await objectExists(account, mediaKey))) {
+    return json({ error: 'missing_file' }, 400);
+  }
+
+  const payload = {
+    id,
+    name: v.name,
+    caption: v.caption,
+    kind: 'upload',
+    media_type: v.mediaType,
+    status: 'pending',
+    provider: account.index,
+    bucket: account.bucket,
+    media_key: mediaKey,
+    poster_key: posterKey,
+    size_bytes: v.sizeBytes,
+    width: v.width,
+    height: v.height,
+    transcoded: v.transcoded,
+    device_id: v.deviceId,
+    file_hash: v.fileHash,
+    phash: v.phash,
+    created_at: new Date().toISOString(),
+  };
+
+  try {
+    await createRow(payload);
+  } catch (err) {
+    // migration #2 not applied yet — retry without the moderation columns
+    if (/PGRST204|Could not find the/.test(String(err?.message ?? ''))) {
+      const { device_id, file_hash, phash, ...base } = payload;
+      try {
+        await createRow(base);
+      } catch {
+        return json({ error: 'database_unavailable' }, 500);
+      }
+    } else {
+      return json({ error: 'database_unavailable' }, 500);
+    }
+  }
+
+  return json(
+    {
+      ok: true,
+      id,
+      provider: account.index,
+      bucket: account.bucket,
+      mediaKey,
+      posterKey,
+    },
+    200,
+  );
 }
 
 export default async function handler(request) {
@@ -34,105 +210,10 @@ export default async function handler(request) {
       return json({ error: 'invalid_fields' }, 400);
     }
 
-    const name = String(input.name ?? '').trim();
-    const caption = String(input.caption ?? '').trim();
-    const mediaType = String(input.mediaType ?? '');
-    const contentType = String(input.contentType ?? '');
-    const sizeBytes = Number(input.sizeBytes ?? 0);
-
-    const DEVICE_RE = /^[A-Za-z0-9_-]{8,128}$/;
-    const deviceId = String(input.deviceId ?? '').trim();
-    const fileHash = String(input.fileHash ?? '').trim();
-    const phash = String(input.phash ?? '').trim();
-    if (!DEVICE_RE.test(deviceId)) return json({ error: 'invalid_fields' }, 400);
-    if (fileHash && !/^[0-9a-f]{16,128}$/i.test(fileHash)) return json({ error: 'invalid_fields' }, 400);
-    if (phash && !/^[0-9a-f]{16,64}$/i.test(phash)) return json({ error: 'invalid_fields' }, 400);
-
-    let width = null;
-    let height = null;
-    const rawW = Number(input.width);
-    const rawH = Number(input.height);
-    if (Number.isInteger(rawW) && rawW > 0 && rawW <= 8192) width = rawW;
-    if (Number.isInteger(rawH) && rawH > 0 && rawH <= 8192) height = rawH;
-    const transcoded = input.transcoded === true || input.transcoded === 'true';
-
-    if (!name || name.length > 40) return json({ error: 'invalid_fields' }, 400);
-    if (caption.length > 180) return json({ error: 'invalid_fields' }, 400);
-    if (mediaType !== 'image' && mediaType !== 'video') return json({ error: 'unsupported_file' }, 400);
-    if (!contentType || !contentType.startsWith(`${mediaType}/`)) {
-      return json({ error: 'unsupported_file' }, 400);
-    }
-    const limits = mediaLimits();
-    if (mediaType === 'image' && sizeBytes > limits.image) return json({ error: 'image_too_large' }, 413);
-    if (mediaType === 'video' && sizeBytes > limits.video) return json({ error: 'file_too_large' }, 413);
-
-    const account = randomAccount();
-    if (!account) return json({ error: 'storage_not_configured' }, 503);
-
-    const id = crypto.randomUUID();
-    const mediaKey = `${KEY_PREFIX}pending/${id}/media`;
-    const wantPoster = Boolean(input.poster) && mediaType === 'video' && input.posterContentType;
-
-    try {
-      const mediaUrl = await presignPut(account, mediaKey, contentType);
-      let posterKey = null;
-      let posterUrl = null;
-      if (wantPoster) {
-        posterKey = `${KEY_PREFIX}pending/${id}/poster`;
-        posterUrl = await presignPut(account, posterKey, String(input.posterContentType));
-      }
-
-      const payload = {
-        id,
-        name,
-        caption,
-        kind: 'upload',
-        media_type: mediaType,
-        status: 'pending',
-        provider: account.index,
-        bucket: account.bucket,
-        media_key: mediaKey,
-        poster_key: posterKey,
-        size_bytes: sizeBytes,
-        width,
-        height,
-        transcoded,
-        device_id: deviceId,
-        file_hash: fileHash || null,
-        phash: phash || null,
-        created_at: new Date().toISOString(),
-      };
-      try {
-        await createRow(payload);
-      } catch (err) {
-        // migration #2 not applied yet — retry without the moderation columns
-        if (/PGRST204|Could not find the/.test(String(err?.message ?? ''))) {
-          const { device_id, file_hash, phash, ...base } = payload;
-          try {
-            await createRow(base);
-          } catch {
-            return json({ error: 'database_unavailable' }, 500);
-          }
-        } else {
-          return json({ error: 'database_unavailable' }, 500);
-        }
-      }
-
-      return json(
-        {
-          id,
-          provider: account.index,
-          bucket: account.bucket,
-          mediaKey,
-          posterKey,
-          mediaUrl,
-          posterUrl,
-        },
-        200,
-      );
-    } catch {
-      return json({ error: 'storage_unavailable' }, 502);
-    }
+    const action = String(input.action ?? '');
+    if (action === 'confirm') return await handleConfirm(input);
+    if (action === '' || action === 'presign') return await handlePresign(input);
+    return json({ error: 'invalid_fields' }, 400);
   } catch (err) {
     return json({ error: 'internal', detail: String(err?.message ?? err ?? '') }, 500);
   }

@@ -55,6 +55,18 @@ export async function presignGet(account, key, expiresIn = 3600) {
   return presignedUrl(account, key, 'GET', expiresIn);
 }
 
+/** True when the object exists in the bucket (presigned HEAD). */
+export async function objectExists(account, key, expiresIn = 60) {
+  if (!key) return false;
+  try {
+    const url = await presignedUrl(account, key, 'HEAD', expiresIn);
+    const res = await fetch(url, { method: 'HEAD' });
+    return res.status === 200;
+  } catch {
+    return false;
+  }
+}
+
 export async function copyObject(account, fromKey, toKey) {
   await s3Copy(account, fromKey, toKey);
 }

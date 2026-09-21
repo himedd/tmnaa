@@ -7,6 +7,7 @@ import {
 import {
   authenticate,
   deleteReports,
+  deleteRow,
   getRow,
   insertAction,
   latestAction,
@@ -308,6 +309,23 @@ async function moderateUndo(id, admin) {
   return { state: 'restored', restored: metaFrom };
 }
 
+async function moderateDelete(id, admin) {
+  const row = await getRow(id);
+  if (!row) return { state: 'not_found' };
+  if (row.status === 'approved') return { state: 'not_allowed' };
+  const account = getAccount(row.provider);
+  await safeDelete(account, [row.media_key, row.poster_key, row.trash_media_key, row.trash_poster_key]);
+  await insertAction({
+    submissionId: id,
+    action: 'delete',
+    admin: reviewerName(admin),
+    reason: 'Deleted broken submission',
+    meta: { from: row.status ?? '' },
+  });
+  await deleteRow(id);
+  return { state: 'done' };
+}
+
 // ---------------------------------------------------------------------------
 // GET
 // ---------------------------------------------------------------------------
@@ -429,6 +447,12 @@ async function handlePost(request, admin) {
     if (res.state === 'nothing') return json({ error: 'nothing_to_undo' }, 400);
     if (res.state === 'expired') return json({ error: 'undo_window_expired' }, 400);
     return json({ ok: true, restored: res.restored }, 200);
+  }
+  if (action === 'delete') {
+    const res = await moderateDelete(id, admin);
+    if (res.state === 'not_found') return json({ error: 'not_found' }, 404);
+    if (res.state === 'not_allowed') return json({ error: 'invalid_state' }, 409);
+    return json({ ok: true }, 200);
   }
   if (action === 'update') {
     const row = await getRow(id);

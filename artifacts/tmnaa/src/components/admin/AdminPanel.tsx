@@ -29,6 +29,7 @@ import {
   adminBeginReview,
   adminBulk,
   adminClearReports,
+  adminDelete,
   adminEndReview,
   adminFlagged,
   adminList,
@@ -56,7 +57,7 @@ const GOLD = '#D9A441';
 export type AdminTab = 'queue' | 'approved' | 'flagged' | 'rejected' | 'audit' | 'dashboard';
 
 type ConfirmState = {
-  kind: 'approve' | 'reject' | 'unpublish';
+  kind: 'approve' | 'reject' | 'unpublish' | 'delete';
   ids: string[];
 } | null;
 
@@ -207,12 +208,25 @@ export function AdminPanel() {
   };
 
   /** approve/reject/unpublish for one or many ids; returns count performed. */
-  const runAction = async (kind: 'approve' | 'reject' | 'unpublish', ids: string[], reason?: string) => {
+  const runAction = async (kind: 'approve' | 'reject' | 'unpublish' | 'delete', ids: string[], reason?: string) => {
     setBusy(true);
     setError('');
     try {
       const single = ids.length === 1;
-      if (single) {
+      if (kind === 'delete') {
+        for (const id of ids) {
+          try {
+            await adminDelete(id);
+          } catch (e) {
+            if (String((e as Error).message) === 'unauthorized') {
+              clearAdminToken();
+              window.location.reload();
+              return;
+            }
+            throw e;
+          }
+        }
+      } else if (single) {
         const id = ids[0];
         if (kind === 'approve') await adminApprove(id);
         else if (kind === 'reject') await adminReject(id, reason ?? 'Other');
@@ -238,7 +252,9 @@ export function AdminPanel() {
           ? `Approved ${single ? '1 edit' : `${ids.length} edits`}`
           : kind === 'reject'
             ? `Rejected ${single ? '1 edit' : `${ids.length} edits`}`
-            : `Unpublished ${single ? '1 edit' : `${ids.length} edits`}`;
+            : kind === 'delete'
+              ? `Deleted ${single ? '1 edit' : `${ids.length} edits`}`
+              : `Unpublished ${single ? '1 edit' : `${ids.length} edits`}`;
       setUndo({ ids, label });
       if (single && modalId && modalId === ids[0]) setModalId(null);
       await load();
@@ -573,6 +589,7 @@ export function AdminPanel() {
           onApprove={(id) => runAction('approve', [id])}
           onReject={(id) => setConfirm({ kind: 'reject', ids: [id] })}
           onUnpublish={(id) => setConfirm({ kind: 'unpublish', ids: [id] })}
+          onDelete={(id) => setConfirm({ kind: 'delete', ids: [id] })}
           onClearFlags={(id) => {
             adminClearReports(id)
               .catch(() => notify('Could not clear flags.', true))
@@ -667,10 +684,11 @@ interface ListProps {
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   onUnpublish: (id: string) => void;
+  onDelete: (id: string) => void;
   onClearFlags: (id: string) => void;
 }
 
-function ListView({ tab, items, badges, selected, busy, who, onSelect, onOpen, onApprove, onReject, onUnpublish, onClearFlags }: ListProps) {
+function ListView({ tab, items, badges, selected, busy, who, onSelect, onOpen, onApprove, onReject, onUnpublish, onDelete, onClearFlags }: ListProps) {
   const selectable = tab === 'queue' || tab === 'flagged' || tab === 'approved';
 
   if (items.length === 0) {
@@ -865,6 +883,16 @@ function ListView({ tab, items, badges, selected, busy, who, onSelect, onOpen, o
                     <Trash2 className="w-3.5 h-3.5" /> Take Down
                   </button>
                 )}
+                {(tab === 'queue' || tab === 'rejected') && (
+                  <button
+                    onClick={() => onDelete(item.id)}
+                    disabled={busy}
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 h-10 px-4 rounded-full text-[12px] font-bold transition-all duration-300 hover:scale-105 disabled:opacity-50"
+                    style={{ border: '1px solid rgba(255,80,80,0.35)', color: '#FF8A8A' }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>
@@ -897,7 +925,7 @@ const CONFIRM_REASONS = [
 ];
 
 function ConfirmDialog({ confirm, reason, setReason, busy, onCancel, onConfirm }: ConfirmProps) {
-  const needsReason = confirm.kind !== 'approve';
+  const needsReason = confirm.kind === 'reject' || confirm.kind === 'unpublish';
   const isBulk = confirm.ids.length > 1;
   const [freeText, setFreeText] = useState('');
   return (
@@ -927,7 +955,9 @@ function ConfirmDialog({ confirm, reason, setReason, busy, onCancel, onConfirm }
             ? `Approve ${isBulk ? `${confirm.ids.length} edits` : 'this edit'}?`
             : confirm.kind === 'reject'
               ? `Reject ${isBulk ? `${confirm.ids.length} edits` : 'this edit'}?`
-              : `Take down ${isBulk ? `${confirm.ids.length} edits` : 'this edit'}?`}
+              : confirm.kind === 'delete'
+                ? `Delete ${isBulk ? `${confirm.ids.length} edits` : 'this edit'} permanently?`
+                : `Take down ${isBulk ? `${confirm.ids.length} edits` : 'this edit'}?`}
         </h3>
         <p className="mt-1 text-[12.5px]" style={{ color: 'rgba(247,243,238,0.5)' }}>
           {confirm.kind === 'approve'
@@ -938,7 +968,11 @@ function ConfirmDialog({ confirm, reason, setReason, busy, onCancel, onConfirm }
               ? isBulk
                 ? 'These edits will be hidden from the public wall. Reversible for 10 seconds via Undo.'
                 : 'This edit will be hidden from the public wall. Reversible for 10 seconds via Undo.'
-              : 'This edit will be immediately hidden from the public wall. Reversible for 10 seconds via Undo.'}
+              : confirm.kind === 'delete'
+                ? isBulk
+                  ? 'These edits will be removed forever — including their files in storage. This cannot be undone.'
+                  : 'This edit will be removed forever — including its file in storage. This cannot be undone.'
+                : 'This edit will be immediately hidden from the public wall. Reversible for 10 seconds via Undo.'}
         </p>
 
         {needsReason && (
@@ -1002,7 +1036,7 @@ function ConfirmDialog({ confirm, reason, setReason, busy, onCancel, onConfirm }
               boxShadow: confirm.kind === 'approve' ? '0 0 18px rgba(217,164,65,0.3)' : '0 0 18px rgba(255,80,80,0.25)',
             }}
           >
-            {busy ? <Loader2 className="mx-auto w-4 h-4 animate-spin" /> : confirm.kind === 'approve' ? 'Approve' : confirm.kind === 'reject' ? 'Reject' : 'Take Down'}
+            {busy ? <Loader2 className="mx-auto w-4 h-4 animate-spin" /> : confirm.kind === 'approve' ? 'Approve' : confirm.kind === 'reject' ? 'Reject' : confirm.kind === 'delete' ? 'Delete' : 'Take Down'}
           </button>
         </div>
       </motion.div>

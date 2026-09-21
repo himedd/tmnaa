@@ -21,7 +21,7 @@ const uploadErrors: Record<string, string> = {
   image_too_large: 'That image is too large. Max 12MB.',
   unsupported_file: 'That file type is not supported. Use MP4, WEBM, JPG, PNG or GIF.',
   invalid_fields: 'Please check your name and caption.',
-  missing_file: 'Choose a file to upload.',
+  missing_file: 'We could not find your file in storage. Please upload it again.',
   unauthorized: 'Your admin session expired — sign in again.',
   supabase_not_configured: 'The wall database is not configured yet on this server.',
 };
