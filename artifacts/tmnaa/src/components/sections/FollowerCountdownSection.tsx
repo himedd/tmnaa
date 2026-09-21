@@ -91,8 +91,22 @@ function saveHistory(history: PersistedHistory): void {
 }
 
 function useLiveFollowerCount(): LiveState {
-  const [count, setCount] = useState<number | null>(null);
-  const [stats, setStats] = useState<FollowerStats>(EMPTY_STATS);
+  // Seed instantly from the last known count in localStorage so the counter is
+  // never blank (or waiting on the network) — live data stream overrides
+  // within a second or two.
+  const [count, setCount] = useState<number | null>(() => {
+    const h = loadHistory();
+    const samples = [...h.samples].sort((a, b) => a.t - b.t);
+    const latest = samples[samples.length - 1];
+    return latest && Number.isFinite(latest.c) ? latest.c : null;
+  });
+  const [stats, setStats] = useState<FollowerStats>(() => {
+    const h = loadHistory();
+    const samples = [...h.samples].sort((a, b) => a.t - b.t);
+    const latest = samples[samples.length - 1];
+    if (!latest) return EMPTY_STATS;
+    return computeFollowerStats(samples, Date.now(), TARGET, latest.c, h.launchCount);
+  });
   const [mode, setMode] = useState<'server' | 'local' | null>(null);
   const samplesRef = useRef<Sample[]>([]);
   const launchCountRef = useRef<number | null>(null);
@@ -636,7 +650,7 @@ export function FollowerCountdownSection() {
     <MotionConfig reducedMotion="user">
       <section
         id="follower-countdown"
-        className="hidden md:block relative py-24 md:py-32 px-6 overflow-hidden border-t border-white/5"
+        className="relative py-16 md:py-32 px-5 md:px-6 overflow-hidden border-t border-white/5"
         aria-label="300K follower countdown"
       >
         <style>{`
