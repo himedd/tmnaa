@@ -758,12 +758,23 @@ export function FollowerCountdownSection() {
           }
 
           /* ---------- glowing big number ---------- */
-          #follower-countdown .fcs-num-breathe {
-            animation: fcs-numb 4s ease-in-out infinite;
+          #follower-countdown .fcs-num-glow {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 160%;
+            height: 110%;
+            border-radius: 9999px;
+            background: radial-gradient(closest-side, rgba(232,180,92,0.45) 0%, rgba(255,122,24,0.22) 45%, transparent 72%);
+            filter: blur(16px);
+            animation: fcs-numglow 4s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
           }
-          @keyframes fcs-numb {
-            0%, 100% { filter: drop-shadow(0 0 12px rgba(232,180,92,0.35)); }
-            50%      { filter: drop-shadow(0 0 22px rgba(255,122,24,0.55)); }
+          @keyframes fcs-numglow {
+            0%, 100% { opacity: 0.5; }
+            50%      { opacity: 1; }
           }
 
           /* ---------- stat panel + cards ---------- */
@@ -932,7 +943,7 @@ export function FollowerCountdownSection() {
             #follower-countdown .fcs-sheen,
             #follower-countdown .fcs-goal-pulse,
             #follower-countdown .fcs-halo,
-            #follower-countdown .fcs-num-breathe,
+            #follower-countdown .fcs-num-glow,
             #follower-countdown .fcs-ember { animation: none; }
             #follower-countdown .fcs-rim-sheen g { animation-duration: 30s; }
             #follower-countdown .fcs-hoverglow { transition: none; }
@@ -1123,17 +1134,16 @@ export function FollowerCountdownSection() {
                         className="fcs-pulse absolute inset-0 rounded-full border-2 border-[#D9A441] pointer-events-none"
                       />
                     )}
+                    <span className="fcs-num-glow" aria-hidden />
                     <span
-                      className={`relative block text-[44px] sm:text-5xl md:text-6xl font-black tabular-nums leading-none fcs-num-breathe ${
+                      className={`relative block z-[1] text-[44px] sm:text-5xl md:text-6xl font-black tabular-nums leading-none ${
                         goalHit ? 'metal-shine' : ''
                       }`}
                       style={{
                         fontFamily: 'Cairo, sans-serif',
                         color: goalHit ? '#F7E6B8' : '#E8B45C',
-                        textShadow: goalHit
-                          ? '0 0 30px rgba(232,180,92,0.95), 0 0 60px rgba(255,122,24,0.55)'
-                          : '0 0 24px rgba(232,180,92,0.35)',
-                        transition: 'color 600ms ease, text-shadow 600ms ease',
+                        textShadow: 'none',
+                        transition: 'color 600ms ease',
                       }}
                     >
                       {count == null ? '—' : (
