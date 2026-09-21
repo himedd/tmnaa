@@ -512,8 +512,7 @@ function StatCard({
   return (
     <motion.div
       initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, delay, ease: EASE }}
       whileHover={{ scale: 1.03 }}
       className="fcs-card"
@@ -570,8 +569,6 @@ export function FollowerCountdownSection() {
     duration: 5 + (i % 5) * 0.8,
     size: 1.5 + (i % 3) * 1.3,
   }));
-
-  const viewport = { once: true, margin: '-60px' } as const;
 
   const EYEBROW = goalHit ? 'The 300K Milestone' : 'The Countdown to 300K';
 
@@ -970,12 +967,11 @@ export function FollowerCountdownSection() {
         <div className="relative z-10 max-w-5xl mx-auto">
           {/* Eyebrow divider ("small-caps-with-side-lines" tagline pattern) */}
           <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={viewport}
-            transition={{ duration: 0.7, ease: EASE }}
-            className="flex items-center justify-center gap-4 mb-5"
-          >
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: EASE }}
+              className="flex items-center justify-center gap-4 mb-5"
+            >
             <span className="h-px w-10 md:w-16 bg-gradient-to-r from-transparent to-[#D9A441]/60" />
             <span
               className="text-[11px] md:text-xs font-bold tracking-[0.34em] uppercase whitespace-nowrap"
@@ -989,8 +985,7 @@ export function FollowerCountdownSection() {
           {/* Headline */}
           <motion.h2
             initial={{ opacity: 0, y: 22 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={viewport}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1, ease: EASE }}
             className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-center"
             style={{ fontFamily: 'Cairo, sans-serif', color: '#F7F3EE' }}
@@ -1007,8 +1002,7 @@ export function FollowerCountdownSection() {
           {goalHit && (
             <motion.p
               initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={viewport}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2, ease: EASE }}
               className="text-center mt-3 text-[13px] md:text-sm font-bold tracking-wide"
               style={{ color: 'rgba(232,180,92,0.85)', fontFamily: 'Cairo, sans-serif' }}
@@ -1021,8 +1015,7 @@ export function FollowerCountdownSection() {
             {/* Ring column — first on mobile, right on desktop */}
             <motion.div
               initial={{ opacity: 0, scale: 0.92 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={viewport}
+              animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.9, delay: 0.2, ease: EASE }}
               className="fcs-ring-glow relative rounded-[9999px] px-4 py-2 order-1 lg:order-2 flex flex-col items-center"
             >
@@ -1131,7 +1124,7 @@ export function FollowerCountdownSection() {
                       />
                     )}
                     <span
-                      className={`relative block text-4xl sm:text-5xl md:text-6xl font-black tabular-nums leading-none fcs-num-breathe ${
+                      className={`relative block text-[44px] sm:text-5xl md:text-6xl font-black tabular-nums leading-none fcs-num-breathe ${
                         goalHit ? 'metal-shine' : ''
                       }`}
                       style={{
@@ -1163,8 +1156,7 @@ export function FollowerCountdownSection() {
               {/* Progress bar + remaining */}
               <motion.div
                 initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={viewport}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.35, ease: EASE }}
                 className="mt-7 w-full flex items-center justify-center gap-4"
               >
@@ -1225,8 +1217,7 @@ export function FollowerCountdownSection() {
             {/* Stats panel — second on mobile, left on desktop */}
             <motion.div
               initial={{ opacity: 0, y: 22 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={viewport}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.18, ease: EASE }}
               className="fcs-panel-glow relative order-2 lg:order-1"
             >
