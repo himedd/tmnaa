@@ -1136,12 +1136,10 @@ export function FollowerCountdownSection() {
                     )}
                     <span className="fcs-num-glow" aria-hidden />
                     <span
-                      className={`relative block z-[1] text-[44px] sm:text-5xl md:text-6xl font-black tabular-nums leading-none ${
-                        goalHit ? 'metal-shine' : ''
-                      }`}
+                      className={`relative block z-[1] text-[44px] sm:text-5xl md:text-6xl font-black tabular-nums leading-none`}
                       style={{
                         fontFamily: 'Cairo, sans-serif',
-                        color: goalHit ? '#F7E6B8' : '#E8B45C',
+                        color: goalHit ? '#FFE1B0' : '#E8B45C',
                         textShadow: 'none',
                         transition: 'color 600ms ease',
                       }}
