@@ -379,27 +379,28 @@ function ReelRun({ digits, fraction }: { digits: string; fraction: number }) {
 }
 
 /** Counter that glides from previous value to `value` over ROLL_MS on every
- * change, then settles exactly on the target. Fractional frames give the
- * units reel its continuous upward spin. */
-function ReelCounter({ value, target }: { value: number; target: number }) {
+ *  change, then settles exactly on the target. Fractional frames give the
+ *  units reel its continuous upward spin. Pass cap={null} to count freely
+ *  without clamping (used once the 300K goal is reached). */
+function ReelCounter({ value, cap }: { value: number; cap: number | null }) {
   const [disp, setDisp] = useState<number | null>(null);
   const dispRef = useRef(0);
-  const targetRef = useRef(Math.min(value, target));
+  const targetRef = useRef(cap === null ? value : Math.min(value, cap));
 
   useEffect(() => {
     if (disp !== null) return;
-    const to = Math.min(value, target);
+    const to = cap === null ? value : Math.min(value, cap);
     dispRef.current = to;
     targetRef.current = to;
     setDisp(to);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // On every value/target change, glide to the new count over ROLL_MS. Works
-  // only off [value, target] so the rAF loop keeps scheduling frames without
+  // On every value/cap change, glide to the new count over ROLL_MS. Works
+  // only off [value, cap] so the rAF loop keeps scheduling frames without
   // being cancelled by its own setDisp re-renders.
   useEffect(() => {
-    const to = Math.min(value, target);
+    const to = cap === null ? value : Math.min(value, cap);
     if (dispRef.current === to) {
       targetRef.current = to;
       return;
@@ -418,7 +419,7 @@ function ReelCounter({ value, target }: { value: number; target: number }) {
     };
     id = requestAnimationFrame(step);
     return () => cancelAnimationFrame(id);
-  }, [value, target]);
+  }, [value, cap]);
 
   if (disp === null) return null;
 
@@ -430,7 +431,7 @@ function ReelCounter({ value, target }: { value: number; target: number }) {
     -1,
   );
   const label = new Intl.NumberFormat('en-US').format(
-    Math.min(value, target),
+    cap === null ? value : Math.min(value, cap),
   );
 
   return (
@@ -525,7 +526,9 @@ export function FollowerCountdownSection() {
 
   const clamped = count == null ? 0 : Math.min(count, TARGET);
   const pct = count == null ? null : (clamped / TARGET) * 100;
+  const pctLive = count == null ? null : (count / TARGET) * 100;
   const remaining = Math.max(0, TARGET - clamped);
+  const pastGoal = count == null ? 0 : Math.max(0, count - TARGET);
   const fmt = (n: number) => new Intl.NumberFormat('en-US').format(n);
   const dashOffset = RING_CIRC * (1 - clamped / TARGET);
 
@@ -555,6 +558,8 @@ export function FollowerCountdownSection() {
   }));
 
   const viewport = { once: true, margin: '-60px' } as const;
+
+  const EYEBROW = goalHit ? 'The 300K Milestone' : 'The Countdown to 300K';
 
   interface CardDef {
     key: string;
@@ -587,20 +592,22 @@ export function FollowerCountdownSection() {
     },
     {
       key: 'eta',
-      label: 'ETA to 300K',
-      sub: 'at current pace',
-      icon: Hourglass,
-      raw: stats.etaHours,
-      fmt: fmtEta,
-      fallback: 'Calculating…',
+      label: goalHit ? 'Past the Goal' : 'ETA to 300K',
+      sub: goalHit ? 'followers over 300K' : 'at current pace',
+      icon: goalHit ? Rocket : Hourglass,
+      raw: goalHit ? pastGoal : stats.etaHours,
+      fmt: goalHit ? fmtSigned : fmtEta,
+      fallback: '—',
     },
     {
       key: 'pct',
       label: 'Completion',
       sub: 'of the goal',
       icon: Target,
-      raw: pct,
-      fmt: fmtPercent,
+      raw: goalHit ? pctLive : pct,
+      fmt: goalHit
+        ? (n: number) => `${n.toFixed(2)}%`
+        : fmtPercent,
       fallback: '—',
     },
     {
@@ -960,7 +967,7 @@ export function FollowerCountdownSection() {
               className="text-[11px] md:text-xs font-bold tracking-[0.34em] uppercase whitespace-nowrap"
               style={{ color: '#D9A441', fontFamily: 'Cairo, sans-serif' }}
             >
-              The Countdown to 300K
+              {EYEBROW}
             </span>
             <span className="h-px w-10 md:w-16 bg-gradient-to-l from-transparent to-[#D9A441]/60" />
           </motion.div>
@@ -971,7 +978,7 @@ export function FollowerCountdownSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={viewport}
             transition={{ duration: 0.8, delay: 0.1, ease: EASE }}
-            className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-12 md:mb-14 text-center"
+            className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-center"
             style={{ fontFamily: 'Cairo, sans-serif', color: '#F7F3EE' }}
           >
             {goalHit ? (
@@ -983,7 +990,20 @@ export function FollowerCountdownSection() {
             )}
           </motion.h2>
 
-          <div className="fcs-grid">
+          {goalHit && (
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={viewport}
+              transition={{ duration: 0.7, delay: 0.2, ease: EASE }}
+              className="text-center mt-3 text-[13px] md:text-sm font-bold tracking-wide"
+              style={{ color: 'rgba(232,180,92,0.85)', fontFamily: 'Cairo, sans-serif' }}
+            >
+              Officially 300,000 followers — and the number keeps climbing. 🎉
+            </motion.p>
+          )}
+
+          <div className="fcs-grid mt-10 md:mt-12">
             {/* Ring column — first on mobile, right on desktop */}
             <motion.div
               initial={{ opacity: 0, scale: 0.92 }}
@@ -1109,14 +1129,19 @@ export function FollowerCountdownSection() {
                         transition: 'color 600ms ease, text-shadow 600ms ease',
                       }}
                     >
-                      {count == null ? '—' : <ReelCounter value={clamped} target={TARGET} />}
+                      {count == null ? '—' : (
+                        <ReelCounter
+                          value={goalHit ? count : clamped}
+                          cap={goalHit ? null : TARGET}
+                        />
+                      )}
                     </span>
                   </div>
                   <span
                     className="mt-2 text-[11px] sm:text-xs font-bold tracking-[0.3em] uppercase"
                     style={{ color: 'rgba(247,243,238,0.4)' }}
                   >
-                    of {fmt(TARGET)}
+                    {goalHit ? 'and still counting' : `of ${fmt(TARGET)}`}
                   </span>
                 </div>
               </div>
@@ -1148,7 +1173,13 @@ export function FollowerCountdownSection() {
                   className="text-[13px] font-black whitespace-nowrap tabular-nums"
                   style={{ color: '#D9A441' }}
                 >
-                  {count == null ? '—' : <Odometer text={`${fmt(remaining)} to go`} />}
+                  {count == null ? (
+                  '—'
+                ) : goalHit ? (
+                  <Odometer text={`+${fmt(pastGoal)} past 300K`} />
+                ) : (
+                  <Odometer text={`${fmt(remaining)} to go`} />
+                )}
                 </span>
               </motion.div>
 
@@ -1158,17 +1189,18 @@ export function FollowerCountdownSection() {
                   initial={{ scale: 0.7, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ type: 'spring', stiffness: 260, damping: 14 }}
-                  className="mt-8 flex items-center gap-2.5 rounded-full px-5 py-2"
+                  className="relative mt-8 flex items-center gap-2.5 rounded-full px-5 py-2 overflow-hidden"
                   style={{
-                    border: '1px solid rgba(217,164,65,0.35)',
-                    background: 'rgba(217,164,65,0.08)',
-                    boxShadow: '0 0 24px rgba(217,164,65,0.25)',
+                    border: '1px solid rgba(217,164,65,0.4)',
+                    background: 'linear-gradient(135deg, rgba(217,164,65,0.14), rgba(255,122,24,0.08))',
+                    boxShadow: '0 0 24px rgba(217,164,65,0.3), inset 0 0 14px rgba(217,164,65,0.08)',
                   }}
                 >
-                  <Flame size={16} className="text-[#FF7A18]" />
+                  <span className="absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-[#F5D489]/80 to-transparent" />
+                  <Flame size={17} className="text-[#FF7A18] drop-shadow-[0_0_6px_rgba(255,122,24,0.8)]" />
                   <span
-                    className="text-xs font-black tracking-[0.2em] uppercase"
-                    style={{ color: '#F5D489' }}
+                    className="text-xs font-black tracking-[0.2em] uppercase metal-shine"
+                    style={{ color: '#F5D489', fontFamily: 'Cairo, sans-serif' }}
                   >
                     Goal Reached 🔥
                   </span>
