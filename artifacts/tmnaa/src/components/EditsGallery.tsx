@@ -96,9 +96,18 @@ function useColumnCount(): number {
   return count;
 }
 
-function Thumb({ sub, className }: { sub: WallItem; className?: string }) {
+function Thumb({ sub, className, priority = false }: { sub: WallItem; className?: string; priority?: boolean }) {
   if (sub.posterUrl) {
-    return <img src={sub.posterUrl} alt={sub.caption || sub.name} loading="lazy" className={`w-full h-full object-cover ${className || ''}`} />;
+    return (
+      <img
+        src={sub.posterUrl}
+        alt={sub.caption || sub.name}
+        loading={priority ? 'eager' : 'lazy'}
+        fetchPriority={priority ? 'high' : 'low'}
+        decoding="async"
+        className={`w-full h-full object-cover ${className || ''}`}
+      />
+    );
   }
   return (
     <div
@@ -117,7 +126,7 @@ const hoverCapable = () =>
   typeof window !== 'undefined' && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
 /** Card media that plays inline (muted loop) on hover for desktop, poster otherwise. */
-function CardMedia({ sub }: { sub: WallItem }) {
+function CardMedia({ sub, priority }: { sub: WallItem; priority?: boolean }) {
   const [showVideo, setShowVideo] = useState(false);
   const [buffering, setBuffering] = useState(false);
   const [broken, setBroken] = useState(false);
@@ -159,7 +168,7 @@ function CardMedia({ sub }: { sub: WallItem }) {
           className="absolute inset-0 w-full h-full object-cover"
         />
       ) : (
-        <Thumb sub={sub} className="transition-transform duration-700 group-hover:scale-110" />
+        <Thumb sub={sub} priority={priority} className="transition-transform duration-700 group-hover:scale-110" />
       )}
       {buffering && isVideo && showVideo && (
         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -194,12 +203,13 @@ interface CardProps {
   likesOverride: number | null;
   index: number;
   reported: boolean;
+  priority: boolean;
   onOpen: () => void;
   onToggleLike: (sub: WallItem) => void;
   onReport: (sub: WallItem) => void;
 }
 
-function WallCard({ sub, liked, likesOverride, index, reported, onOpen, onToggleLike, onReport }: CardProps) {
+function WallCard({ sub, liked, likesOverride, index, reported, priority, onOpen, onToggleLike, onReport }: CardProps) {
   const likeCount = likesOverride ?? sub.likes;
   return (
     <motion.div
@@ -229,7 +239,7 @@ function WallCard({ sub, liked, likesOverride, index, reported, onOpen, onToggle
         (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 22px rgba(0,0,0,0.4)';
       }}
     >
-      <CardMedia sub={sub} />
+      <CardMedia sub={sub} priority={priority} />
       <div className="absolute top-3 right-3">
         <button
           type="button"
@@ -616,6 +626,7 @@ function ReportModal({
 
 export function EditsGallery({ submissions }: { submissions: WallItem[] }) {
   const [sort, setSort] = useState<SortMode>('shuffle');
+  const [videosOnly, setVideosOnly] = useState(false);
   const [selected, setSelected] = useState<WallItem | null>(null);
   const [likedIds, setLikedIds] = useState<Set<string>>(() => {
     try {
@@ -634,28 +645,29 @@ export function EditsGallery({ submissions }: { submissions: WallItem[] }) {
   const columns = useColumnCount();
 
   const ordered = useMemo(() => {
+    const src = videosOnly ? submissions.filter((s) => s.mediaType === 'video') : submissions;
     if (sort === 'newest') {
-      return [...submissions].sort(
+      return [...src].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       );
     }
     if (sort === 'top') {
-      return [...submissions].sort((a, b) => b.likes - a.likes);
+      return [...src].sort((a, b) => b.likes - a.likes);
     }
     // balanced shuffle: deterministic random order, reseeded when the wall changes
     let seed = 7;
-    for (let i = 0; i < submissions.length; i++) {
-      seed = (seed * 31 + submissions[i].id.length) | 0;
+    for (let i = 0; i < src.length; i++) {
+      seed = (seed * 31 + src[i].id.length) | 0;
     }
     const rnd = mulberry32(seed);
-    const arr = [...submissions];
+    const arr = [...src];
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(rnd() * (i + 1));
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [submissions, sort]);
+  }, [submissions, sort, videosOnly]);
 
   const packed = useMemo(() => packColumns(ordered, columns), [ordered, columns]);
 
@@ -758,6 +770,27 @@ export function EditsGallery({ submissions }: { submissions: WallItem[] }) {
     );
   };
 
+  const videosBtn = () => {
+    const active = videosOnly;
+    return (
+      <button
+        onClick={() => setVideosOnly((v) => !v)}
+        aria-pressed={active}
+        className="inline-flex items-center gap-1.5 px-4 h-9 rounded-full text-[12px] font-bold tracking-wide transition-all duration-300"
+        style={{
+          fontFamily: 'Cairo, sans-serif',
+          color: active ? '#0d0906' : 'rgba(247,243,238,0.6)',
+          background: active ? 'linear-gradient(135deg, #E8B45C, #D9A441)' : 'rgba(217,164,65,0.06)',
+          border: active ? '1px solid transparent' : '1px solid rgba(217,164,65,0.15)',
+          boxShadow: active ? '0 0 18px rgba(217,164,65,0.3)' : 'none',
+        }}
+      >
+        <Film className="w-3.5 h-3.5" />
+        {active ? 'Videos Only' : 'Videos Only'}
+      </button>
+    );
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
@@ -766,19 +799,24 @@ export function EditsGallery({ submissions }: { submissions: WallItem[] }) {
             The Wall
           </h2>
           <span className="text-sm font-bold" style={{ color: 'rgba(217,164,65,0.7)' }}>
-            {ordered.length} {ordered.length === 1 ? 'edit' : 'edits'}
+            {videosOnly
+              ? `${ordered.length} ${ordered.length === 1 ? 'video' : 'videos'}`
+              : `${ordered.length} ${ordered.length === 1 ? 'edit' : 'edits'}`}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {sortBtn('shuffle', 'Balanced')}
           {sortBtn('newest', 'Newest')}
           {sortBtn('top', 'Most Liked')}
+          {videosBtn()}
         </div>
       </div>
 
       {ordered.length === 0 ? (
         <div className="rounded-[28px] py-16 text-center" style={{ background: 'rgba(9,8,7,0.6)', border: '1px solid rgba(217,164,65,0.12)' }}>
-          <p className="text-sm font-bold" style={{ color: 'rgba(247,243,238,0.5)' }}>No edits yet — be the first to submit.</p>
+          <p className="text-sm font-bold" style={{ color: 'rgba(247,243,238,0.5)' }}>
+            {videosOnly ? 'No videos yet — check back soon.' : 'No edits yet — be the first to submit.'}
+          </p>
         </div>
       ) : (
         <div className="flex items-start gap-3">
@@ -789,6 +827,7 @@ export function EditsGallery({ submissions }: { submissions: WallItem[] }) {
                   key={sub.id}
                   sub={sub}
                   index={i * columns + ci}
+                  priority={i * columns + ci < columns * 2 + 2}
                   liked={likedIds.has(sub.id)}
                   likesOverride={likesOverrides[sub.id] ?? null}
                   reported={reportedIds.has(sub.id)}

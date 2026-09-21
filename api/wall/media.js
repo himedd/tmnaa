@@ -40,10 +40,15 @@ export default async function handler(request) {
     if (!key) return json({ error: 'not_found' }, 404);
 
     try {
-      const signed = await presignGet(account, key, 3600);
+      const signed = await presignGet(account, key, 3600, {
+        'response-cache-control': 'public,max-age=86400',
+      });
+      // Public approved media can be cached hard: the presigned URL is stable for
+      // the row, so browsers reuse the stored image and skip the storj round-trip.
+      const cache = row.status === 'approved' ? 'public, max-age=540' : 'no-store';
       return new Response(null, {
         status: 302,
-        headers: { Location: signed, 'Cache-Control': 'no-store' },
+        headers: { Location: signed, 'Cache-Control': cache },
       });
     } catch {
       return json({ error: 'storage_unavailable' }, 502);

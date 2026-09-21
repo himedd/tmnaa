@@ -51,8 +51,8 @@ export async function presignPut(account, key, contentType, expiresIn = 3600) {
   return presignedUrl(account, key, 'PUT', expiresIn);
 }
 
-export async function presignGet(account, key, expiresIn = 3600) {
-  return presignedUrl(account, key, 'GET', expiresIn);
+export async function presignGet(account, key, expiresIn = 3600, extraQuery = null) {
+  return presignedUrl(account, key, 'GET', expiresIn, extraQuery ?? null);
 }
 
 /** True when the object exists in the bucket (presigned HEAD). */

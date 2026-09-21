@@ -43,8 +43,9 @@ async function signingKey(secretKey, date, region) {
   return hmac(kService, enc.encode('aws4_request'));
 }
 
-/** Query-param presigned URL for method in {PUT, GET, DELETE}. */
-export async function presignedUrl(account, key, method, expiresIn = 3600) {
+/** Query-param presigned URL for method in {PUT, GET, DELETE}.
+ *  extraQuery: additional query params (e.g. S3 response-* overrides) included in the signature. */
+export async function presignedUrl(account, key, method, expiresIn = 3600, extraQuery = null) {
   const now = new Date();
   const amzDate = isoDate(now);
   const date = shortDate(now);
@@ -57,6 +58,7 @@ export async function presignedUrl(account, key, method, expiresIn = 3600) {
     'X-Amz-Date': amzDate,
     'X-Amz-Expires': String(expiresIn),
     'X-Amz-SignedHeaders': 'host',
+    ...(extraQuery ?? {}),
   };
 
   const canonicalQuery = Object.keys(params)
