@@ -56,15 +56,6 @@ export async function updateRow(id, patch) {
   }
 }
 
-export async function deleteRow(id) {
-  assertConfigured();
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${encodeURIComponent(id)}`, {
-    method: 'DELETE',
-    headers: authHeaders(),
-  });
-  return res.ok || res.status === 204;
-}
-
 export async function listRows(status, limit = 500) {
   assertConfigured();
   let path = `${SUPABASE_URL}/rest/v1/${TABLE}?select=*&order=created_at.desc&limit=${limit}`;

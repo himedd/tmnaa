@@ -70,7 +70,7 @@ function FollowerProgress() {
 const guidelines = [
   'Original edits, posters and clips only.',
   'Keep it respectful — no hate or inappropriate content.',
-  'Upload a file (videos up to 500MB) to share your edit.',
+  'Upload a file (videos up to 5GB) to share your edit.',
   'Submissions are reviewed by the admins before they appear on the wall.',
 ];
 

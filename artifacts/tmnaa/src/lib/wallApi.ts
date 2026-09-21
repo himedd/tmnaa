@@ -198,7 +198,7 @@ export async function submitUpload(input: SubmitUploadInput): Promise<WallItem> 
   const isVideo = mime.startsWith('video/');
   if (!isImage && !isVideo) throw new Error('unsupported_file');
   const maxImage = 12 * 1024 * 1024;
-  const maxVideo = 500 * 1024 * 1024;
+  const maxVideo = 5000 * 1024 * 1024;
   if (isImage && input.file.size > maxImage) throw new Error('image_too_large');
   if (isVideo && input.file.size > maxVideo) throw new Error('file_too_large');
 
@@ -222,27 +222,10 @@ export async function submitUpload(input: SubmitUploadInput): Promise<WallItem> 
   }
   const deviceId = getDeviceId();
 
-  // Phase 1 — signed PUT urls only; no DB row is created yet.
-  const presignRes = await fetch(apiUrl('/api/wall/upload'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: input.name,
-      caption: input.caption,
-      mediaType: isVideo ? 'video' : 'image',
-      contentType: mime,
-      sizeBytes: input.file.size,
-      width: Number.isFinite(input.width) ? input.width : null,
-      height: Number.isFinite(input.height) ? input.height : null,
-      transcoded: Boolean(input.transcoded),
-      deviceId,
-      fileHash: fileHash || undefined,
-      phash,
-      poster: posterBlob ? true : undefined,
-      posterContentType: posterBlob ? posterContentType : undefined,
-    }),
-  });
-  const presign = (await presignRes.json().catch(() => ({}))) as {
+  // Try up to 4 storage accounts: if an account refuses the presign or the PUT
+  // fails, tell the server to skip it and presign on the next account.
+  const failedProviders: number[] = [];
+  let presign: {
     id?: string;
     provider?: number;
     bucket?: string;
@@ -251,73 +234,124 @@ export async function submitUpload(input: SubmitUploadInput): Promise<WallItem> 
     mediaUrl?: string;
     posterUrl?: string | null;
     error?: string;
-  };
-  if (!presignRes.ok || !presign.id || !presign.mediaUrl) {
-    throw new Error(presign.error ?? 'upload_failed');
+  } | null = null;
+
+  for (let attempt = 0; attempt < 4; attempt++) {
+    // Phase 1 — signed PUT urls only; no DB row is created yet.
+    const presignRes = await fetch(apiUrl('/api/wall/upload'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: input.name,
+        caption: input.caption,
+        mediaType: isVideo ? 'video' : 'image',
+        contentType: mime,
+        sizeBytes: input.file.size,
+        width: Number.isFinite(input.width) ? input.width : null,
+        height: Number.isFinite(input.height) ? input.height : null,
+        transcoded: Boolean(input.transcoded),
+        deviceId,
+        fileHash: fileHash || undefined,
+        phash,
+        poster: posterBlob ? true : undefined,
+        posterContentType: posterBlob ? posterContentType : undefined,
+        skip: failedProviders.length > 0 ? failedProviders : undefined,
+      }),
+    });
+    const body = (await presignRes.json().catch(() => ({}))) as {
+      id?: string;
+      provider?: number;
+      bucket?: string;
+      mediaKey?: string;
+      posterKey?: string | null;
+      mediaUrl?: string;
+      posterUrl?: string | null;
+      error?: string;
+    };
+
+    if (!presignRes.ok || !body.id || !body.mediaUrl) {
+      const err = body.error ?? 'upload_failed';
+      if (err === 'storage_unavailable' || err === 'storage_not_configured' || err === 'upload_failed') {
+        if (err === 'storage_not_configured') break;
+        continue;
+      }
+      throw new Error(err);
+    }
+    presign = body;
+
+    try {
+      await storagePut(presign.mediaUrl!, input.file, mime);
+
+      let posterUploaded = false;
+      if (posterBlob && presign.posterUrl) {
+        try {
+          await storagePut(presign.posterUrl, posterBlob, posterContentType);
+          posterUploaded = true;
+        } catch {
+          posterUploaded = false;
+        }
+      }
+
+      // Phase 2 — bytes are in the bucket; only now register the submission.
+      const confirmRes = await fetch(apiUrl('/api/wall/upload'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'confirm',
+          id: presign.id,
+          provider: presign.provider,
+          poster: posterUploaded,
+          name: input.name,
+          caption: input.caption,
+          mediaType: isVideo ? 'video' : 'image',
+          contentType: mime,
+          sizeBytes: input.file.size,
+          width: Number.isFinite(input.width) ? input.width : null,
+          height: Number.isFinite(input.height) ? input.height : null,
+          transcoded: Boolean(input.transcoded),
+          deviceId,
+          fileHash: fileHash || undefined,
+          phash,
+        }),
+      });
+      const confirm = (await confirmRes.json().catch(() => ({}))) as {
+        id?: string;
+        mediaKey?: string;
+        posterKey?: string | null;
+        error?: string;
+      };
+      if (!confirmRes.ok || !confirm.id) {
+        throw new Error(confirm.error ?? 'upload_failed');
+      }
+      const posterKey = confirm.posterKey ?? null;
+
+      return rowToItem({
+        id: confirm.id,
+        name: input.name,
+        caption: input.caption,
+        kind: 'upload',
+        media_type: isVideo ? 'video' : 'image',
+        status: 'pending',
+        likes: 0,
+        created_at: new Date().toISOString(),
+        link_url: null,
+        provider: presign.provider ?? null,
+        bucket: presign.bucket ?? null,
+        media_key: confirm.mediaKey ?? null,
+        poster_key: posterKey,
+        size_bytes: input.file.size,
+        width: typeof input.width === 'number' ? input.width : null,
+        height: typeof input.height === 'number' ? input.height : null,
+        transcoded: Boolean(input.transcoded),
+        reviewed_at: null,
+        reviewer: null,
+      });
+    } catch {
+      if (presign.provider) failedProviders.push(presign.provider);
+    }
   }
 
-  await storagePut(presign.mediaUrl, input.file, mime);
-
-  let posterUploaded = false;
-  if (posterBlob && presign.posterUrl) {
-    await storagePut(presign.posterUrl, posterBlob, posterContentType);
-    posterUploaded = true;
-  }
-
-  // Phase 2 — bytes are in the bucket; only now register the submission.
-  const confirmRes = await fetch(apiUrl('/api/wall/upload'), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      action: 'confirm',
-      id: presign.id,
-      provider: presign.provider,
-      poster: posterUploaded,
-      name: input.name,
-      caption: input.caption,
-      mediaType: isVideo ? 'video' : 'image',
-      contentType: mime,
-      sizeBytes: input.file.size,
-      width: Number.isFinite(input.width) ? input.width : null,
-      height: Number.isFinite(input.height) ? input.height : null,
-      transcoded: Boolean(input.transcoded),
-      deviceId,
-      fileHash: fileHash || undefined,
-      phash,
-    }),
-  });
-  const confirm = (await confirmRes.json().catch(() => ({}))) as {
-    id?: string;
-    mediaKey?: string;
-    posterKey?: string | null;
-    error?: string;
-  };
-  if (!confirmRes.ok || !confirm.id) {
-    throw new Error(confirm.error ?? 'upload_failed');
-  }
-  const posterKey = confirm.posterKey ?? null;
-
-  return rowToItem({
-    id: confirm.id,
-    name: input.name,
-    caption: input.caption,
-    kind: 'upload',
-    media_type: isVideo ? 'video' : 'image',
-    status: 'pending',
-    likes: 0,
-    created_at: new Date().toISOString(),
-    link_url: null,
-    provider: presign.provider ?? null,
-    bucket: presign.bucket ?? null,
-    media_key: confirm.mediaKey ?? null,
-    poster_key: posterKey,
-    size_bytes: input.file.size,
-    width: typeof input.width === 'number' ? input.width : null,
-    height: typeof input.height === 'number' ? input.height : null,
-    transcoded: Boolean(input.transcoded),
-    reviewed_at: null,
-    reviewer: null,
-  });
+  throw new Error('storage_unavailable');
 }
 
 export async function submitLink(input: {
@@ -437,14 +471,6 @@ export async function adminUndo(id: string): Promise<{ restored?: string }> {
     body: JSON.stringify({ action: 'undo', id }),
   })) as { restored?: string };
   return { restored: data.restored };
-}
-
-/** Permanently delete a broken/never-uploaded submission (pending/rejected only). */
-export async function adminDelete(id: string): Promise<void> {
-  await adminFetch('/api/wall/admin', {
-    method: 'POST',
-    body: JSON.stringify({ action: 'delete', id }),
-  });
 }
 
 export async function adminUpdate(

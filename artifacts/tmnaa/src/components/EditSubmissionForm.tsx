@@ -17,7 +17,7 @@ const uploadErrors: Record<string, string> = {
   database_unavailable: 'We could not reach the wall database. Please try again.',
   too_many_uploads: 'You have submitted a lot recently. Wait a bit and try again.',
   queue_full: 'The wall is full right now — come back in a little while.',
-  file_too_large: 'That file is too large. Videos up to 500MB, images up to 12MB.',
+  file_too_large: 'That file is too large. Videos up to 5GB, images up to 12MB.',
   image_too_large: 'That image is too large. Max 12MB.',
   unsupported_file: 'That file type is not supported. Use MP4, WEBM, JPG, PNG or GIF.',
   invalid_fields: 'Please check your name and caption.',
@@ -339,7 +339,7 @@ export function EditSubmissionForm({ onSubmitted }: Props) {
                 Drag & drop or <span style={{ color: '#D9A441' }}>browse</span>
               </span>
               <span className="text-[11px]" style={{ color: 'rgba(247,243,238,0.3)' }}>
-                Images or videos — MP4, WEBM, JPG, PNG · videos up to 500MB
+                Images or videos — MP4, WEBM, JPG, PNG · videos up to 5GB
               </span>
             </button>
           ) : (

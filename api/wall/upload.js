@@ -2,7 +2,6 @@ import {
   getAccount,
   objectExists,
   presignPut,
-  randomAccount,
   KEY_PREFIX,
 } from '../_lib/storj.js';
 import { createRow } from '../_lib/supabase.js';
@@ -24,8 +23,17 @@ function json(data, status) {
 function mediaLimits() {
   return {
     image: (Number(process.env.MAX_IMAGE_MB) || 12) * 1024 * 1024,
-    video: (Number(process.env.MAX_VIDEO_MB) || 500) * 1024 * 1024,
+    video: (Number(process.env.MAX_VIDEO_MB) || 5000) * 1024 * 1024,
   };
+}
+
+/** Rotate the starting account randomly, then scan the rest in numeric order. */
+function accountOrder(skip) {
+  const skipSet = new Set(skip);
+  const all = [1, 2, 3, 4].filter((i) => !skipSet.has(i));
+  if (all.length === 0) return [];
+  const start = Math.floor(Math.random() * all.length);
+  return [...all.slice(start), ...all.slice(0, start)];
 }
 
 /** Shared validation for both phases. Returns { error } or normalized fields. */
@@ -86,37 +94,48 @@ async function handlePresign(input) {
     return json({ error: v.error }, v.error === 'file_too_large' || v.error === 'image_too_large' ? 413 : 400);
   }
 
-  const account = randomAccount();
-  if (!account) return json({ error: 'storage_not_configured' }, 503);
+  const skip = Array.isArray(input.skip)
+    ? input.skip.map(Number).filter((n) => Number.isInteger(n) && n >= 1 && n <= 4)
+    : [];
 
-  const id = crypto.randomUUID();
-  const mediaKey = `${KEY_PREFIX}pending/${id}/media`;
-  const wantPoster = Boolean(input.poster) && v.mediaType === 'video' && input.posterContentType;
+  const order = accountOrder(skip);
+  if (order.length === 0) return json({ error: 'storage_not_configured' }, 503);
 
-  try {
-    const mediaUrl = await presignPut(account, mediaKey, v.contentType);
-    let posterKey = null;
-    let posterUrl = null;
-    if (wantPoster) {
-      posterKey = `${KEY_PREFIX}pending/${id}/poster`;
-      posterUrl = await presignPut(account, posterKey, String(input.posterContentType));
+  for (const idx of order) {
+    const account = getAccount(idx);
+    if (!account) continue;
+
+    const id = crypto.randomUUID();
+    const mediaKey = `${KEY_PREFIX}pending/${id}/media`;
+    const wantPoster = Boolean(input.poster) && v.mediaType === 'video' && input.posterContentType;
+
+    try {
+      const mediaUrl = await presignPut(account, mediaKey, v.contentType);
+      let posterKey = null;
+      let posterUrl = null;
+      if (wantPoster) {
+        posterKey = `${KEY_PREFIX}pending/${id}/poster`;
+        posterUrl = await presignPut(account, posterKey, String(input.posterContentType));
+      }
+
+      return json(
+        {
+          id,
+          provider: account.index,
+          bucket: account.bucket,
+          mediaKey,
+          posterKey,
+          mediaUrl,
+          posterUrl,
+        },
+        200,
+      );
+    } catch {
+      // this account failed to sign — fall through to the next one
     }
-
-    return json(
-      {
-        id,
-        provider: account.index,
-        bucket: account.bucket,
-        mediaKey,
-        posterKey,
-        mediaUrl,
-        posterUrl,
-      },
-      200,
-    );
-  } catch {
-    return json({ error: 'storage_unavailable' }, 502);
   }
+
+  return json({ error: 'storage_unavailable' }, 502);
 }
 
 // ---------------------------------------------------------------------------
@@ -134,14 +153,26 @@ async function handleConfirm(input) {
     return json({ error: 'invalid_fields' }, 400);
   }
 
-  const account = getAccount(provider);
-  if (!account) return json({ error: 'storage_not_configured' }, 503);
-
   const mediaKey = `${KEY_PREFIX}pending/${id}/media`;
   const wantPoster = v.mediaType === 'video' && input.poster === true;
   const posterKey = wantPoster ? `${KEY_PREFIX}pending/${id}/poster` : null;
 
-  if (!(await objectExists(account, mediaKey))) {
+  // Find the account that actually holds the object: try the reported one first,
+  // then fall back through every other account in numeric order.
+  let account = null;
+  for (const idx of [provider, ...[1, 2, 3, 4].filter((i) => i !== provider)]) {
+    const candidate = getAccount(idx);
+    if (!candidate) continue;
+    try {
+      if (await objectExists(candidate, mediaKey)) {
+        account = candidate;
+        break;
+      }
+    } catch {
+      // this account is unreachable right now — check the next one
+    }
+  }
+  if (!account) {
     return json({ error: 'missing_file' }, 400);
   }
 
