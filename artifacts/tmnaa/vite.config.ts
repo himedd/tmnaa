@@ -88,6 +88,8 @@ function kickProxyPlugin(): Plugin {
 }
 
 export default defineConfig({
+  // Expose GROQ_API_KEY (in addition to VITE_*) to client code for the AI bot.
+  envPrefix: ['VITE_', 'GROQ_'],
   plugins: [
     react(),
     tailwindcss(),

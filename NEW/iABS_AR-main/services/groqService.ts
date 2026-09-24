@@ -1,7 +1,8 @@
 // GROQ client with automatic failover across multiple API keys + models.
 //
 // How it works:
-// - Keys are read from `VITE_GROQ_API_KEYS` (comma-separated, 3 keys recommended).
+// - Keys are read from `GROQ_API_KEY` (comma-separated, 3 keys recommended).
+//   (Requires `envPrefix: ['VITE_', 'GROQ_']` in vite.config.ts so the browser can see it.)
 // - Every call starts from a rotating key index so traffic spreads across keys.
 // - If a key fails (401/403 = dead, 429/5xx/network = tired), we instantly try
 //   the next key. If every key fails for one model, we fall back to the next model.
@@ -34,8 +35,11 @@ interface GroqOptions {
 }
 
 function readKeys(): string[] {
-  const raw =
-    ((import.meta.env.VITE_GROQ_API_KEYS as string | undefined) ?? '').trim();
+  const raw = (
+    (import.meta.env.GROQ_API_KEY as string | undefined) ??
+    (import.meta.env.VITE_GROQ_API_KEYS as string | undefined) ??
+    ''
+  ).trim();
   return raw
     .split(',')
     .map((k) => k.trim())
@@ -106,7 +110,7 @@ export async function groqChatStream(
     const keys = orderedKeys();
     if (!keys.length) {
       throw new Error(
-        'GROQ: no API keys — set VITE_GROQ_API_KEYS (comma-separated)',
+        'GROQ: no API keys — set GROQ_API_KEY (comma-separated)',
       );
     }
     const body = buildBody(messages, model, true, opts);

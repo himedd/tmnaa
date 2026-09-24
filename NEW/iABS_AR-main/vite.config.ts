@@ -5,6 +5,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
+    // Expose GROQ_API_KEY (in addition to VITE_*) to client code for the AI bot.
+    envPrefix: ['VITE_', 'GROQ_'],
     server: {
       port: 3000,
       host: '0.0.0.0',
