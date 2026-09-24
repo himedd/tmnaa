@@ -429,16 +429,34 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
         console.error('[AIChat] Insert failed:', e);
       }
     } catch (err) {
-      console.error('AI Chat Error:', err);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('AI Chat Error:', msg);
       setIsWaiting(false);
       setIsResponding(false);
+      // Surface the real reason (never includes key values) so misconfig is obvious.
+      let hint: string;
+      if (/no API keys/i.test(msg)) {
+        hint = lang === 'ar'
+          ? 'البوت مو مضبوط بعد: GROQ_API_KEY ناقص. أعد تشغيل السيرفر وتأكد من ملف .env'
+          : 'Bot not configured: GROQ_API_KEY is missing. Restart the dev server and check .env';
+      } else if (/401|403/.test(msg)) {
+        hint = lang === 'ar'
+          ? 'مفاتيح GROQ مرفوضة (تحقق من GROQ_API_KEY في ملف .env وحدثها)'
+          : 'GROQ keys rejected (check GROQ_API_KEY in .env)';
+      } else if (/429/.test(msg)) {
+        hint = lang === 'ar'
+          ? 'في ضغط عالي على GROQ الحين، انتظر شوي وحاول مجدد'
+          : 'GROQ is rate-limited right now, try again shortly';
+      } else {
+        hint = lang === 'ar'
+          ? 'عذراً، حدث خطأ في الاتصال. حاول مرة أخرى.'
+          : 'Sorry, connection error. Please try again.';
+      }
       setMessages(prev => [
         ...prev,
         {
           role: 'assistant',
-          content: lang === 'ar'
-            ? 'عذراً، حدث خطأ في الاتصال. حاول مرة أخرى.'
-            : 'Sorry, connection error. Please try again.',
+          content: hint,
         },
       ]);
     } finally {

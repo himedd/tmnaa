@@ -540,7 +540,22 @@ export default function ChatWidget() {
         }
       }, 15);
     }
-    catch { setMessages(prev => [...prev, { role: 'assistant', content: 'معليش، فيه مشكلة بالاتصال الحين. حاول بعد شوي يا بعدي 🤍' }]); }
+    catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error('[tmnaaBot] send failed:', msg);
+      // Surface the real reason (never includes key values) so misconfig is obvious.
+      let hint = 'معليش، فيه مشكلة بالاتصال الحين. حاول بعد شوي يا بعدي 🤍';
+      if (/no API keys/i.test(msg)) {
+        hint = 'البوت مو مضبوط بعد: GROQ_API_KEY ناقص. أعد تشغيل السيرفر (pnpm dev) وتأكد من ملف .env 🤍';
+      } else if (/401|403/.test(msg)) {
+        hint = 'مفاتيح GROQ مرفوضة (تحقق من GROQ_API_KEY في ملف .env وحدثها) 🤍';
+      } else if (/429/.test(msg)) {
+        hint = 'في ضغط عالي على GROQ الحين، انتظر شوي وحاول مجدد يا وحش 🤍';
+      } else if (/network|fetch|CORS|cors|Failed/i.test(msg)) {
+        hint = 'المتصفح ما قدر يوصل لسيرفر GROQ. جرّب تحديث الصفحة (Ctrl+Shift+R) 🤍';
+      }
+      setMessages(prev => [...prev, { role: 'assistant', content: hint }]);
+    }
     finally { setIsLoading(false); }
   }, [input, isLoading, messages, fetchFB]);
 
