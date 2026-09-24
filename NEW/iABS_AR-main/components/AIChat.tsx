@@ -1,25 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Language } from '../types';
 import { supabase } from '../supabaseClient';
+import { groqChatStream, type GroqMessage } from '../services/groqService';
 
 interface AIChatProps {
   lang: Language;
   streamerInfo?: string;
-}
+};
 
-const API_KEYS = (import.meta.env.VITE_OPENROUTER_API_KEYS || '')
-  .split(',')
-  .map((k: string) => k.trim())
-  .filter(Boolean);
-
-const MODELS = [
-  'google/gemma-4-31b-it:free',
-  'google/gemma-4-26b-a4b-it:free',
-  'meta-llama/llama-4-scout:free',
-  'meta-llama/llama-4-maverick:free',
-  'minimax/minimax-m3:free',
-  'liquid/lfm-2.5-2.6b:free',
-];
+// AI backend: GROQ (see services/groqService.ts) — 3 keys with auto failover + model fallback.
 
 const SYSTEM_PROMPT = `أنت "أبو سعد" (محمد القحطاني) - الستريمر iABS. لست ذكاء اصطناعي. رد كأنك أبو سعد شخصياً.
 
@@ -357,45 +346,50 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
     sendMessageDirect(newMessages, query);
   };
 
-  const tryRequest = async (body: object): Promise<Response> => {
-    let lastError: unknown = null;
-    const errors: string[] = [];
+  // Streams one assistant reply via GROQ (keys 1→2→3 auto-failover + model fallback).
+  // Appends a new message on first token when `append` is true, else rewrites the last one.
+  const runStream = async (
+    messages: GroqMessage[],
+    append: boolean,
+  ): Promise<string> => {
+    let assistantContent = '';
+    let started = !append;
 
-    if (API_KEYS.length === 0) {
-      throw new Error('No API keys configured - VITE_OPENROUTER_API_KEYS is empty');
+    if (append) {
+      // placeholder state handled on first token below
+    } else {
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { role: 'assistant', content: '' };
+        return updated;
+      });
+      setIsWaiting(false);
+      setIsResponding(true);
     }
 
-    for (const model of MODELS) {
-      const attempts = API_KEYS.map((key) =>
-        fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${key}`,
-            'HTTP-Referer': window.location.origin,
-            'X-Title': 'iABS Stream Hub',
-          },
-          body: JSON.stringify({ ...body, model }),
-        })
-      );
-
-      const settled = await Promise.allSettled(attempts);
-
-      for (const result of settled) {
-        if (result.status !== 'fulfilled') {
-          errors.push(`${model}: network error`);
-          continue;
+    const onDelta = (delta: string) => {
+      if (!started) {
+        started = true;
+        setIsWaiting(false);
+        setIsResponding(true);
+        if (append) {
+          setMessages((prev) => [...prev, { role: 'assistant', content: '' }]);
         }
-        const res = result.value;
-        if (res.ok) return res;
-        const errText = await res.text().catch(() => '');
-        errors.push(`${model}: ${res.status} ${errText.slice(0, 100)}`);
-        lastError = res.status;
       }
-    }
+      assistantContent += delta;
+      const cleanedContent = assistantContent
+        .replace(/```(?:thinking|reasoning)\s*[\s\S]*?```/g, '')
+        .replace(/(?:thinking|reasoning):\s*(?:<\|im_end\|>)?/gi, '')
+        .trim();
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = { role: 'assistant', content: cleanedContent };
+        return updated;
+      });
+    };
 
-    console.error('[AIChat] All attempts failed:', errors);
-    throw new Error(lastError ? `All models/keys failed (last: ${lastError})` : 'No API keys configured');
+    await groqChatStream(messages, onDelta, { temperature: 0.7, maxTokens: 1024 });
+    return assistantContent;
   };
 
   const sendMessageDirect = async (newMessages: Message[], text: string) => {
@@ -412,58 +406,16 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
         ? SYSTEM_PROMPT + `\n\nهذي بيانات المتصدرين من بوتريكس حالياً (استخدمها لما يسألك عن الناس أو المتابعين أو التحديات):\n${JSON.stringify(botrixData.slice(0, 20))}\n\nهذول أهم الناس في القناة، جاوب على أسئلة المستخدم عنهم بمعلوماتهم (المستوى، وقت المشاهدة، XP، النقاط).`
         : SYSTEM_PROMPT;
 
-      const body = {
-        messages: [
-          { role: 'system', content: systemContent },
-          ...newMessages.map(m => ({ role: m.role, content: m.content })),
-        ],
-        stream: true,
-        max_tokens: 1024,
-        temperature: 0.7,
-      };
+      const messages: GroqMessage[] = [
+        { role: 'system', content: systemContent },
+        ...newMessages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+      ];
 
-      const response = await tryRequest(body);
+      let assistantContent = await runStream(messages, true);
 
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No reader');
-
-      const decoder = new TextDecoder();
-      let assistantContent = '';
-      let started = false;
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
-
-        for (const line of lines) {
-          const data = line.slice(6);
-          if (data === '[DONE]') continue;
-          try {
-            const parsed = JSON.parse(data);
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              if (!started) {
-                started = true;
-                setIsWaiting(false);
-                setIsResponding(true);
-                setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
-              }
-              assistantContent += delta;
-              const cleanedContent = assistantContent
-                .replace(/```(?:thinking|reasoning)\s*[\s\S]*?```/g, '')
-                .replace(/(?:thinking|reasoning):\s*(?:<\|im_end\|>)?/gi, '')
-                .trim();
-              setMessages(prev => {
-                const updated = [...prev];
-                updated[updated.length - 1] = { role: 'assistant', content: cleanedContent };
-                return updated;
-              });
-            }
-          } catch {}
-        }
+      // Retry once (rewriting the same bubble) if the model hallucinated CJK/Cyrillic.
+      if (/[Ѐ-ӿ一-鿿]/.test(assistantContent)) {
+        assistantContent = await runStream(messages, false);
       }
 
       try {

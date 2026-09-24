@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Send, Loader2, Sparkles, Bot } from 'lucide-react';
 import { apiUrl } from '@/lib/apiBase';
+import { groqChat, type GroqMessage } from '@/lib/groq';
 
 const P = [
 'أنت بوت مجتمع خاص بستريمر tmnaa (عبدالله الشمري). هدفك التفاعل بأسلوب سعودي عفوي وحماسي وبأريحية كأنك واحد من الشباب. أنت لست مجرد بوت، أنت تمثل قناة tmnaa ومجتمعها بالكامل. أجب كأنك جزء من هذا المجتمع بطريقة حماسية وودية.',
@@ -191,16 +192,7 @@ const P = [
 ].join('\n');
 
 type Msg = { role: 'user' | 'assistant'; content: string };
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-
-const MODELS = [
-  'minimax/minimax-m3:free',
-  'nvidia/nemotron-3-ultra-550b-a55b:free',
-  'minimax/minimax-m2.7:free',
-  'liquid/lfm-2.5-2.6b:free',
-  'google/gemma-4-31b-it:free',
-  'google/gemma-4-26b-a4b-it:free',
-];
+// AI backend: GROQ (see src/lib/groq.ts) — 3 keys with auto failover + model fallback.
 
 const TH = { primary: '#D4A84A', primaryDark: '#B8860B', primaryLight: '#E8C97A', bgDark: '#120D08', text: '#F5EBD5', textMuted: '#A08A5A', border: 'rgba(212,168,74,0.25)', borderLight: 'rgba(212,168,74,0.15)' };
 
@@ -298,8 +290,6 @@ export default function ChatWidget() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingRef = useRef<number | null>(null);
-
-  const apiKeys = useMemo(() => { const s = import.meta.env.VITE_OPENROUTER_API_KEYS || ''; return s.split(',').map((x: string) => x.trim()).filter(Boolean); }, []);
 
   const renderText = useCallback((text: string, sendFn: (text: string) => void) => {
     const processMarkdown = (str: string, pk: number) => {
@@ -506,52 +496,20 @@ export default function ChatWidget() {
   }, [counts, botrix, vods, liveData]);
 
   const fetchFB = useCallback(async (hist: Msg[]): Promise<string> => {
-    if (!apiKeys.length) throw new Error('no keys configured');
-    const lastError: number[] = [];
+    const messages: GroqMessage[] = [
+      { role: 'system', content: buildPrompt() },
+      ...hist.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+    ];
+    // groqChat tries keys 1→2→3 (rotating start) + falls back across models.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const txt = await groqChat(messages, { temperature: 0.3, maxTokens: 512 });
 
-    for (const model of MODELS) {
-      const attempts = apiKeys.map((key) =>
-        fetch(OPENROUTER_URL, {
-          method: 'POST',
-          headers: {
-            'Authorization': 'Bearer ' + key,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': window.location.origin,
-            'X-Title': 'tmnaa Stream Hub',
-          },
-          body: JSON.stringify({
-            model,
-            messages: [{ role: 'system', content: buildPrompt() }, ...hist],
-            temperature: 0.3,
-            max_tokens: 512,
-          }),
-        })
-      );
-
-      const settled = await Promise.allSettled(attempts);
-
-      for (const result of settled) {
-        if (result.status !== 'fulfilled') continue;
-        const r = result.value;
-        if (!r.ok) { lastError.push(r.status); continue; }
-        try {
-          const d = await r.json();
-          const txt = d.choices?.[0]?.message?.content ?? '';
-
-          // Check for hallucinated Chinese/Russian languages. If found, skip and try next.
-          if (/[\u0400-\u04FF\u4E00-\u9FFF]/.test(txt)) {
-            lastError.push(0);
-            continue;
-          }
-          return txt;
-        } catch {
-          lastError.push(0);
-        }
-      }
+      // Check for hallucinated Chinese/Russian languages. If found, retry once.
+      if (/[Ѐ-ӿ一-鿿]/.test(txt) && attempt === 0) continue;
+      if (txt) return txt;
     }
-
-    throw new Error('All models/keys failed (last: ' + lastError.join(',') + ')');
-  }, [apiKeys, buildPrompt]);
+    throw new Error('GROQ: empty reply after retry');
+  }, [buildPrompt]);
 
   const send = useCallback(async (ov?: string) => {
     const text = (ov || input).trim();
