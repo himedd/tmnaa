@@ -15,12 +15,49 @@ const MARKS = [33, 44, 55, 60];
 const WINNER = '';
 const DAY_MS = 864e5;
 
-/* آيفونات العرض — نفس HTML الأصل بالضبط */
-const DUO_HTML = `<div class="duo"><div class="ip ipb"><div class="plat"><i class="lens" style="left:2px;top:8px"></i><i class="lens" style="left:30px;top:21px"></i><i class="lens" style="left:2px;top:35px"></i><i class="fls"></i><i class="mc"></i><i class="ld"></i></div><div class="gp"></div><svg class="apl" viewBox="0 0 24 24"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg><div class="shine"></div></div><div class="ip ipf"><div class="scr"><i class="wa a1"></i><i class="wa a2"></i><i class="wa a3"></i><i class="wa a4"></i><i class="di2"></i><div class="shine"></div></div><i class="sb s1"></i><i class="sb s2"></i><i class="sb s3"></i></div></div>`;
-
 const FACES = ['fB', 'fL', 'fR', 'fD', 'fT', 'fF'];
+
+/* طبقات السماكة ثلاثية الأبعاد — تصريحية (يملكها React فلا تُمسح عند إعادة العرض) */
+const CONSOLE_LAYERS = (() => {
+  const arr: React.ReactNode[] = [];
+  const N = 20;
+  for (let i = N; i >= 1; i--) {
+    arr.push(
+      <img
+        key={`k${i}`}
+        className="cs"
+        src="/ps5-console.png"
+        alt=""
+        aria-hidden="true"
+        style={{
+          transform: `translateZ(${-i * 0.8}px)`,
+          filter: `brightness(${(0.97 - 0.5 * Math.pow(i / N, 0.8)).toFixed(3)})` + (i === N ? ' drop-shadow(0 10px 12px #000b)' : ''),
+        }}
+      />,
+    );
+  }
+  return arr;
+})();
+
+const PAD_LAYERS = (() => {
+  const arr: React.ReactNode[] = [];
+  const N = 13;
+  for (let i = N; i >= 1; i--) {
+    arr.push(
+      <img
+        key={`t${i}`}
+        className="pd th"
+        src="/ps5-dualsense.png"
+        alt=""
+        aria-hidden="true"
+        style={{ '--tz': `${-i * 0.95}px`, '--bk': (0.95 - 0.55 * Math.pow(i / N, 0.8)).toFixed(3) } as React.CSSProperties}
+      />,
+    );
+  }
+  return arr;
+})();
 const TM_LABELS = ['يوم', 'ساعة', 'دقيقة', 'ثانية'];
-const CONF_COLORS = ['#ff3d3d', '#ffc83d', '#53fc18', '#2ee6ff', '#ff7aa5', '#ffffff', '#b794ff'];
+const CONF_COLORS = ['#1f8bff', '#ffffff', '#53b1ff', '#2ee6ff', '#7aa8ff', '#b9dcff', '#ffc83d'];
 
 interface Legend {
   n: string;
@@ -223,8 +260,9 @@ export const ChatLegends: React.FC = () => {
       v.insertAdjacentHTML('beforeend', s);
     };
     const showFinale = () => {
-      if (root.querySelector('.fin')) return;
-      const duo = root.querySelector('.duo');
+      const hero = heroRef.current;
+      if (!hero || hero.querySelector('.fin')) return;
+      const duo = hero.querySelector('.duo');
       if (!duo) return;
       const R = Math.random;
       const f = document.createElement('div');
@@ -240,8 +278,8 @@ export const ChatLegends: React.FC = () => {
         const d = 35 + R() * 45;
         sh += `<i class="shd" style="--s:${14 + R() * 34}px;--x:${Math.cos(a) * d}vmax;--y:${Math.sin(a) * d * 0.8}vmin;--r:${(R() - 0.5) * 900}deg"></i>`;
       }
-      f.innerHTML = `<div class="r2"></div><div class="gl"></div><div class="fstage"><div class="fl"><div class="spin"><div class="in3">${duo.outerHTML}</div></div></div></div>${sh}${cf}<div class="tt">🎉 مبروك${WINNER ? ' ' + WINNER : ''}! الآيفون صار جاهز 🎉<small>انتهى التحدي · 60 يوم</small></div><button class="x" type="button">إغلاق ✕</button><div class="flash"></div>`;
-      root.appendChild(f);
+      f.innerHTML = `<div class="r2"></div><div class="gl"></div><div class="fstage"><div class="fl"><div class="spin"><div class="in3">${duo.outerHTML}</div></div></div></div>${sh}${cf}<div class="tt">🎉 مبروك${WINNER ? ' ' + WINNER : ''}! البلايستيشن صار جاهز 🎉<small>انتهى التحدي · 60 يوم</small></div><button class="x" type="button">إغلاق ✕</button><div class="flash"></div>`;
+      hero.appendChild(f);
       const st = f.querySelector('.fstage') as HTMLElement | null;
       if (st) {
         const sc = Math.min(3.6, window.innerHeight * 0.6 / 200, window.innerWidth * 0.78 / 215);
@@ -289,7 +327,7 @@ export const ChatLegends: React.FC = () => {
     const done = () => {
       stageRef.current?.classList.add('melted');
       visRef.current?.classList.add('done');
-      if (noteRef.current) noteRef.current.textContent = '🎉 انتهى التحدي! مبروك، الآيفون صار جاهز';
+      if (noteRef.current) noteRef.current.textContent = '🎉 انتهى التحدي! مبروك، البلايستيشن صار جاهز';
       const bdg = root.querySelector('.bdg');
       if (bdg) bdg.textContent = '🎉 مبروك! انتهى التحدي';
       if (WINNER && cbnRef.current) cbnRef.current.textContent = `🎉 مبروك ${WINNER} 🎉`;
@@ -383,11 +421,16 @@ export const ChatLegends: React.FC = () => {
           </div>
         </div>
 
-        <div className="card hero" ref={heroRef as React.RefObject<HTMLDivElement>}>
-          <div className="info">
-            <span className="bdg">🎁 جيف أواي كبير</span>
-            <h4>آيفون 18 برو<br />برغندي</h4>
-            <p>كمّل التحدي 60 يوم بدون انقطاع، والثلج يذوب ويبقى الآيفون الجائزة.</p>
+        <div className="cl-ps">
+          <div className="card hero" ref={heroRef as React.RefObject<HTMLDivElement>}>
+            <div className="info">
+              <span className="bdg">🎁 جيف أواي كبير</span>
+              <h4>
+                بلايستيشن 5 برو
+                <br />
+                الإصدار الرقمي
+              </h4>
+              <p>كمّل التحدي 60 يوم بدون انقطاع، والثلج يذوب وتبقى البلايستيشن الجائزة.</p>
             <div className="tm" ref={tmRef}>
               {TM_LABELS.map((l) => (
                 <div key={l}>
@@ -409,7 +452,13 @@ export const ChatLegends: React.FC = () => {
             <div className="stage" ref={stageRef as React.RefObject<HTMLDivElement>}>
               <div className="spin">
                 <div className="in3">
-                  <div dangerouslySetInnerHTML={{ __html: DUO_HTML }} />
+                  <div className="duo">
+                    {CONSOLE_LAYERS}
+                    <img className="cs f0" src="/ps5-console.png" alt="PlayStation 5 Pro" />
+                    <i className="pds"></i>
+                    {PAD_LAYERS}
+                    <img className="pd" src="/ps5-dualsense.png" alt="DualSense" />
+                  </div>
                   <div className="cube3d">
                     {FACES.map((f) => (
                       <div key={f} className={`f ${f}`}></div>
@@ -421,9 +470,10 @@ export const ChatLegends: React.FC = () => {
             <div className="pud"></div>
             <div className="drips" ref={dripsRef}></div>
             <div className="cbn" ref={cbnRef}>
-              🎉 مبروك! الآيفون صار جاهز 🎉
+              🎉 مبروك! البلايستيشن صار جاهز 🎉
             </div>
           </div>
+        </div>
         </div>
 
         <div className="card ogc">
