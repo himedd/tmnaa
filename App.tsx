@@ -57,6 +57,9 @@ const KICK_SOCIAL: SocialLink = {
 
 const EMAIL_ADDRESS = "";
 
+// زر "موقع خاص بك" — يفتح محادثة واتساب مباشرة
+const WHATSAPP_CONTACT_URL = 'https://api.whatsapp.com/message/4TYV7IWEUNAXN1';
+
 const TRANSLATIONS = {
     en: {
         status: 'LIVE NOW', statusOffline: 'OFFLINE',
@@ -82,6 +85,8 @@ const TRANSLATIONS = {
         theaterTitle: 'Live Theater', viewers: 'watching',
         statsKick: 'Kick followers', statsViews: 'Site visits', statsPlatforms: 'Platforms', statsStatus: 'Status',
         follow: 'Follow', open: 'Open', followers: 'followers',
+        ownSite: 'Want a website of your own?',
+        ownSiteBtn: 'Get your own site',
     },
     ar: {
         status: 'بث مباشر الآن', statusOffline: 'غير متصل حالياً',
@@ -107,6 +112,8 @@ const TRANSLATIONS = {
         theaterTitle: 'مسرح البث المباشر', viewers: 'مشاهد',
         statsKick: 'متابع كيك', statsViews: 'زيارة للموقع', statsPlatforms: 'منصة', statsStatus: 'الحالة',
         follow: 'تابع', open: 'افتح', followers: 'متابع',
+        ownSite: 'تبي موقع خاص بك؟',
+        ownSiteBtn: 'اطلب موقعك',
     }
 };
 
@@ -1548,6 +1555,12 @@ export default function App() {
                                     </a>
                                 )}
                                 <p className="text-[11px] font-black tracking-[0.3em] text-white/50 mt-6 uppercase">{t.poweredBy}</p>
+                                <a href={WHATSAPP_CONTACT_URL} target="_blank" rel="noopener noreferrer"
+                                    className="group mt-4 inline-flex items-center gap-2 rounded-full border border-[#25D366]/40 bg-[#25D366]/10 px-4 py-2 text-[11px] sm:text-xs font-black text-[#25D366] transition-all duration-300 hover:bg-[#25D366]/20 hover:border-[#25D366]/70 hover:shadow-[0_0_24px_rgba(37,211,102,0.25)]">
+                                    <span className="scale-[0.85] block"><WhatsAppIcon className="w-5 h-5" /></span>
+                                    <span className="tracking-wide">{t.ownSite}</span>
+                                    <span className="text-white/50 group-hover:text-white/80 transition-colors">· {t.ownSiteBtn}</span>
+                                </a>
                                 <p className="text-[11px] text-white/35 mt-1">{t.footer}</p>
                                 <button onClick={() => { if (isAdmin) setShowAdminDashboard(true); else setShowAdminLogin(true); }}
                                     className="mt-4 text-white/20 hover:text-white/60 transition-colors" aria-label="Admin">
