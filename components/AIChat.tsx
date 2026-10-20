@@ -674,7 +674,7 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
           <div className="flex items-center gap-3 relative z-10">
             <div className={`w-12 h-12 flex items-center justify-center transition-all duration-700 ${isResponding ? 'animate-breathe' : ''} hover:rotate-12`}
               style={isResponding ? { animation: 'breathe 1.5s ease-in-out infinite' } : {}}>
-              <img src="/ai-icon.png" alt="AI" className="w-12 h-12 object-contain drop-shadow-[0_0_15px_rgba(255,45,45,0.4)]" />
+              <img src="ai-icon.png" alt="AI" className="w-12 h-12 object-contain drop-shadow-[0_0_15px_rgba(255,45,45,0.4)]" />
             </div>
             <div>
               <h3 className="text-white font-bold text-sm tracking-wide">iABS AI</h3>
@@ -723,7 +723,7 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
                   {msg.role === 'assistant' && (
                     <div className="flex items-center gap-2 mb-1.5">
                       <div className="w-6 h-6 flex items-center justify-center">
-                        <img src="/ai-icon.png" alt="AI" className="w-6 h-6 object-contain" />
+                        <img src="ai-icon.png" alt="AI" className="w-6 h-6 object-contain" />
                       </div>
                       <span className="text-[10px] font-bold text-[#FF2D2D]/80 uppercase tracking-wider">iABS AI</span>
                     </div>
@@ -751,7 +751,7 @@ export const AIChat: React.FC<AIChatProps> = ({ lang, streamerInfo }) => {
                 <div className="bg-[#0d0d15]/80 border border-white/5 rounded-2xl rounded-bl-md px-4 py-3 backdrop-blur-sm">
                   <div className="flex items-center gap-1.5">
                     <div className="w-5 h-5 flex items-center justify-center">
-                      <img src="/ai-icon.png" alt="AI" className="w-5 h-5 object-contain" />
+                      <img src="ai-icon.png" alt="AI" className="w-5 h-5 object-contain" />
                     </div>
                     <span className="text-[10px] font-bold text-[#FF2D2D]/80 uppercase tracking-wider">iABS AI</span>
                     <div className="flex items-center gap-1 mr-2">

@@ -162,7 +162,7 @@ export const DiscordWidget: React.FC<CommunityWidgetsProps> = ({ lang }) => {
                    <div className="group/banner relative block rounded-2xl overflow-hidden border border-white/10 bg-black shadow-[0_18px_44px_-16px_rgba(88,101,242,0.35)]">
                       <div className="relative aspect-[21/9]">
                          <img
-                            src="/discord-banner.jpg"
+                            src="discord-banner.jpg"
                             alt="ABS Community Discord server"
                             loading="lazy"
                             decoding="async"
@@ -302,7 +302,7 @@ export const YoutubeWidget: React.FC<CommunityWidgetsProps> = ({ lang }) => {
                title: lang === 'en' ? 'ULTRA ELITE GAMING CONTENT' : 'أقـوى مـحـتوى ألعاب - iABS',
                link: channelUrl,
                date: 'CHANNELS',
-               thumbnail: '/channels4_banner.jpg'
+               thumbnail: 'channels4_banner.jpg'
             });
          } finally {
             setLoading(false);
@@ -373,7 +373,7 @@ export const YoutubeWidget: React.FC<CommunityWidgetsProps> = ({ lang }) => {
                    >
                       <div className="relative aspect-video">
                          <img
-                            src={video?.thumbnail || '/channels4_banner.jpg'}
+                            src={video?.thumbnail || 'channels4_banner.jpg'}
                             alt={video?.title || 'Latest video'}
                             loading="lazy"
                             decoding="async"
@@ -383,7 +383,7 @@ export const YoutubeWidget: React.FC<CommunityWidgetsProps> = ({ lang }) => {
                             onError={(e) => {
                                const target = e.target as HTMLImageElement;
                                if (target.src.includes('maxresdefault')) target.src = target.src.replace('maxresdefault', 'hqdefault');
-                               else target.src = '/channels4_banner.jpg';
+                               else target.src = 'channels4_banner.jpg';
                             }}
                          />
                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/15 to-black/10" />

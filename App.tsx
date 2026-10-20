@@ -16,13 +16,13 @@ const ModeratorsSection = lazy(() => import('./components/ModeratorsSection'));
 const ChatWidget = lazy(() => import('./components/Chat').then(m => ({ default: m.ChatWidget })));
 
 // --- Constants (preserved) ---
-const DEFAULT_PROFILE_IMAGE = "/favicon-192.png";
+const DEFAULT_PROFILE_IMAGE = "favicon-192.png";
 import { kickFetch } from './utils/kickApi';
 import { getAllSocialMediaStats, formatFollowerCount, readSocialCache, SOCIAL_TTL_MS } from './utils/socialMediaApi';
 import { getTipLeaderboard, TipDonor, TipInterval } from './utils/supportersApi';
 
-const PC_BACKGROUND = "/bg-pc.jpg";
-const MOBILE_BACKGROUND = "/bg-mobile.jpg";
+const PC_BACKGROUND = "bg-pc.jpg";
+const MOBILE_BACKGROUND = "bg-mobile.jpg";
 const CHANNEL_SLUG = 'iabs';
 
 const createSocialLink = (key: string, value: string, followerCount?: string, specialDetail?: string): SocialLink | null => {
@@ -57,8 +57,9 @@ const KICK_SOCIAL: SocialLink = {
 
 const EMAIL_ADDRESS = "";
 
-// زر "موقع خاص بك" — يفتح محادثة واتساب مباشرة
-const WHATSAPP_CONTACT_URL = 'https://api.whatsapp.com/message/4TYV7IWEUNAXN1';
+// زر "موقع خاص بك" — يفتح موقع HSG
+const OWN_SITE_URL = 'https://mohhsg.vercel.app/';
+const OWN_SITE_ICON = 'mohhsg-icon.png';
 
 const TRANSLATIONS = {
     en: {
@@ -796,9 +797,9 @@ const SupportArena: React.FC<{ lang: Language; supporters: Supporter[] }> = ({ l
                 <div className="absolute -bottom-10 left-0 w-72 h-72 rounded-full animate-aurora pointer-events-none" style={{ animationDelay: '-7s', background: 'radial-gradient(circle, rgba(139,92,246,0.22) 0%, rgba(139,92,246,0.09) 40%, transparent 68%)' }} aria-hidden="true" />
                 {/* locked direction: Streamlabs (mint) always right, Dokan (coral/violet) always left */}
                 <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-5" dir="rtl">
-                    <DonateGate lang={lang} title="PAYPAL" url="https://streamlabs.com/iabs/tip" color="#6FF2C4" markImg="/streamlabs-mark.png"
+                    <DonateGate lang={lang} title="PAYPAL" url="https://streamlabs.com/iabs/tip" color="#6FF2C4" markImg="streamlabs-mark.png"
                         label={lang === 'en' ? 'STREAMLABS' : 'ستريم لابس'} secure={lang === 'en' ? 'SECURE' : 'آمن'} cta={lang === 'en' ? 'Donate via PayPal' : 'ادعم عبر PayPal'} />
-                    <DonateGate lang={lang} title="DOKAN" url="https://tip.dokan.sa/abs" color="#FF7A59" color2="#8B5CF6" markImg="/creators-mark.png"
+                    <DonateGate lang={lang} title="DOKAN" url="https://tip.dokan.sa/abs" color="#FF7A59" color2="#8B5CF6" markImg="creators-mark.png"
                         label={lang === 'en' ? 'CREATORS • SEND TIP' : 'كريترز • دعم دكان'}
                         secure={lang === 'en' ? 'SECURE' : 'آمن'} cta={lang === 'en' ? 'Donate via Dokan' : 'ادعم عبر دكان'} />
                 </div>
@@ -1555,11 +1556,11 @@ export default function App() {
                                     </a>
                                 )}
                                 <p className="text-[11px] font-black tracking-[0.3em] text-white/50 mt-6 uppercase">{t.poweredBy}</p>
-                                <a href={WHATSAPP_CONTACT_URL} target="_blank" rel="noopener noreferrer"
-                                    className="group mt-4 inline-flex items-center gap-2 rounded-full border border-[#25D366]/40 bg-[#25D366]/10 px-4 py-2 text-[11px] sm:text-xs font-black text-[#25D366] transition-all duration-300 hover:bg-[#25D366]/20 hover:border-[#25D366]/70 hover:shadow-[0_0_24px_rgba(37,211,102,0.25)]">
-                                    <span className="scale-[0.85] block"><WhatsAppIcon className="w-5 h-5" /></span>
+                                <a href={OWN_SITE_URL} target="_blank" rel="noopener noreferrer"
+                                    className="group mt-4 inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] sm:text-xs font-black text-white/70 transition-all duration-300 hover:text-white hover:border-white/25 hover:bg-white/[0.08] hover:shadow-[0_8px_22px_rgba(0,0,0,0.45)]">
+                                    <img src={OWN_SITE_ICON} alt="" aria-hidden="true" loading="lazy" className="w-6 h-6 rounded-[8px] object-cover ring-1 ring-white/10 shadow-[0_2px_10px_rgba(0,0,0,0.55)]" />
                                     <span className="tracking-wide">{t.ownSite}</span>
-                                    <span className="text-white/50 group-hover:text-white/80 transition-colors">· {t.ownSiteBtn}</span>
+                                    <span className="text-white/30 group-hover:text-white/55 transition-colors">· {t.ownSiteBtn}</span>
                                 </a>
                                 <p className="text-[11px] text-white/35 mt-1">{t.footer}</p>
                                 <button onClick={() => { if (isAdmin) setShowAdminDashboard(true); else setShowAdminLogin(true); }}

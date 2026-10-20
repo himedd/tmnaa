@@ -26,7 +26,7 @@ const CONSOLE_LAYERS = (() => {
       <img
         key={`k${i}`}
         className="cs"
-        src="/ps5-console.png"
+        src="ps5-console.png"
         alt=""
         aria-hidden="true"
         style={{
@@ -47,7 +47,7 @@ const PAD_LAYERS = (() => {
       <img
         key={`t${i}`}
         className="pd th"
-        src="/ps5-dualsense.png"
+        src="ps5-dualsense.png"
         alt=""
         aria-hidden="true"
         style={{ '--tz': `${-i * 0.95}px`, '--bk': (0.95 - 0.55 * Math.pow(i / N, 0.8)).toFixed(3) } as React.CSSProperties}
@@ -454,10 +454,10 @@ export const ChatLegends: React.FC = () => {
                 <div className="in3">
                   <div className="duo">
                     {CONSOLE_LAYERS}
-                    <img className="cs f0" src="/ps5-console.png" alt="PlayStation 5 Pro" />
+                    <img className="cs f0" src="ps5-console.png" alt="PlayStation 5 Pro" />
                     <i className="pds"></i>
                     {PAD_LAYERS}
-                    <img className="pd" src="/ps5-dualsense.png" alt="DualSense" />
+                    <img className="pd" src="ps5-dualsense.png" alt="DualSense" />
                   </div>
                   <div className="cube3d">
                     {FACES.map((f) => (
@@ -496,7 +496,7 @@ export const ChatLegends: React.FC = () => {
                   >
                     <div className="in">
                       <div className="ogw">
-                        <img src="/og-badge.png" alt="OG" loading="lazy" />
+                        <img src="og-badge.png" alt="OG" loading="lazy" />
                       </div>
                       <div className="who">
                         <Avatar name={p.n} img={imgOf(p.n)} />
