@@ -17,45 +17,49 @@ const DAY_MS = 864e5;
 
 const FACES = ['fB', 'fL', 'fR', 'fD', 'fT', 'fF'];
 
-/* طبقات السماكة ثلاثية الأبعاد — تصريحية (يملكها React فلا تُمسح عند إعادة العرض) */
-const CONSOLE_LAYERS = (() => {
-  const arr: React.ReactNode[] = [];
-  const N = 20;
-  for (let i = N; i >= 1; i--) {
-    arr.push(
-      <img
-        key={`k${i}`}
-        className="cs"
-        src="ps5-console.png"
-        alt=""
-        aria-hidden="true"
-        style={{
-          transform: `translateZ(${-i * 0.8}px)`,
-          filter: `brightness(${(0.97 - 0.5 * Math.pow(i / N, 0.8)).toFixed(3)})` + (i === N ? ' drop-shadow(0 10px 12px #000b)' : ''),
-        }}
-      />,
-    );
-  }
-  return arr;
-})();
+/* ============================================================
+   آيفون 18 برو (برغندي) — نفس تصميم 98765890.html حرفياً
+   آيفون من الخلف (كاميرا ثلاثية) + آيفون من الأمام (شاشة) داخل ثلجة
+   ============================================================ */
+const AppleLogo: React.FC = () => (
+  <svg className="apl" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" />
+  </svg>
+);
 
-const PAD_LAYERS = (() => {
-  const arr: React.ReactNode[] = [];
-  const N = 13;
-  for (let i = N; i >= 1; i--) {
-    arr.push(
-      <img
-        key={`t${i}`}
-        className="pd th"
-        src="ps5-dualsense.png"
-        alt=""
-        aria-hidden="true"
-        style={{ '--tz': `${-i * 0.95}px`, '--bk': (0.95 - 0.55 * Math.pow(i / N, 0.8)).toFixed(3) } as React.CSSProperties}
-      />,
-    );
-  }
-  return arr;
-})();
+const PhoneDuo: React.FC = () => (
+  <div className="duo">
+    {/* آيفون من الخلف — الكاميرات الثلاث */}
+    <div className="ip ipb">
+      <div className="plat">
+        <i className="lens" style={{ left: '2px', top: '8px' } as React.CSSProperties} />
+        <i className="lens" style={{ left: '30px', top: '21px' } as React.CSSProperties} />
+        <i className="lens" style={{ left: '2px', top: '35px' } as React.CSSProperties} />
+        <i className="fls" />
+        <i className="mc" />
+        <i className="ld" />
+      </div>
+      <div className="gp" />
+      <AppleLogo />
+      <div className="shine" />
+    </div>
+    {/* آيفون من الأمام — الشاشة */}
+    <div className="ip ipf">
+      <div className="scr">
+        <i className="wa a1" />
+        <i className="wa a2" />
+        <i className="wa a3" />
+        <i className="wa a4" />
+        <i className="di2" />
+        <div className="shine" />
+      </div>
+      <i className="sb s1" />
+      <i className="sb s2" />
+      <i className="sb s3" />
+    </div>
+  </div>
+);
+
 const TM_LABELS = ['يوم', 'ساعة', 'دقيقة', 'ثانية'];
 const CONF_COLORS = ['#1f8bff', '#ffffff', '#53b1ff', '#2ee6ff', '#7aa8ff', '#b9dcff', '#ffc83d'];
 
@@ -278,7 +282,7 @@ export const ChatLegends: React.FC = () => {
         const d = 35 + R() * 45;
         sh += `<i class="shd" style="--s:${14 + R() * 34}px;--x:${Math.cos(a) * d}vmax;--y:${Math.sin(a) * d * 0.8}vmin;--r:${(R() - 0.5) * 900}deg"></i>`;
       }
-      f.innerHTML = `<div class="r2"></div><div class="gl"></div><div class="fstage"><div class="fl"><div class="spin"><div class="in3">${duo.outerHTML}</div></div></div></div>${sh}${cf}<div class="tt">🎉 مبروك${WINNER ? ' ' + WINNER : ''}! البلايستيشن صار جاهز 🎉<small>انتهى التحدي · 60 يوم</small></div><button class="x" type="button">إغلاق ✕</button><div class="flash"></div>`;
+      f.innerHTML = `<div class="r2"></div><div class="gl"></div><div class="fstage"><div class="fl"><div class="spin"><div class="in3">${duo.outerHTML}</div></div></div></div>${sh}${cf}<div class="tt">🎉 مبروك${WINNER ? ' ' + WINNER : ''}! الآيفون صار جاهز 🎉<small>انتهى التحدي · 60 يوم</small></div><button class="x" type="button">إغلاق ✕</button><div class="flash"></div>`;
       hero.appendChild(f);
       const st = f.querySelector('.fstage') as HTMLElement | null;
       if (st) {
@@ -327,7 +331,7 @@ export const ChatLegends: React.FC = () => {
     const done = () => {
       stageRef.current?.classList.add('melted');
       visRef.current?.classList.add('done');
-      if (noteRef.current) noteRef.current.textContent = '🎉 انتهى التحدي! مبروك، البلايستيشن صار جاهز';
+      if (noteRef.current) noteRef.current.textContent = '🎉 انتهى التحدي! مبروك، الآيفون صار جاهز';
       const bdg = root.querySelector('.bdg');
       if (bdg) bdg.textContent = '🎉 مبروك! انتهى التحدي';
       if (WINNER && cbnRef.current) cbnRef.current.textContent = `🎉 مبروك ${WINNER} 🎉`;
@@ -368,8 +372,13 @@ export const ChatLegends: React.FC = () => {
         const sMid = new Date(2026, 8, 18).getTime();
         dayRef.current.textContent = `يوم ${Math.max(1, Math.min(TOTAL, Math.round((tMid - sMid) / DAY_MS) + 1))} / ${TOTAL}`;
       }
-      if (!(window as any).__mpLock) root.style.setProperty('--mp', `${Math.min(1, (now - t0) / (TOTAL * DAY_MS))}`);
-      if (pbRef.current) pbRef.current.style.width = `${Math.min(100, ((now - t0) / (TOTAL * DAY_MS)) * 100)}%`;
+      /* progress = نسبة الذوبان — الثلج يذوب مع العدّاد بالضبط */
+      const mp = Math.min(1, Math.max(0, (now - t0) / (TOTAL * DAY_MS)));
+      if (!(window as any).__mpLock) root.style.setProperty('--mp', `${mp}`);
+      if (pbRef.current) pbRef.current.style.width = `${mp * 100}%`;
+      if (noteRef.current && ms) {
+        noteRef.current.innerHTML = `الوقت المتبقي على نهاية اليوم ${TOTAL} · <b>ذاب الثلج ${Math.round(mp * 100)}%</b>`;
+      }
       if (!ms) done();
     };
 
@@ -421,16 +430,15 @@ export const ChatLegends: React.FC = () => {
           </div>
         </div>
 
-        <div className="cl-ps">
-          <div className="card hero" ref={heroRef as React.RefObject<HTMLDivElement>}>
-            <div className="info">
-              <span className="bdg">🎁 جيف أواي كبير</span>
-              <h4>
-                بلايستيشن 5 برو
-                <br />
-                الإصدار الرقمي
-              </h4>
-              <p>كمّل التحدي 60 يوم بدون انقطاع، والثلج يذوب وتبقى البلايستيشن الجائزة.</p>
+        <div className="card hero" ref={heroRef as React.RefObject<HTMLDivElement>}>
+          <div className="info">
+            <span className="bdg">🎁 جيف أواي كبير</span>
+            <h4>
+              آيفون 18 برو
+              <br />
+              برغندي
+            </h4>
+            <p>كمّل التحدي 60 يوم بدون انقطاع، والثلج يذوب ويبقى الآيفون الجائزة.</p>
             <div className="tm" ref={tmRef}>
               {TM_LABELS.map((l) => (
                 <div key={l}>
@@ -452,13 +460,7 @@ export const ChatLegends: React.FC = () => {
             <div className="stage" ref={stageRef as React.RefObject<HTMLDivElement>}>
               <div className="spin">
                 <div className="in3">
-                  <div className="duo">
-                    {CONSOLE_LAYERS}
-                    <img className="cs f0" src="ps5-console.png" alt="PlayStation 5 Pro" />
-                    <i className="pds"></i>
-                    {PAD_LAYERS}
-                    <img className="pd" src="ps5-dualsense.png" alt="DualSense" />
-                  </div>
+                  <PhoneDuo />
                   <div className="cube3d">
                     {FACES.map((f) => (
                       <div key={f} className={`f ${f}`}></div>
@@ -470,10 +472,9 @@ export const ChatLegends: React.FC = () => {
             <div className="pud"></div>
             <div className="drips" ref={dripsRef}></div>
             <div className="cbn" ref={cbnRef}>
-              🎉 مبروك! البلايستيشن صار جاهز 🎉
+              🎉 مبروك! الآيفون صار جاهز 🎉
             </div>
           </div>
-        </div>
         </div>
 
         <div className="card ogc">
