@@ -32,7 +32,7 @@ const kickTime = (value?: string | null): number | null => {
     return Number.isNaN(ms) ? null : ms;
 };
 
-const CLAN = { latin: 'LEVEL ONE', ar: 'كلان ليفل ون', tag: '#StayOne' };
+const CLAN = { latin: 'LEVEL ONE', ar: 'كلان لفل ون', tag: '#StayOne' };
 
 /**
  * كاش آخر بث حي — صالح ثلاث ساعات فقط.
@@ -89,7 +89,6 @@ const TRANSLATIONS = {
     en: {
         status: 'LIVE NOW', statusOffline: 'OFFLINE',
         headerTitle: 'xlxwi STREAM HUB',
-        eyebrow: 'Clan Level One · Nonstop live',
         nameAr: 'Ali Al-Hashemi',
         nameLatin: 'ALI AL-HASHEMI',
         bio: 'Ali Al-Hashemi (xlxwi) broadcasts here daily. Games, challenges and nonstop interaction with the Level One clan.',
@@ -128,10 +127,9 @@ const TRANSLATIONS = {
     ar: {
         status: 'بث مباشر الآن', statusOffline: 'غير متصل حالياً',
         headerTitle: 'مركز xlxwi للبث المباشر',
-        eyebrow: 'كلان ليفل ون · تفاعل ما يوقف',
         nameAr: 'علي الهاشمي',
         nameLatin: 'ALI AL-HASHEMI',
-        bio: 'علي الهاشمي (xlxwi) يبث هنا يومياً — حياك الله. ألعاب، تحديات وتفاعل لا يتوقف مع كلان ليفل ون.',
+        bio: 'علي الهاشمي (xlxwi) يبث هنا يومياً — حياك الله. ألعاب، تحديات وتفاعل لا يتوقف مع كلان لفل ون.',
         tags: ['ألعاب', 'سوالف', 'بث يومي'],
         footer: '© 2026 xlxwi. جميع الحقوق محفوظة.',
         poweredBy: 'بدعم من HSG',
@@ -353,6 +351,7 @@ const Marquee: React.FC<{ lang: Language }> = ({ lang }) => {
             { kind: 'txt', label: 'علي الهاشمي', gold: true },
             { kind: 'txt', label: '21 سنة' },
             { kind: 'txt', label: 'الإمارات' },
+            { kind: 'txt', label: 'صانع محتوى مع لفل ون' },
             { kind: 'tag', label: 'شخصيات قراند' },
             { kind: 'char', img: 'char-scrab.webp', name: 'علي الهاشمي', role: 'مؤسس عصابة السكراب', tone: 'gold' },
             { kind: 'char', img: 'char-iaa.webp', name: 'علي عبدالله', role: 'قطاع IAA الاستخباراتي', tone: 'ice' },
@@ -361,13 +360,14 @@ const Marquee: React.FC<{ lang: Language }> = ({ lang }) => {
             { kind: 'txt', label: 'ALI AL-HASHEMI', gold: true },
             { kind: 'txt', label: 'AGE 21' },
             { kind: 'txt', label: 'UAE' },
+            { kind: 'txt', label: 'CREATOR — LEVEL ONE' },
             { kind: 'tag', label: 'GTA CHARACTERS' },
             { kind: 'char', img: 'char-scrab.webp', name: 'Ali Al-Hashemi', role: 'Founder — Scrab Gang', tone: 'gold' },
             { kind: 'char', img: 'char-iaa.webp', name: 'Ali Abdullah', role: 'IAA Intelligence Sector', tone: 'ice' },
         ];
-    /* الديسكتوب يجلب الصور فوراً؛ الجوال يتركها على راحتها */
-    const eager = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
-    // نصف المسار لازم يتجاوز عرض الشريط وإلا ظهر طرف فارغ عند اللفّ — ٣ مجموعات تكفي لأي شاشة
+    // صورتان فقط (~5KB لكل واحدة) — التحميل المسبقي أرخص من دائرة فاضية تظهر
+    // لحظة دخول الشخصية الشاشة، لأن الكسول ما يجلب إلا بعد مسافة قريبة من الشريط.
+    // نصف المسار لازم يتجاوز عرض الشريط وإلا ظهر طرف فارغ عند اللفّ — ٦ مجموعات تكفي لأي شاشة
     const row = Array.from({ length: 6 }, () => cells).flat();
     return (
         <div className="hq-strip" dir={ar ? 'rtl' : 'ltr'} aria-hidden="true">
@@ -385,8 +385,7 @@ const Marquee: React.FC<{ lang: Language }> = ({ lang }) => {
                         {c.kind === 'char' && (
                             <span className={`hq-char hq-char-${c.tone}`}>
                                 <img src={c.img} alt="" width={28} height={28}
-                                    loading={eager ? 'eager' : 'lazy'}
-                                    fetchPriority={eager ? 'high' : 'auto'} decoding="async" />
+                                    loading="eager" fetchPriority="high" decoding="async" />
                                 <span className="hq-char-body">
                                     <span className="hq-char-name">{c.name}</span>
                                     <span className="hq-char-role">{c.role}</span>
@@ -1582,11 +1581,7 @@ export default function App() {
                     <section id="top" className="pt-6 md:pt-10 pb-6 md:pb-8 overflow-clip">
                         <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-8 lg:gap-10 items-center justify-items-center lg:justify-items-stretch">
                             <div className="animate-fade-in-up w-full max-w-xl text-center lg:text-start order-2 lg:order-1">
-                                <div className="inline-flex items-center gap-2.5 rounded-full border border-gold/35 bg-gold/[0.07] px-4 py-1.5 mb-5">
-                                    <span className={`w-2 h-2 rounded-full shrink-0 ${streamInfo.isLive ? 'bg-[#E3B341] animate-pulse shadow-[0_0_10px_#E3B341]' : 'bg-[#C21E3A] animate-pulse shadow-[0_0_10px_#C21E3A]'}`} />
-                                    <span className="text-[10px] md:text-xs font-black tracking-[0.18em] text-white/80 uppercase">{t.eyebrow}</span>
-                                </div>
-                                <p className="text-white/50 font-bold text-xs sm:text-sm md:text-base mb-2">{t.nameAr} • <span dir="ltr" className="text-gold/55">ALI AL-HASHEMI</span></p>
+                                <p className="text-white/50 font-bold text-xs sm:text-sm md:text-base mb-2 mt-1">{t.nameAr} • <span dir="ltr" className="text-gold/55">ALI AL-HASHEMI</span></p>
                                 <h1 className="wm-mark relative font-gaming leading-none tracking-wide select-none text-[clamp(96px,24vw,180px)] lg:text-[180px]" dir="ltr" aria-label="xlxwi">
                                     <span aria-hidden="true" className="wm-depth wm-depth-2 font-gaming leading-none tracking-wide">XLXWI</span>
                                     <span aria-hidden="true" className="wm-depth wm-depth-1 font-gaming leading-none tracking-wide">XLXWI</span>
@@ -1600,8 +1595,8 @@ export default function App() {
                                 <div className="mt-3 inline-flex flex-wrap items-center justify-center lg:justify-start gap-2.5">
                                     <a href="https://x.com/level_one" target="_blank" rel="noopener noreferrer"
                                         className="clan-crest card-sheen" dir="ltr"
-                                        title={lang === 'ar' ? 'كلان ليفل ون على إكس' : 'Clan Level One on X'}
-                                        aria-label={lang === 'ar' ? 'كلان ليفل ون على إكس' : 'Clan Level One on X'}>
+                                        title={lang === 'ar' ? 'كلان لفل ون على إكس' : 'Clan Level One on X'}
+                                        aria-label={lang === 'ar' ? 'كلان لفل ون على إكس' : 'Clan Level One on X'}>
                                         <span className="clan-crest-shield" aria-hidden="true">
                                             <img src="level-one-mark.webp" alt="" width={271} height={330} />
                                             <b>01</b>

@@ -302,6 +302,14 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
   from { transform: translate3d(0, 0, 0); }
   to { transform: translate3d(-50%, 0, 0); }
 }
+/* بالعربي المسار ممدود إلى يسار الشريط (البداية على اليمين)، فالحركة لليسار
+   كانت تكشف طرفاً فارغاً من اليمين وتخلي المعلومات «تختفي لمّا تخلص».
+   عكس الاتجاه يخليها تتوالى بترتيبها الصحيح وبلا فراغ. */
+.hq-strip[dir="rtl"] .hq-track { animation-name: hq-run-rtl; }
+@keyframes hq-run-rtl {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(50%, 0, 0); }
+}
 @media (prefers-reduced-motion: reduce) {
   .hq-track { animation-duration: 240s; }
 }
