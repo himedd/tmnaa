@@ -26,12 +26,18 @@ export const HANDLES: Record<CountPlatform, string> = {
   snapchat: 'xlxwiii',
 };
 
+/**
+ * بذرة آخر قراءة موثّقة (31 أكتوبر 2026 من مصادر كل منصة الرسمية).
+ * لماذا لا تكون أصفاراً: لو فشل `/api/social` على فيركل — وإنستغرام يحجب
+ * عناوين السحابة كثيراً — يبقى البطاقة بلا رقم إطلاقاً عند زائر جديد ما
+ * عنده كاش. القراءة الحيّة تتجاوز هذه القيم دائماً وتحدّث الكاش.
+ */
 export const FALLBACK: SocialMediaStats = {
-  kick: 0,
-  instagram: 0,
-  tiktok: 0,
-  twitter: 72007,
-  discord: 0,
+  kick: 261372,
+  instagram: 8167,
+  tiktok: 26800,
+  twitter: 72037,
+  discord: 18150,
   snapchat: 30000, // رقم المالك — سناب ما ينشر عدّاده، يظهر مغّب
   whatsapp: 40000, // رقم المالك — لا يوجد API عام
 };

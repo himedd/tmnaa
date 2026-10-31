@@ -17,7 +17,7 @@ const LiveTheater = lazy(() => import('./components/LiveTheater').then(m => ({ d
 // --- Constants ---
 const BRAND_LOGO = "xlxwi-logo.webp";
 import { kickFetch } from './utils/kickApi';
-import { getAllSocialMediaStats, formatFollowerCount, readSocialCache, SOCIAL_TTL_MS } from './utils/socialMediaApi';
+import { getAllSocialMediaStats, formatFollowerCount, readSocialCache, SOCIAL_TTL_MS, FALLBACK } from './utils/socialMediaApi';
 import { fetchBotrixLeaderboard } from './utils/botrixApi';
 import { getTipLeaderboard, type TipSource, TipDonor, TipInterval } from './utils/supportersApi';
 
@@ -1029,9 +1029,13 @@ export default function App() {
     const [lang, setLang] = useState<Language>('ar');
     const [branding] = useState({ profileImage: BRAND_LOGO, bannerImage: SITE_BACKGROUND });
 
+    /* الأرقام مبدوءة على آخر قراءة موثّقة: كرت ما يطلع فاضي أبداً — لا قبل
+       وصول الرد ولا لو فشل (إنستغرام يحجب عناوين السحابة كثيراً). */
     const [socialStats, setSocialStats] = useState<Record<string, string>>({
-        'KICK': '', 'Snapchat': '', 'Instagram': '', 'TikTok': '',
-        'X': '', 'WhatsApp': '40K', 'Discord': ''
+        'KICK': formatFollowerCount(FALLBACK.kick!), 'Snapchat': formatFollowerCount(FALLBACK.snapchat!),
+        'Instagram': formatFollowerCount(FALLBACK.instagram!), 'TikTok': formatFollowerCount(FALLBACK.tiktok!),
+        'X': formatFollowerCount(FALLBACK.twitter!), 'WhatsApp': formatFollowerCount(FALLBACK.whatsapp!),
+        'Discord': formatFollowerCount(FALLBACK.discord!)
     });
     /** الأرقام الخام لكل منصة — تُجمع في "مجموع المتابعين" بالمربع الأول */
     const [socialRaw, setSocialRaw] = useState<Record<string, number>>({});

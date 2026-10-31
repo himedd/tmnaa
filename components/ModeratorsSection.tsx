@@ -156,6 +156,9 @@ const ShieldIcon: React.FC<{ className?: string }> = ({ className }) => (
 const ModeratorsSection: React.FC<{ lang: Language }> = ({ lang }) => {
   const [profiles, setProfiles] = useState<Record<string, ModProfile>>(() => readCache()?.data || {});
   const [loading, setLoading] = useState(true);
+  /* الديسكتوب: الصور والبانرات تُجلب فوراً وبأولوية عالية (شاشة كبيرة وموارد أوفر).
+     الجوال: يبقى lazy كما هو — أولوية الفتح الأول فوق كل شيء. */
+  const eager = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
 
   const t = {
     mod: lang === 'ar' ? 'مشرف' : 'MOD',
@@ -263,7 +266,8 @@ const ModeratorsSection: React.FC<{ lang: Language }> = ({ lang }) => {
                   <img
                     src={p.banner}
                     alt=""
-                    loading="lazy"
+                    loading={eager ? 'eager' : 'lazy'}
+                    fetchPriority={eager ? 'high' : 'auto'}
                     decoding="async"
                     width={600}
                     height={200}
@@ -316,7 +320,8 @@ const ModeratorsSection: React.FC<{ lang: Language }> = ({ lang }) => {
                       </span>
                       {p.avatar && (
                         <img
-                          src={p.avatar} alt={p.name} loading="lazy" decoding="async"
+                          src={p.avatar} alt={p.name} loading={eager ? 'eager' : 'lazy'}
+                          fetchPriority={eager ? 'high' : 'auto'} decoding="async"
                           width={200} height={200}
                           onError={(e) => { e.currentTarget.style.display = 'none'; }}
                           className="absolute inset-[2px] rounded-full object-cover bg-wine-950"
