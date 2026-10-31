@@ -2,6 +2,7 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import socialHandler from './api/social.ts';
+import kickHandler from './api/kick.ts';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
@@ -31,37 +32,19 @@ export default defineConfig(({ mode }) => {
               return;
             }
             if (req.url && req.url.startsWith('/api/kick')) {
-              // Parse the URL
-              const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-              const endpoint = url.searchParams.get('endpoint');
-              
-              if (!endpoint) {
-                res.statusCode = 400;
-                res.end(JSON.stringify({ error: 'Missing endpoint' }));
-                return;
-              }
-              
+              // ---- /api/kick : نفس دالة الإنتاج (api/kick.ts) بلا تكرار ----
+              // مهم: لوكتبناها يدوياً هنا كانت قائمة النطاقات المسموحة تنطبق على
+              // فيركل فقط، فيشتغل الموقع محلياً ويفشل منشوراً (خطأ أساطير الشات).
               try {
-                const targetUrl = Array.isArray(endpoint) ? endpoint[0] : endpoint;
-                
-                // Use built-in Node.js fetch (Node 18+)
-                // ملاحظة: UA مختصر فقط — الـ UA الكامل يفعّل حظر Kick الأمني (403)
-                const response = await fetch(targetUrl, {
-                  headers: {
-                    'Accept': 'application/json',
-                    'User-Agent': 'Mozilla/5.0',
-                  }
-                });
-                
-                const text = await response.text();
-                
+                const base = `http://${req.headers.host || 'localhost'}`;
+                const webRes = await kickHandler(new Request(new URL(req.url, base).toString(), { method: req.method || 'GET' }));
+                res.statusCode = webRes.status;
                 res.setHeader('Content-Type', 'application/json');
                 res.setHeader('Access-Control-Allow-Origin', '*');
-                res.statusCode = response.status;
-                res.end(text);
+                res.end(await webRes.text());
               } catch (err: any) {
                 res.statusCode = 500;
-                res.end(JSON.stringify({ error: err.message || 'Internal Server Error' }));
+                res.end(JSON.stringify({ error: err?.message || 'Internal Server Error' }));
               }
             } else {
               next();

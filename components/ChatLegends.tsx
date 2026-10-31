@@ -55,18 +55,23 @@ export const ChatLegends: React.FC = () => {
   /* ---------- البيانات الحية ---------- */
   useEffect(() => {
     let dead = false;
-    fetchBotrixLeaderboard()
-      .then((rows) => {
-        if (dead) return;
-        const sorted = [...rows].sort((a, b) => b.watchtime - a.watchtime || b.points - a.points);
-        /* watchtime من Botrix بالدقائق — القسمة على 60 للتحويل لساعات */
-        setData(sorted.map((e) => ({ n: e.name, p: e.points || 0, h: (e.watchtime || 0) / 60 })));
-      })
-      .catch(() => {
-        if (!dead) setData([]);
-      });
+    const load = () =>
+      fetchBotrixLeaderboard()
+        .then((rows) => {
+          if (dead) return;
+          const sorted = [...rows].sort((a, b) => b.watchtime - a.watchtime || b.points - a.points);
+          /* watchtime من Botrix بالدقائق (يتطابق مع النقاط 1:1 عند أغلب الأسماء) */
+          setData(sorted.map((e) => ({ n: e.name, p: e.points || 0, h: (e.watchtime || 0) / 60 })));
+        })
+        .catch(() => {
+          if (!dead) setData([]);
+        });
+    load();
+    /* محاولة أولى قد تسبق جهوزية البروكسي بعد النشر البارد */
+    const retry = setTimeout(load, 6000);
     return () => {
       dead = true;
+      clearTimeout(retry);
     };
   }, []);
 

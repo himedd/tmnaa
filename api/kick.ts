@@ -7,7 +7,13 @@ export const config = {
  * البروكسي عام على الإنترنت، لذا يُسمح فقط بنطاقات البيانات التي يستهلكها الموقع.
  * بدونه يتحول إلى مفتاح تمرير مجاني لأي عنوان (استهلاك رصيد فيركل + SSRF).
  */
-const ALLOWED_HOSTS = new Set(['kick.com', 'web.kick.com', 'streamlabs.com', 'api.creators.sa']);
+const ALLOWED_HOSTS = new Set([
+  'kick.com', // يشمل web.kick.com و files.kick.com عبر فحص النطاق الفرعي
+  'streamlabs.com',
+  'api.creators.sa',
+  'botrix.live', // أساطير الشات + ساعات مشاهدة الكلان
+  'api.fxtwitter.com', // صور المشرفين من إكس
+]);
 
 const isAllowed = (raw: string): boolean => {
   let url: URL;

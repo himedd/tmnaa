@@ -1189,14 +1189,21 @@ export default function App() {
     // ساعات مشاهدة الكلان — نفس مصدر "أساطير الشات" (كاش 5 دقائق)
     useEffect(() => {
         let dead = false;
-        fetchBotrixLeaderboard()
-            .then(rows => {
-                if (dead || rows.length === 0) return;
-                const minutes = rows.reduce((sum, r) => sum + (r.watchtime || 0), 0);
-                setClanHours(Math.round(minutes / 60));
-            })
-            .catch(() => {});
-        return () => { dead = true; };
+        const load = () =>
+            fetchBotrixLeaderboard()
+                .then(rows => {
+                    if (dead || rows.length === 0) return;
+                    // watchtime بالدقائق عند بوتريكس
+                    setClanHours(Math.round(rows.reduce((sum, r) => sum + (r.watchtime || 0), 0) / 60));
+                })
+                .catch(() => {});
+        load();
+        // المحاولة الأولى تسبق أحياناً انتهاء كاش المتصفح → إعادة محاولة واحدة فقط
+        const retry = setTimeout(load, 6000);
+        return () => {
+            dead = true;
+            clearTimeout(retry);
+        };
     }, []);
 
     const totalFollowers = useMemo(
