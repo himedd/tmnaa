@@ -417,21 +417,8 @@ const CountUp: React.FC<{ value: number; duration?: number }> = ({ value, durati
 // --- Last Session Report: MISSION DEBRIEF edition (rich Kick data) ---
 const LastSessionReport: React.FC<{ lang: Language; data: any; clips: any[]; past?: any[]; onPlay: (t: MediaTarget) => void }> = ({ lang, data, clips, past = [], onPlay }) => {
     if (!data) return null;
-    const timeAgo = (date: string) => {
-        if (!date) return '---';
-        const now = new Date(); const pastD = new Date(date);
-        if (isNaN(pastD.getTime())) return '---';
-        const diff = Math.floor((now.getTime() - pastD.getTime()) / 1000);
-        if (diff < 60) return lang === 'en' ? `${diff}s ago` : `منذ ${diff} ثانية`;
-        if (diff < 3600) return lang === 'en' ? `${Math.floor(diff / 60)}m ago` : `منذ ${Math.floor(diff / 60)} دقيقة`;
-        if (diff < 86400) return lang === 'en' ? `${Math.floor(diff / 3600)}h ago` : `منذ ${Math.floor(diff / 3600)} ساعة`;
-        return lang === 'en' ? `${Math.floor(diff / 86400)}d ago` : `منذ ${Math.floor(diff / 86400)} يوم`;
-    };
-    /** مدة كيك (v2) بالميلي ثانية دائماً */
-    const formatDuration = (val: number) => {
-        const totalSeconds = Math.floor((Number(val) || 0) / 1000);
-        return `${Math.floor(totalSeconds / 3600)}h ${Math.floor((totalSeconds % 3600) / 60)}m`;
-    };
+    const timeAgo = (date: string) => timeAgoLang(date, lang);
+    const formatDuration = fmtDurMs;
     const t = TRANSLATIONS[lang] as any;
     const thumbnail = data.thumbnail?.url || data.thumbnail?.src || (typeof data.thumbnail === 'string' ? data.thumbnail : '') || (data.responsive_url) || SITE_BACKGROUND;
     const views = Number(data.views ?? data.video?.views ?? 0);
@@ -679,7 +666,46 @@ const BRAND_GRADIENTS: Record<string, string> = {
 };
 
 // --- Social Card — premium edition (same data + behavior) ---
-const SocialCard: React.FC<{ social: SocialLink; index: number; featured?: boolean; live?: boolean; lang: Language }> = ({ social, index, featured = false, live = false, lang }) => {
+/** «منذ كذا» بحسب اللغة — مشترك بين تقرير الجلسة وبطاقة كيك */
+const timeAgoLang = (date: string, lang: Language): string => {
+    if (!date) return '---';
+    const now = new Date(); const pastD = new Date(date);
+    if (isNaN(pastD.getTime())) return '---';
+    const diff = Math.floor((now.getTime() - pastD.getTime()) / 1000);
+    if (diff < 60) return lang === 'en' ? `${diff}s ago` : `منذ ${diff} ثانية`;
+    if (diff < 3600) return lang === 'en' ? `${Math.floor(diff / 60)}m ago` : `منذ ${Math.floor(diff / 60)} دقيقة`;
+    if (diff < 86400) return lang === 'en' ? `${Math.floor(diff / 3600)}h ago` : `منذ ${Math.floor(diff / 3600)} ساعة`;
+    return lang === 'en' ? `${Math.floor(diff / 86400)}d ago` : `منذ ${Math.floor(diff / 86400)} يوم`;
+};
+/** مدة كيك (v2) بالميلي ثانية دائماً */
+const fmtDurMs = (val: number) => {
+    const totalSeconds = Math.floor((Number(val) || 0) / 1000);
+    return `${Math.floor(totalSeconds / 3600)}h ${Math.floor((totalSeconds % 3600) / 60)}m`;
+};
+/**
+ * عدّاد بالساعات:الدقائق:الثواني. نفضّله على «2س 36د» لأن وحدات عربية بين أرقام
+ * داخل عنصر dir=ltr يقلب ترتيبها عرضاً (تظهر «س 36» مقلوبة)، والأرقام الصرفة محصّنة.
+ */
+const fmtClock = (ms: number) => {
+    const s = Math.max(0, Math.floor((Number(ms) || 0) / 1000));
+    return `${Math.floor(s / 3600)}:${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+};
+
+/** عدّاد البث الحي — يعيد رسم نفسه وحده كل ثانية، لا الصفحة كلها */
+const LiveClock: React.FC<{ since: number | null }> = ({ since }) => {
+    const [now, setNow] = useState(() => Date.now());
+    useEffect(() => {
+        if (!since) return;
+        const id = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(id);
+    }, [since]);
+    return <span dir="ltr">{since ? fmtClock(now - since) : '0:00:00'}</span>;
+};
+
+const SocialCard: React.FC<{
+    social: SocialLink; index: number; featured?: boolean; live?: boolean; lang: Language;
+    status?: string; stats?: { label: string; value: React.ReactNode }[];
+}> = ({ social, index, featured = false, live = false, lang, status, stats = [] }) => {
     const [hover, setHover] = useState(false);
     const [launching, setLaunching] = useState(false);
     const [pressed, setPressed] = useState(false);
@@ -704,7 +730,7 @@ const SocialCard: React.FC<{ social: SocialLink; index: number; featured?: boole
             {/* top energy line */}
             <span className="absolute top-0 start-6 end-6 h-[2.5px] rounded-full transition-all duration-500" style={{ background: `linear-gradient(90deg, transparent, ${brand}, transparent)`, opacity: active ? 1 : 0.3, boxShadow: active ? `0 0 18px ${brand}` : 'none' }} />
             {launching && <span className="absolute bottom-0 start-0 h-1 animate-charge z-30" style={{ width: '100%', backgroundColor: brand, boxShadow: `0 0 12px ${brand}` }} />}
-            <div className={`relative p-2.5 sm:p-4 lg:p-5 flex items-center gap-2 sm:gap-3.5 lg:gap-4 ${featured ? 'flex-1 min-h-[104px] sm:min-h-[128px]' : 'min-h-[88px] sm:min-h-[104px]'}`}>
+            <div className={`relative p-2.5 sm:p-4 lg:p-5 flex items-center gap-2 sm:gap-3.5 lg:gap-4 ${featured ? 'min-h-[96px] sm:min-h-[112px]' : 'min-h-[88px] sm:min-h-[104px]'}`}>
                 {/* icon medallion */}
                 <div className={`${featured ? 'w-[52px] h-[52px] sm:w-[60px] sm:h-[60px] lg:w-[68px] lg:h-[68px]' : 'w-[42px] h-[42px] sm:w-[52px] sm:h-[52px] lg:w-[60px] lg:h-[60px]'} rounded-[14px] sm:rounded-[18px] flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-[1.06] group-hover:-rotate-3 [&_svg]:w-[62%] [&_svg]:h-[62%]`}
                     style={{
@@ -731,7 +757,7 @@ const SocialCard: React.FC<{ social: SocialLink; index: number; featured?: boole
                     </div>
                     <p className={`font-black text-white truncate leading-tight mt-0.5 ${featured ? 'text-[17px] sm:text-[22px] lg:text-2xl' : 'text-[13px] sm:text-[15px] lg:text-[17px]'}`} dir="ltr">{social.username}</p>
                     <div className="flex items-center gap-1 sm:gap-1.5 mt-1 min-w-0">
-                        {social.followerCount && (
+                        {!featured && social.followerCount && (
                             <span className={`inline-flex items-center gap-1 shrink-0 text-[10px] sm:text-[11px] font-black text-white/85 ${social.name === 'Snapchat' ? 'blur-[3px] select-none' : ''}`} dir="ltr">
                                 <svg className="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>
                                 {social.followerCount}
@@ -751,9 +777,31 @@ const SocialCard: React.FC<{ social: SocialLink; index: number; featured?: boole
                     <svg className="w-4 h-4 sm:w-5 sm:h-5 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                 </span>
             </div>
-            {/* البطاقة الرئيسية (كيك) عمودية: شريط سفلي يملأ الارتفاع ويوضّح الحالة */}
+            {/* البطاقة الرئيسية (كيك) عمودية: الحالة + أرقام حقيقية تملأ الطول */}
+            {featured && (status || stats.length > 0) && (
+                <div className="relative px-2.5 sm:px-4 lg:px-5">
+                    <div className="h-px bg-gradient-to-l from-transparent via-gold/30 to-transparent" />
+                    {status && (
+                        <div className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2">
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${live ? 'bg-[#C21E3A] animate-pulse shadow-[0_0_8px_rgba(194,30,58,0.9)]' : 'bg-gold/60'}`} />
+                            <span className="text-[10.5px] sm:text-[11.5px] font-black text-white/70 truncate">{status}</span>
+                        </div>
+                    )}
+                    {stats.length > 0 && (
+                        <div className={`mt-2.5 grid gap-1.5 ${stats.length >= 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                            {stats.map((s) => (
+                                <div key={s.label} className="min-w-0 rounded-xl border border-white/[0.07] bg-gradient-to-b from-white/[0.055] to-transparent px-1 py-2 sm:py-2.5 text-center">
+                                    <p className="font-gaming text-[14px] sm:text-[16px] leading-none text-gold-light truncate" dir="ltr">{s.value}</p>
+                                    <p className="mt-1.5 text-[9px] sm:text-[10px] font-bold text-white/45 leading-tight truncate">{s.label}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+            {/* شريط الطلب السفلي: يوضح حالة الدخول ويملأ بقية الارتفاع */}
             {featured && (
-                <div className="relative mt-auto px-2.5 sm:px-4 lg:px-5 pb-3 sm:pb-4 lg:pb-5">
+                <div className="relative mt-auto pt-2.5 px-2.5 sm:px-4 lg:px-5 pb-3 sm:pb-4 lg:pb-5">
                     <div className="flex items-center justify-center gap-2 rounded-2xl px-4 py-3 bg-gradient-to-b from-gold-light to-gold text-wine-950 font-black text-[13px] sm:text-[15px] shadow-[0_10px_28px_-10px_rgba(227,179,65,0.75)] transition-transform duration-300 group-hover:scale-[1.02]">
                         <span className={`w-2 h-2 rounded-full shrink-0 ${live ? 'bg-[#C21E3A] animate-pulse shadow-[0_0_8px_rgba(194,30,58,0.9)]' : 'bg-wine-950/45'}`} />
                         {live
@@ -1408,6 +1456,28 @@ export default function App() {
     const snapCard = socials.find(s => s.name === 'Snapchat');
     const restSocials = socials.filter(s => s.name !== 'KICK' && s.name !== 'Snapchat');
 
+    /* البطاقة الطويلة (كيك): أرقام حقيقية فقط — من البث الحي وهو على الهواء،
+       وإلا من آخر جلسة مسجّلة. ما نختلق بديل: «—» أوضح من رقم مخترع. */
+    const lastViews = Number(lastSession?.views ?? lastSession?.video?.views ?? 0);
+    const lastDur = Number(lastSession?.duration ?? 0);
+    const followersStat = { label: lang === 'ar' ? 'متابع' : 'Followers', value: kickCard?.followerCount || '—' };
+    const kickStats = streamInfo.isLive
+        ? [
+            { label: lang === 'ar' ? 'مشاهدون الآن' : 'Watching now', value: streamInfo.viewers > 0 ? streamInfo.viewers.toLocaleString('en-US') : '—' },
+            { label: lang === 'ar' ? 'على الهواء منذ' : 'On air for', value: <LiveClock since={streamInfo.startedAt} /> },
+            followersStat,
+        ]
+        : [
+            followersStat,
+            { label: lang === 'ar' ? 'مشاهدات آخر بث' : 'Last stream views', value: lastViews > 0 ? formatFollowerCount(lastViews) : '—' },
+            { label: lang === 'ar' ? 'مدة آخر بث' : 'Last stream length', value: lastDur > 0 ? fmtClock(lastDur) : '—' },
+        ];
+    const kickStatus = streamInfo.isLive
+        ? (lang === 'ar' ? `متصل الآن${streamInfo.category ? ` • ${streamInfo.category}` : ''}` : `LIVE NOW${streamInfo.category ? ` • ${streamInfo.category}` : ''}`)
+        : lastSession?.created_at
+            ? (lang === 'ar' ? `غير متصل • آخر بث ${timeAgoLang(String(lastSession.created_at), lang)}` : `Offline • last stream ${timeAgoLang(String(lastSession.created_at), lang)}`)
+            : (lang === 'ar' ? 'غير متصل حالياً' : 'Currently offline');
+
     useEffect(() => {
         document.documentElement.lang = lang;
         document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
@@ -1686,7 +1756,7 @@ export default function App() {
                         <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 md:gap-4 lg:auto-rows-[1fr]">
                             {kickCard && (
                                 <Reveal delay={0} className="col-span-2 lg:col-span-1 lg:row-span-3">
-                                    <SocialCard social={kickCard} index={0} featured live={streamInfo.isLive} lang={lang} />
+                                    <SocialCard social={kickCard} index={0} featured live={streamInfo.isLive} lang={lang} status={kickStatus} stats={kickStats} />
                                 </Reveal>
                             )}
                             {restSocials.map((s, i) => (
