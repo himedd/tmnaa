@@ -332,6 +332,76 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
   background: linear-gradient(140deg, #fff3d6, #e3b341 55%, #8a5e12);
   box-shadow: 0 0 12px rgba(227, 179, 65, 0.65);
 }
+/* عنوان مجموعة داخل الشريط — خيطان رفيعان يحضنان الكلمة */
+.hq-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.3em;
+  color: rgba(227, 179, 65, 0.55);
+}
+.hq-tag-line {
+  width: 26px;
+  height: 1px;
+  flex: none;
+  background: linear-gradient(90deg, transparent, rgba(227, 179, 65, 0.6));
+}
+.hq-tag-line:last-child { transform: scaleX(-1); }
+/* بطاقة شخصية: صورة دائرية + اسم + انتساب — الفرق بين الشخصيتين بلون الحلقة */
+.hq-char {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding-block: 5px;
+  padding-inline-start: 6px;
+  padding-inline-end: 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(227, 179, 65, 0.24);
+  background: linear-gradient(155deg, rgba(62, 14, 26, 0.92), rgba(18, 3, 7, 0.94));
+  box-shadow: inset 0 1px 0 rgba(255, 243, 214, 0.08), 0 6px 18px -10px rgba(0, 0, 0, 0.9);
+}
+.hq-char img {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 999px;
+  object-fit: cover;
+  background: #120307;
+}
+.hq-char-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.18;
+}
+.hq-char-name {
+  font-size: 12.5px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #f7e3ae;
+}
+.hq-char-role {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: rgba(255, 247, 236, 0.5);
+}
+/* السكراب = ذهب المؤسس · IAA = فضي استخباراتي هادئ */
+.hq-char-gold img { box-shadow: 0 0 0 1.5px rgba(227, 179, 65, 0.75), 0 0 16px -2px rgba(227, 179, 65, 0.5); }
+.hq-char-gold .hq-char-name { color: #e3b341; }
+.hq-char-ice { border-color: rgba(190, 208, 222, 0.22); }
+.hq-char-ice img { box-shadow: 0 0 0 1.5px rgba(190, 208, 222, 0.6), 0 0 16px -3px rgba(190, 208, 222, 0.35); }
+.hq-char-ice .hq-char-name { color: #cfdde8; }
+@media (min-width: 768px) {
+  .hq-char-name { font-size: 13.5px; }
+  .hq-char-role { font-size: 11px; }
+}
+/* الجوال: الشريط ما يسحب أولوية فوق الفتح الأول */
+@media (max-width: 767px) {
+  .hq-track { animation-duration: 120s; }
+}
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -468,6 +538,32 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
     linear-gradient(150deg, rgba(62, 14, 26, 0.92), rgba(18, 3, 7, 0.95)) padding-box,
     linear-gradient(120deg, rgba(255, 243, 214, 0.85), #e3b341 32%, #8a5e12 62%, #f7e3ae 100%) border-box;
   box-shadow: inset 0 1px 0 rgba(255, 243, 214, 0.12), 0 18px 40px -20px rgba(0, 0, 0, 0.95), 0 0 26px -8px rgba(227, 179, 65, 0.35);
+  transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+/* الدرع صار رابطاً لحساب الكلان — إشارة ↗ صغيرة + رفع خفيف عند المرور */
+.clan-crest:hover {
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255, 243, 214, 0.16), 0 22px 46px -20px rgba(0, 0, 0, 0.95), 0 0 36px -6px rgba(227, 179, 65, 0.6);
+}
+.clan-crest:active { transform: translateY(0) scale(0.985); }
+.clan-crest:focus-visible { outline: 2px solid #e3b341; outline-offset: 3px; }
+.clan-crest-go {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin-inline-start: 3px;
+  border-radius: 8px;
+  border: 1px solid rgba(227, 179, 65, 0.35);
+  color: rgba(247, 227, 174, 0.72);
+  transition: color 0.2s var(--ease), background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.clan-crest-go svg { width: 12px; height: 12px; }
+.clan-crest:hover .clan-crest-go {
+  color: #1b0509;
+  border-color: transparent;
+  background: linear-gradient(150deg, #fff3d6, #e3b341 60%, #b8860b);
 }
 .clan-crest-shield {
   position: relative;
@@ -538,9 +634,8 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
   font-weight: 900;
   letter-spacing: 0.06em;
   box-shadow: 0 0 22px -8px rgba(228, 80, 106, 0.8);
-  transition: transform 0.2s var(--ease), color 0.2s, border-color 0.2s;
+  user-select: none;
 }
-.clan-tag:hover { transform: translateY(-2px); color: #fff3d6; border-color: rgba(247, 227, 174, 0.75); }
 .clan-ar {
   font-family: "Cairo", "Tajawal", sans-serif;
   font-size: 12px;

@@ -340,18 +340,59 @@ const DeferredMount: React.FC<{ children: React.ReactNode; rootMargin?: string; 
     return <div ref={ref} className="h-full" style={show ? undefined : { minHeight }}>{show ? children : null}</div>;
 };
 
+/** خلية في شريط الهوية: معلومة نص، عنوان مجموعة، أو شخصية بصورة */
+type MarqueeCell =
+    | { kind: 'txt'; label: string; gold?: boolean }
+    | { kind: 'tag'; label: string }
+    | { kind: 'char'; img: string; name: string; role: string; tone: 'gold' | 'ice' };
+
 const Marquee: React.FC<{ lang: Language }> = ({ lang }) => {
-    const items = lang === 'ar'
-        ? ['بث يومي مباشر', 'كلان ليفل ون', '#StayOne', 'أسود الذهب', 'تفاعل لا يتوقف', 'ألعاب وتحديات', 'سوالف وفعاليات']
-        : ['DAILY LIVE', 'CLAN LEVEL ONE', '#STAYONE', 'GOLDEN LION', 'NONSTOP HYPE', 'GAMES & CHALLENGES', 'CHATTING & EVENTS'];
+    const ar = lang === 'ar';
+    const cells: MarqueeCell[] = ar
+        ? [
+            { kind: 'txt', label: 'علي الهاشمي', gold: true },
+            { kind: 'txt', label: '21 سنة' },
+            { kind: 'txt', label: 'الإمارات' },
+            { kind: 'tag', label: 'شخصيات قراند' },
+            { kind: 'char', img: 'char-scrab.webp', name: 'علي الهاشمي', role: 'مؤسس عصابة السكراب', tone: 'gold' },
+            { kind: 'char', img: 'char-iaa.webp', name: 'علي عبدالله', role: 'قطاع IAA الاستخباراتي', tone: 'ice' },
+        ]
+        : [
+            { kind: 'txt', label: 'ALI AL-HASHEMI', gold: true },
+            { kind: 'txt', label: 'AGE 21' },
+            { kind: 'txt', label: 'UAE' },
+            { kind: 'tag', label: 'GTA CHARACTERS' },
+            { kind: 'char', img: 'char-scrab.webp', name: 'Ali Al-Hashemi', role: 'Founder — Scrab Gang', tone: 'gold' },
+            { kind: 'char', img: 'char-iaa.webp', name: 'Ali Abdullah', role: 'IAA Intelligence Sector', tone: 'ice' },
+        ];
+    /* الديسكتوب يجلب الصور فوراً؛ الجوال يتركها على راحتها */
+    const eager = typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches;
     // نصف المسار لازم يتجاوز عرض الشريط وإلا ظهر طرف فارغ عند اللفّ — ٣ مجموعات تكفي لأي شاشة
-    const row = Array.from({ length: 6 }, () => items).flat();
+    const row = Array.from({ length: 6 }, () => cells).flat();
     return (
-        <div className="hq-strip" dir="ltr" aria-hidden="true">
+        <div className="hq-strip" dir={ar ? 'rtl' : 'ltr'} aria-hidden="true">
             <div className="hq-track">
-                {row.map((label, i) => (
+                {row.map((c, i) => (
                     <span key={i} className="hq-item">
-                        <span className={i % 2 ? 'hq-txt' : 'hq-txt hq-txt-gold'}>{label}</span>
+                        {c.kind === 'txt' && <span className={c.gold ? 'hq-txt hq-txt-gold' : 'hq-txt'}>{c.label}</span>}
+                        {c.kind === 'tag' && (
+                            <span className="hq-tag">
+                                <span className="hq-tag-line" />
+                                {c.label}
+                                <span className="hq-tag-line" />
+                            </span>
+                        )}
+                        {c.kind === 'char' && (
+                            <span className={`hq-char hq-char-${c.tone}`}>
+                                <img src={c.img} alt="" width={28} height={28}
+                                    loading={eager ? 'eager' : 'lazy'}
+                                    fetchPriority={eager ? 'high' : 'auto'} decoding="async" />
+                                <span className="hq-char-body">
+                                    <span className="hq-char-name">{c.name}</span>
+                                    <span className="hq-char-role">{c.role}</span>
+                                </span>
+                            </span>
+                        )}
                         <span className="hq-dia" />
                     </span>
                 ))}
@@ -643,7 +684,7 @@ const BRAND_GRADIENTS: Record<string, string> = {
 };
 
 // --- Social Card — premium edition (same data + behavior) ---
-const SocialCard: React.FC<{ social: SocialLink; index: number; featured?: boolean; lang: Language }> = ({ social, index, featured = false, lang }) => {
+const SocialCard: React.FC<{ social: SocialLink; index: number; featured?: boolean; live?: boolean; lang: Language }> = ({ social, index, featured = false, live = false, lang }) => {
     const [hover, setHover] = useState(false);
     const [launching, setLaunching] = useState(false);
     const [pressed, setPressed] = useState(false);
@@ -657,7 +698,7 @@ const SocialCard: React.FC<{ social: SocialLink; index: number; featured?: boole
     };
     const active = hover || launching;
     const card = (
-        <div className={`card-sheen relative h-full rounded-[22px] border bg-wine-900/92 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-active:translate-y-0 group-active:scale-[0.985] ${launching ? 'glitch-active' : ''} ${pressed ? 'scale-[0.985]' : ''}`}
+        <div className={`card-sheen relative h-full rounded-[22px] border bg-wine-900/92 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-active:translate-y-0 group-active:scale-[0.985] ${featured ? 'flex flex-col' : ''} ${launching ? 'glitch-active' : ''} ${pressed ? 'scale-[0.985]' : ''}`}
             style={{ borderColor: launching ? brand : active ? `${brand}99` : 'rgba(255,255,255,0.09)', boxShadow: active ? `0 18px 44px -16px ${brand}66, inset 0 1px 0 rgba(255,255,255,0.08)` : '0 10px 28px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
             {/* brand wash */}
             <div className="absolute inset-0 pointer-events-none transition-opacity duration-500" style={{ background: BRAND_GRADIENTS[social.name] || `linear-gradient(135deg, ${brand}22, transparent 60%)`, opacity: active ? 1 : 0.75 }} />
@@ -668,7 +709,7 @@ const SocialCard: React.FC<{ social: SocialLink; index: number; featured?: boole
             {/* top energy line */}
             <span className="absolute top-0 start-6 end-6 h-[2.5px] rounded-full transition-all duration-500" style={{ background: `linear-gradient(90deg, transparent, ${brand}, transparent)`, opacity: active ? 1 : 0.3, boxShadow: active ? `0 0 18px ${brand}` : 'none' }} />
             {launching && <span className="absolute bottom-0 start-0 h-1 animate-charge z-30" style={{ width: '100%', backgroundColor: brand, boxShadow: `0 0 12px ${brand}` }} />}
-            <div className={`relative p-2.5 sm:p-4 lg:p-5 flex items-center gap-2 sm:gap-3.5 lg:gap-4 ${featured ? 'min-h-[104px] sm:min-h-[128px]' : 'min-h-[88px] sm:min-h-[104px]'}`}>
+            <div className={`relative p-2.5 sm:p-4 lg:p-5 flex items-center gap-2 sm:gap-3.5 lg:gap-4 ${featured ? 'flex-1 min-h-[104px] sm:min-h-[128px]' : 'min-h-[88px] sm:min-h-[104px]'}`}>
                 {/* icon medallion */}
                 <div className={`${featured ? 'w-[52px] h-[52px] sm:w-[60px] sm:h-[60px] lg:w-[68px] lg:h-[68px]' : 'w-[42px] h-[42px] sm:w-[52px] sm:h-[52px] lg:w-[60px] lg:h-[60px]'} rounded-[14px] sm:rounded-[18px] flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-[1.06] group-hover:-rotate-3 [&_svg]:w-[62%] [&_svg]:h-[62%]`}
                     style={{
@@ -715,19 +756,31 @@ const SocialCard: React.FC<{ social: SocialLink; index: number; featured?: boole
                     <svg className="w-4 h-4 sm:w-5 sm:h-5 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                 </span>
             </div>
+            {/* البطاقة الرئيسية (كيك) عمودية: شريط سفلي يملأ الارتفاع ويوضّح الحالة */}
+            {featured && (
+                <div className="relative mt-auto px-2.5 sm:px-4 lg:px-5 pb-3 sm:pb-4 lg:pb-5">
+                    <div className="flex items-center justify-center gap-2 rounded-2xl px-4 py-3 bg-gradient-to-b from-gold-light to-gold text-wine-950 font-black text-[13px] sm:text-[15px] shadow-[0_10px_28px_-10px_rgba(227,179,65,0.75)] transition-transform duration-300 group-hover:scale-[1.02]">
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${live ? 'bg-[#C21E3A] animate-pulse shadow-[0_0_8px_rgba(194,30,58,0.9)]' : 'bg-wine-950/45'}`} />
+                        {live
+                            ? (lang === 'ar' ? 'الآن مباشر — ادخل البث' : 'LIVE NOW — JOIN IN')
+                            : (lang === 'ar' ? 'ادخل القناة' : 'OPEN CHANNEL')}
+                    </div>
+                </div>
+            )}
             {/* bottom fill line */}
             <span className="absolute bottom-0 start-0 h-[2px] transition-all duration-500" style={{ width: active ? '100%' : '0%', background: brand, boxShadow: `0 0 10px ${brand}` }} />
         </div>
     );
     return (
-        <a href={social.url} onClick={go} onMouseEnter={() => setHover(true)} onMouseLeave={() => { setHover(false); setPressed(false); }}
+        <a href={social.url} onClick={go}
+            onMouseEnter={() => setHover(true)} onMouseLeave={() => { setHover(false); setPressed(false); }}
             onTouchStart={() => setPressed(true)} onTouchEnd={() => setPressed(false)}
             style={{ animationDelay: `${Math.min(index * 60, 400)}ms` }}
-            className={`group relative block animate-fade-in-up select-none rounded-[22px] ${launching ? 'z-40' : ''}`}
+            className={`group relative block h-full animate-fade-in-up select-none rounded-[22px] ${launching ? 'z-40' : ''}`}
             title={`${social.name} - xlxwi Official`} aria-label={lang === 'ar' ? `تابع xlxwi على ${social.name}` : `Visit xlxwi on ${social.name}`}>
             {featured ? (
-                <div className="rounded-[24px] p-[1.5px] bg-gradient-to-l from-gold-light via-gold/50 to-crimson/70 shadow-[0_0_35px_rgba(227,179,65,0.22)]">
-                    <div className="rounded-[22.5px] bg-wine-950">{card}</div>
+                <div className="h-full rounded-[24px] p-[1.5px] bg-gradient-to-l from-gold-light via-gold/50 to-crimson/70 shadow-[0_0_35px_rgba(227,179,65,0.22)]">
+                    <div className="h-full rounded-[22.5px] bg-wine-950">{card}</div>
                 </div>
             ) : (
                 <>
@@ -1543,9 +1596,12 @@ export default function App() {
                                     <span aria-hidden="true" className="wm-sheen font-gaming leading-none tracking-wide z-20">XLXWI</span>
                                 </h1>
                                 <p className="font-gaming text-xl sm:text-2xl md:text-4xl text-stroke mt-1 tracking-wide" dir="ltr" aria-hidden="true">STAY ONE</p>
-                                {/* Clan Level One — درع الكلان */}
+                                {/* Clan Level One — درع الكلان: هو الزر الوحيد القابل للضغط هنا */}
                                 <div className="mt-3 inline-flex flex-wrap items-center justify-center lg:justify-start gap-2.5">
-                                    <div className="clan-crest card-sheen" dir="ltr">
+                                    <a href="https://x.com/level_one" target="_blank" rel="noopener noreferrer"
+                                        className="clan-crest card-sheen" dir="ltr"
+                                        title={lang === 'ar' ? 'كلان ليفل ون على إكس' : 'Clan Level One on X'}
+                                        aria-label={lang === 'ar' ? 'كلان ليفل ون على إكس' : 'Clan Level One on X'}>
                                         <span className="clan-crest-shield" aria-hidden="true">
                                             <img src="level-one-mark.webp" alt="" width={271} height={330} />
                                             <b>01</b>
@@ -1554,8 +1610,12 @@ export default function App() {
                                             <i>CLAN</i>
                                             <em>LEVEL ONE</em>
                                         </span>
-                                    </div>
-                                    <a href="#moderators" className="clan-tag" dir="ltr" title={lang === 'ar' ? 'بيت الكلان' : 'Clan HQ'}>{CLAN.tag}</a>
+                                        <span className="clan-crest-go" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round"><path d="M7 17 17 7M9 7h8v8" /></svg>
+                                        </span>
+                                    </a>
+                                    {/* الوسم زينة هوية — بلا رابط ولا تفاعل */}
+                                    <span className="clan-tag" dir="ltr">{CLAN.tag}</span>
                                     <span className="clan-ar">{CLAN.ar}</span>
                                 </div>
                                 <p className="text-white/65 text-[15px] md:text-lg leading-relaxed max-w-xl mt-4 md:mt-5 font-medium mx-auto lg:mx-0">{t.bio}</p>
@@ -1631,15 +1691,12 @@ export default function App() {
                     {/* ===== SOCIALS BENTO ===== */}
                     <section id="socials" className="pt-12 md:pt-16 scroll-mt-28">
                         <Reveal><SectionHeading no="01" title={t.socialsTitle} sub={t.socialsSub} en="SOCIAL ARENA" /></Reveal>
-                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 md:gap-4">
+                        {/* كيك = عمود طولي ياخذ ثلاثة أدوار، وبقية المنصات تملأ الصفوف بجانبها.
+                            السناب آخر بطاقة (سطر 6) عشان عدّاده مغّب ولا ينافس المباشر. */}
+                        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 md:gap-4 lg:auto-rows-[1fr]">
                             {kickCard && (
-                                <Reveal delay={0} className="col-span-2">
-                                    <SocialCard social={kickCard} index={0} featured lang={lang} />
-                                </Reveal>
-                            )}
-                            {snapCard && (
-                                <Reveal delay={80}>
-                                    <SocialCard social={snapCard} index={1} lang={lang} />
+                                <Reveal delay={0} className="col-span-2 lg:col-span-1 lg:row-span-3">
+                                    <SocialCard social={kickCard} index={0} featured live={streamInfo.isLive} lang={lang} />
                                 </Reveal>
                             )}
                             {restSocials.map((s, i) => (
@@ -1647,6 +1704,11 @@ export default function App() {
                                     <SocialCard social={s} index={i + 2} lang={lang} />
                                 </Reveal>
                             ))}
+                            {snapCard && (
+                                <Reveal delay={330}>
+                                    <SocialCard social={snapCard} index={restSocials.length + 2} lang={lang} />
+                                </Reveal>
+                            )}
                         </div>
                     </section>
 
