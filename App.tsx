@@ -89,9 +89,7 @@ const TRANSLATIONS = {
     en: {
         status: 'LIVE NOW', statusOffline: 'OFFLINE',
         headerTitle: 'xlxwi STREAM HUB',
-        nameAr: 'Ali Al-Hashemi',
-        nameLatin: 'ALI AL-HASHEMI',
-        bio: 'Ali Al-Hashemi (xlxwi) broadcasts here daily. Games, challenges and nonstop interaction with the Level One clan.',
+        bio: 'Ali Al-Hashemi (xlxwi) — a content creator with the Level One clan, broadcasting here daily. Welcome.',
         tags: ['Gaming', 'Just Chatting', 'Live Daily'],
         footer: '© 2026 xlxwi. All Rights Reserved.',
         poweredBy: 'POWERED BY HSG',
@@ -127,9 +125,7 @@ const TRANSLATIONS = {
     ar: {
         status: 'بث مباشر الآن', statusOffline: 'غير متصل حالياً',
         headerTitle: 'مركز xlxwi للبث المباشر',
-        nameAr: 'علي الهاشمي',
-        nameLatin: 'ALI AL-HASHEMI',
-        bio: 'علي الهاشمي (xlxwi) يبث هنا يومياً — حياك الله. ألعاب، تحديات وتفاعل لا يتوقف مع كلان لفل ون.',
+        bio: 'علي الهاشمي (xlxwi) صانع محتوى في كلان لفل ون  يبث هنا يومياً — حياكم الله.',
         tags: ['ألعاب', 'سوالف', 'بث يومي'],
         footer: '© 2026 xlxwi. جميع الحقوق محفوظة.',
         poweredBy: 'بدعم من HSG',
@@ -1581,7 +1577,6 @@ export default function App() {
                     <section id="top" className="pt-6 md:pt-10 pb-6 md:pb-8 overflow-clip">
                         <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-8 lg:gap-10 items-center justify-items-center lg:justify-items-stretch">
                             <div className="animate-fade-in-up w-full max-w-xl text-center lg:text-start order-2 lg:order-1">
-                                <p className="text-white/50 font-bold text-xs sm:text-sm md:text-base mb-2 mt-1">{t.nameAr} • <span dir="ltr" className="text-gold/55">ALI AL-HASHEMI</span></p>
                                 <h1 className="wm-mark relative font-gaming leading-none tracking-wide select-none text-[clamp(96px,24vw,180px)] lg:text-[180px]" dir="ltr" aria-label="xlxwi">
                                     <span aria-hidden="true" className="wm-depth wm-depth-2 font-gaming leading-none tracking-wide">XLXWI</span>
                                     <span aria-hidden="true" className="wm-depth wm-depth-1 font-gaming leading-none tracking-wide">XLXWI</span>
