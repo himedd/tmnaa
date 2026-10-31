@@ -2,42 +2,39 @@ import React, { useEffect, useState } from 'react';
 import type { Language } from '../types';
 
 // ============================================================
-//  MODERATORS — قسم المشرفين (بيانات حية من X via FixTweet)
-//  20 مشرف: 1 قائد BOSS (inormalq) + 19 مشرف GRID
-//  الطبقات: بروكسي /api/kick → مباشر → fallback ثابت
+//  MODERATORS — قسم المشرفين
+//  الطبقات: بروكسي /api/kick → مباشر (FixTweet) → fallback ثابت
 //  الكاش: localStorage 30 دقيقة + تحديث صامت كل 10 دقائق
+//  xAREEJ1 بلا حساب X — يظهر بديسكورد فقط
 // ============================================================
 
 interface RosterEntry {
   kick: string;
-  x: string;
-  boss?: boolean;
+  x?: string;
+  discordId?: string;
+  /** صورة/بانر/نبذة ثابتة يختارها المشرف بنفسه — تتقدم على بيانات X */
+  avatar?: string;
+  banner?: string;
+  bio?: string;
 }
 
-// 20 moderators — Kick name + X handle (live data via FixTweet)
-// القائد أولاً دائماً: ROSTER[0] هو الـ BOSS
 const ROSTER: RosterEntry[] = [
-  { kick: 'inormalq', x: 'inormalq', boss: true },
-  { kick: '_iAli5', x: '_iAli5' },
-  { kick: 'iAbo3tab', x: 'iAbo3tab' },
-  { kick: 'SHADDDOH', x: 'SHADDDOH' },
-  { kick: 'Shanzleezayh', x: 'Shanzleezayh' },
-  { kick: 'rwubii', x: 'rwubii' },
-  { kick: 'IIYZL1', x: 'IIYZL1' },
-  { kick: 'Fotaamii', x: 'Fotaamii' },
-  { kick: '4sshd', x: '4sshd' },
-  { kick: 'mohmd505_', x: 'mohmd505_' },
-  { kick: 'jj4naa', x: 'jj4naa' },
-  { kick: 'Moh_HSG', x: 'Moh_HSG' },
-  { kick: 'awash70_', x: 'awash70_' },
-  { kick: 'wjdann_38', x: 'wjdann_38' },
-  { kick: 'sipdai', x: 'sipdai' },
-  { kick: 'unnFamiliarr', x: 'unnFamiliarr' },
-  { kick: '_A7MEDO_', x: '_A7MEDO_' },
-  { kick: 'Ywvqg3', x: 'Ywvqg3' },
-  { kick: 'r8gd0', x: 'r8gd0' },
-  { kick: 'iluxl3', x: 'iluxl3' },
+  { kick: 'A7MEDO', x: '_A7MEDO_' },
+  { kick: 'JustN2sr', x: 'JustN2sr' },
+  { kick: 'M0ATAZ', x: 'S7_Moataz' },
+  { kick: 'itsN2sser', x: 'itsN2sser' },
+  { kick: 'MISK_RY', x: 'MISK_RY' },
+  { kick: 'Ahhud', x: '1ahhud' },
+  { kick: 'shatha_20', x: 'qirz2i' },
+  { kick: 'xAREEJ1', discordId: '709645074421514251', avatar: 'mods/xareej1-avatar.webp', banner: 'mods/xareej1-banner.webp', bio: 'Not every chapter needs an explanation.' },
 ];
+
+const DISCORD_INVITE = 'https://discord.gg/tmfx';
+
+/** رابط المراسلة المباشرة — يفتح محادثة خاصة مع العضو بدل دخول السيرفر */
+const discordDm = (id?: string) => (id ? `https://discord.com/users/${id}` : DISCORD_INVITE);
+
+const uid = (m: RosterEntry) => (m.x || `discord:${m.discordId}`).toLowerCase();
 
 interface ModProfile {
   name: string;
@@ -50,24 +47,18 @@ interface ModProfile {
   live: boolean;
 }
 
-const CACHE_KEY = 'iabs_mods_cache_v3';
-const LEGACY_CACHE_KEY = 'iabs_mods_cache_v2';
+const CACHE_KEY = 'xlxwi_mods_cache_v1';
 const CACHE_TTL_MS = 30 * 60 * 1000;
 const REFRESH_MS = 10 * 60 * 1000;
 
 /**
- * يضبط مقاس صورة البانر من CDN.
- * المقاسات المتاحة فعلياً عند pbs.twimg.com: 1500x500 (59KB) · 600x200 (15KB) · 300x100 (6KB)
- * Anything else يرجع 404 — لذلك نحصرها هنا ومعها fallback عند فشل التحميل.
+ * يضبط مقاس صورة البانر من CDN — المقاسات المتاحة فقط، غير ذلك 404.
  */
 const BANNER_SIZES = ['1500x500', '600x200', '300x100'] as const;
 
 const stripBannerSize = (url: string): string => url.split('?')[0].replace(/\/$/, '').replace(/\/(1500x500|600x200|300x100|normal)$/, '');
 
-const bannerAt = (url: string, size: typeof BANNER_SIZES[number]): string => {
-  if (!url) return '';
-  return `${stripBannerSize(url)}/${size}`;
-};
+const bannerAt = (url: string, size: typeof BANNER_SIZES[number]): string => (url ? `${stripBannerSize(url)}/${size}` : '');
 
 const compact = (n: number | null | undefined) => {
   if (n == null || !Number.isFinite(n)) return '---';
@@ -88,7 +79,7 @@ async function fetchJson(url: string, timeoutMs = 10000): Promise<any> {
   }
 }
 
-// Layer 1: our server proxy (no CORS issues) → Layer 2: direct FixTweet → Layer 3: static fallback
+// الطبقة 1: بروكسي الموقع (بلا مشاكل CORS) → الطبقة 2: مباشر → الطبقة 3: بلا بيانات
 async function fetchMod(handle: string): Promise<ModProfile | null> {
   const target = `https://api.fxtwitter.com/${handle}`;
   let user: any = null;
@@ -108,16 +99,13 @@ async function fetchMod(handle: string): Promise<ModProfile | null> {
   }
   if (!user) return null;
 
-  // ===== مقاسات صور معقولة =====
-  // البانر يُعرض بحجم ~96px ارتفاع فقط — تحميل 1500x500 كان يستهلك مئات
-  // الكيلوبايت لكل مشرف (20 مشرف) ويسبّب تعليق الموقع. الآن 500x150.
   const avatarRaw: string = user.avatar_url || '';
   const bannerRaw: string = user.banner_url || '';
 
   return {
     name: user.name || handle,
     handle: user.screen_name || handle,
-    // الصورة تُعرض بحجم 56px (أو 96px للبوس) — 200x200 أكثر من كافٍ
+    // الصورة تُعرض بحجم 56px — 200x200 أكثر من كافٍ
     avatar: avatarRaw ? avatarRaw.replace('_normal.', '_200x200.') : '',
     banner: bannerAt(bannerRaw, '600x200'),
     bio: user.description || '',
@@ -129,7 +117,7 @@ async function fetchMod(handle: string): Promise<ModProfile | null> {
 
 function readCache(): { at: number; data: Record<string, ModProfile> } | null {
   try {
-    const raw = localStorage.getItem(CACHE_KEY) || localStorage.getItem(LEGACY_CACHE_KEY);
+    const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || !parsed.data) return null;
@@ -146,10 +134,15 @@ const XIconSmall: React.FC<{ className?: string }> = ({ className }) => (
   </svg>
 );
 
-const CrownIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg className={className || 'w-7 h-7'} viewBox="0 0 24 24" fill="none">
-    <path fill="#FFD76A" d="M2.5 8.5 6.5 12l5.5-7 5.5 7 4-3.5L20 18H4L2.5 8.5z" />
-    <rect x="4" y="18.6" width="16" height="2.2" rx="1.1" fill="#B45309" />
+const DiscordIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className || 'w-3.5 h-3.5'} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M20.317 4.369a19.79 19.79 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 00-5.487 0 12.6 12.6 0 00-.617-1.25.077.077 0 00-.079-.037A19.74 19.74 0 003.677 4.37a.07.07 0 00-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 00.031.056 19.9 19.9 0 005.993 3.03.078.078 0 00.084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 00-.041-.106 13.1 13.1 0 01-1.872-.892.077.077 0 01-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 01.078-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 01.079.009c.12.099.245.198.372.292a.077.077 0 01-.006.127 12.3 12.3 0 01-1.873.891.077.077 0 00-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 00.084.028 19.84 19.84 0 006.002-3.03.077.077 0 00.032-.054c.5-5.177-.838-9.674-3.549-13.66a.06.06 0 00-.031-.029zM8.02 15.331c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z" />
+  </svg>
+);
+
+const MessageIcon: React.FC<{ className?: string }> = ({ className }) => (
+  <svg className={className || 'w-3.5 h-3.5'} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h8M8 14h5m-8 4.5V6a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2h-7l-4 3.5v-3.5H7z" />
   </svg>
 );
 
@@ -166,14 +159,17 @@ const ModeratorsSection: React.FC<{ lang: Language }> = ({ lang }) => {
 
   const t = {
     mod: lang === 'ar' ? 'مشرف' : 'MOD',
-    boss: lang === 'ar' ? 'القائد' : 'BOSS',
     followers: lang === 'ar' ? 'متابع' : 'Followers',
     posts: lang === 'ar' ? 'منشور' : 'Posts',
     follow: lang === 'ar' ? 'تابع' : 'Follow',
+    discordOnly: lang === 'ar' ? 'ديسكورد فقط' : 'DISCORD ONLY',
+    dm: lang === 'ar' ? 'مراسلة' : 'MESSAGE',
+    house: lang === 'ar' ? 'بيت كلان ليفل ون' : 'Clan Level One HQ',
   };
 
   useEffect(() => {
     let cancelled = false;
+    const withX = ROSTER.filter((m) => m.x);
 
     const load = async (useCacheFirst = true) => {
       const cached = readCache();
@@ -183,22 +179,21 @@ const ModeratorsSection: React.FC<{ lang: Language }> = ({ lang }) => {
         setLoading(false);
         return;
       }
-      // دفعات 3 متوازية + عرض تدريجي
-      for (let i = 0; i < ROSTER.length; i += 3) {
+      for (let i = 0; i < withX.length; i += 3) {
         const batch = await Promise.all(
-          ROSTER.slice(i, i + 3).map(async (m) => {
+          withX.slice(i, i + 3).map(async (m) => {
             try {
-              const p = await fetchMod(m.x);
-              return { x: m.x.toLowerCase(), p };
+              const p = await fetchMod(m.x!);
+              return { id: uid(m), p };
             } catch {
-              return { x: m.x.toLowerCase(), p: null };
+              return { id: uid(m), p: null };
             }
           }),
         );
         if (cancelled) return;
         const next: Record<string, ModProfile> = {};
-        batch.forEach(({ x, p }) => {
-          if (p) next[x] = p;
+        batch.forEach(({ id, p }) => {
+          if (p) next[id] = p;
         });
         if (Object.keys(next).length > 0) {
           setProfiles((prev) => {
@@ -214,14 +209,11 @@ const ModeratorsSection: React.FC<{ lang: Language }> = ({ lang }) => {
     };
 
     load(true);
-    // تحديث صامت كل 10 دقائق، ويتوقف كلياً والتبويب مخفي (20 طلب شبكة لكل دورة)
+    // تحديث صامت كل 10 دقائق، ويتوقف والتبويب مخفي
     let timer: ReturnType<typeof setInterval> | null = null;
     const startRefresh = () => { if (!timer) timer = setInterval(() => load(false), REFRESH_MS); };
     const stopRefresh = () => { if (timer) { clearInterval(timer); timer = null; } };
-    const onVis = () => {
-      if (document.visibilityState === 'visible') startRefresh();
-      else stopRefresh();
-    };
+    const onVis = () => (document.visibilityState === 'visible' ? startRefresh() : stopRefresh());
     startRefresh();
     document.addEventListener('visibilitychange', onVis);
     return () => {
@@ -231,26 +223,20 @@ const ModeratorsSection: React.FC<{ lang: Language }> = ({ lang }) => {
     };
   }, []);
 
-  // Fallback ذكي: بيانات Kick الثابتة إن غابت X
-  const get = (x: string): ModProfile => {
-    const p = profiles[x.toLowerCase()];
-    if (p) return p;
-    const r = ROSTER.find((m) => m.x.toLowerCase() === x.toLowerCase())!;
+  // Fallback ذكي: اسم كيك الثابت إن غابت بيانات X، والثابت المختار يدوياً يتقدم على الكل
+  const get = (m: RosterEntry): ModProfile => {
+    const p = profiles[uid(m)];
     return {
-      name: r.kick,
-      handle: x,
-      avatar: '',
-      banner: '',
-      bio: '',
-      followers: null,
-      tweets: null,
-      live: false,
+      name: p?.name || m.kick,
+      handle: p?.handle || m.x || m.kick,
+      avatar: m.avatar || p?.avatar || '',
+      banner: m.banner || p?.banner || '',
+      bio: m.bio || p?.bio || '',
+      followers: p?.followers ?? null,
+      tweets: p?.tweets ?? null,
+      live: p?.live || false,
     };
   };
-
-  const boss = ROSTER[0];
-  const rest = ROSTER.slice(1);
-  const bossP = get(boss.x);
 
   return (
     <div className="w-full">
@@ -258,127 +244,21 @@ const ModeratorsSection: React.FC<{ lang: Language }> = ({ lang }) => {
       <div
         className={`h-[2px] w-full overflow-hidden rounded-full bg-white/[0.06] mb-4 md:mb-6 transition-opacity duration-700 ${loading ? 'opacity-100' : 'opacity-0'}`}
       >
-        <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-transparent via-[#C9A24B] to-transparent animate-pulse" />
+        <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-transparent via-gold to-transparent animate-pulse" />
       </div>
 
-      {/* ===== 👑 BOSS HERO ===== */}
-      <div className="relative rounded-[28px] p-[1.5px] bg-gradient-to-b from-[#FFE9B8] via-[#C9A24B]/50 to-transparent shadow-[0_30px_90px_rgba(201,162,75,0.25)] mb-4 md:mb-6 overflow-hidden animate-fade-in-up">
-        <div className="relative rounded-[26.5px] bg-[#080808] overflow-hidden">
-          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-transparent via-[#FFE9B8]/70 to-transparent" />
-          {/* بانر */}
-          <div className="relative h-36 sm:h-48 lg:h-56 overflow-hidden">
-            {bossP.banner ? (
-              <img
-                src={bannerAt(bossP.banner, '1500x500')}
-                alt="" loading="lazy" decoding="async" width={1500} height={500}
-                onError={(e) => {
-                  const img = e.currentTarget;
-                  const base = stripBannerSize(bossP.banner);
-                  if (!img.src.endsWith(base)) img.src = base;
-                }}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-l from-[#C9A24B]/30 via-[#8B5CF6]/20 to-black" />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#080808] via-[#080808]/30 to-transparent" />
-            <a
-              href={`https://x.com/${boss.x}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={`X — @${boss.x}`}
-              className="absolute top-3 end-3 inline-flex items-center justify-center w-9 h-9 rounded-full bg-black/55 backdrop-blur border border-white/20 text-white hover:bg-white hover:text-black transition-all"
-            >
-              <XIconSmall className="w-4 h-4" />
-            </a>
-          </div>
-          {/* الهوية */}
-          <div className="relative px-5 sm:px-8 pb-6 sm:pb-8 -mt-10 sm:-mt-12">
-            <div className="flex flex-row items-end gap-4 sm:gap-5">
-              {/* الحاوية بمقاس ثابت حتى يبقى التاج والنقطة ملتصقين بالصورة دائماً */}
-              <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0">
-                <span
-                  className="absolute inset-0 block rounded-full p-[3px]"
-                  style={{
-                    background: 'conic-gradient(from 200deg,#ffe977,#8a6a00,#fff6c8,#8a6a00,#ffe977)',
-                    boxShadow: '0 0 44px rgba(255,215,106,0.55)',
-                  }}
-                >
-                  {/* الحرف البديل تحت الصورة — يظهر دائماً لو الصورة ما وصلت */}
-                  <span className="w-full h-full rounded-full bg-[#141414] flex items-center justify-center font-black text-3xl text-[#FFE9B8]">
-                    {boss.kick.charAt(0).toUpperCase()}
-                  </span>
-                  {bossP.avatar && (
-                    <img
-                      src={bossP.avatar} alt={bossP.name} loading="lazy" decoding="async"
-                      width={200} height={200}
-                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                      className="absolute inset-[3px] rounded-full object-cover bg-black"
-                    />
-                  )}
-                </span>
-                <CrownIcon className="absolute -top-6 left-1/2 -translate-x-1/2 w-7 h-7 drop-shadow-[0_0_10px_rgba(255,215,106,0.9)] animate-float-soft" />
-                {bossP.live && (
-                  <span className="absolute bottom-0 end-0 w-4 h-4 rounded-full bg-[#53FC18] border-[3px] border-[#080808] shadow-[0_0_10px_#53FC18]" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1 flex items-end justify-between gap-4 flex-wrap">
-                <div className="min-w-0">
-                  <p className="text-xl sm:text-2xl font-black text-white truncate" dir="ltr">
-                    {bossP.name}
-                  </p>
-                  <p className="flex items-center gap-2 mt-1 flex-wrap" dir="ltr">
-                    <span className="text-[12px] font-bold text-[#53FC18]">@{bossP.handle}</span>
-                    <span className="text-[10px] font-bold text-[#C9A24B]/80">KICK: {boss.kick}</span>
-                  </p>
-                </div>
-                <div className="flex items-center gap-2.5 shrink-0">
-                  <span className="inline-flex flex-col items-center px-4 py-2 rounded-2xl bg-[#FFE9B8]/10 border border-[#FFE9B8]/30">
-                    <span className="text-base sm:text-lg font-black text-[#FFE9B8]" dir="ltr">
-                      {compact(bossP.followers)}
-                    </span>
-                    <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">{t.followers}</span>
-                  </span>
-                  <span className="inline-flex flex-col items-center px-4 py-2 rounded-2xl bg-white/[0.04] border border-white/10">
-                    <span className="text-base sm:text-lg font-black text-white" dir="ltr">
-                      {compact(bossP.tweets)}
-                    </span>
-                    <span className="text-[9px] font-bold text-white/40 uppercase tracking-widest">{t.posts}</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-            {bossP.bio && (
-              <p className="text-[13px] sm:text-sm text-white/60 font-medium leading-relaxed mt-4 max-w-3xl" dir="auto">
-                {bossP.bio}
-              </p>
-            )}            <div className="flex flex-wrap items-center gap-2.5 mt-4">
-              <a
-                href={`https://x.com/${boss.x}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 h-11 px-5 rounded-2xl bg-white text-black text-[13px] font-black hover:brightness-90 hover:scale-[1.02] active:scale-95 transition-all"
-              >
-                <XIconSmall className="w-4 h-4" />
-                {t.follow} @{boss.x}
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ===== 🛡️ MODS GRID ===== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-        {rest.map((m, i) => {
-          const p = get(m.x);
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+        {ROSTER.map((m, i) => {
+          const p = get(m);
+          const isDiscordOnly = !m.x;
           return (
             <div
-              key={m.x}
-              className="group relative overflow-hidden rounded-[22px] border border-white/10 bg-[#0b0b0b]/85 transition-colors hover:border-[#C9A24B]/50 hover:-translate-y-1 hover:shadow-[0_24px_60px_-16px_rgba(201,162,75,0.35)] duration-300 opacity-0 animate-fade-in-up"
-              style={{ animationDelay: `${Math.min(i * 60, 480)}ms` }}
+              key={uid(m)}
+              className="group relative overflow-hidden rounded-[22px] border border-gold/15 bg-wine-900/85 transition-all hover:border-gold/50 hover:-translate-y-1 hover:shadow-[0_24px_60px_-16px_rgba(227,179,65,0.35)] duration-300 opacity-0 animate-fade-in-up"
+              style={{ animationDelay: `${Math.min(i * 70, 490)}ms` }}
             >
               {/* بانر */}
-              <div className="relative h-20 sm:h-24 overflow-hidden bg-gradient-to-l from-[#C9A24B]/20 via-white/[0.03] to-black">
+              <div className="relative h-20 sm:h-24 overflow-hidden bg-gradient-to-l from-wine-600/70 via-wine-900 to-wine-950">
                 {p.banner && (
                   <img
                     src={p.banner}
@@ -392,46 +272,59 @@ const ModeratorsSection: React.FC<{ lang: Language }> = ({ lang }) => {
                       const base = stripBannerSize(p.banner);
                       if (!img.src.endsWith(base)) img.src = base;
                     }}
-                    className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-700"
+                    className="w-full h-full object-cover opacity-60 group-hover:opacity-95 group-hover:scale-105 transition-all duration-700"
                   />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b0b] via-[#0b0b0b]/30 to-transparent" />
-                <span className="absolute top-2 start-2 inline-flex items-center gap-1 text-[8px] font-black tracking-[0.16em] px-2 py-[3px] rounded-lg bg-black/55 backdrop-blur border border-[#C9A24B]/40 text-[#FFE9B8] uppercase">
-                  <ShieldIcon className="w-3 h-3 text-[#C9A24B]" />
+                <div className="absolute inset-0 bg-gradient-to-t from-wine-950 via-wine-950/35 to-transparent" />
+                <span className="absolute top-2 start-2 inline-flex items-center gap-1 text-[8px] font-black tracking-[0.16em] px-2 py-[3px] rounded-lg bg-black/55 backdrop-blur border border-gold/40 text-gold-light uppercase">
+                  <ShieldIcon className="w-3 h-3" />
                   {t.mod}
                 </span>
-                <a
-                  href={`https://x.com/${m.x}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={`X — @${m.x}`}
-                  className="absolute top-2 end-2 inline-flex items-center justify-center w-7 h-7 rounded-full bg-black/55 backdrop-blur border border-white/20 text-white/70 hover:bg-white hover:text-black transition-all"
-                >
-                  <XIconSmall className="w-3.5 h-3.5" />
-                </a>
+                {m.x ? (
+                  <a
+                    href={`https://x.com/${m.x}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`X — @${m.x}`}
+                    className="absolute top-2 end-2 inline-flex items-center justify-center w-7 h-7 rounded-full bg-black/55 backdrop-blur border border-gold/25 text-white/70 hover:bg-gold hover:text-wine-950 transition-all"
+                  >
+                    <XIconSmall className="w-3.5 h-3.5" />
+                  </a>
+                ) : (
+                  <a
+                    href={discordDm(m.discordId)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={lang === 'ar' ? 'مراسلة على ديسكورد' : 'Direct message on Discord'}
+                    className="absolute top-2 end-2 inline-flex items-center justify-center w-7 h-7 rounded-full bg-black/55 backdrop-blur border border-gold/25 text-white/70 hover:bg-gold hover:text-wine-950 transition-all"
+                  >
+                    <DiscordIcon className="w-3.5 h-3.5" />
+                  </a>
+                )}
               </div>
+
               {/* الهوية */}
               <div className="relative px-4 pb-4 -mt-7">
                 <div className="flex items-end gap-3">
                   <div className="relative w-14 h-14 shrink-0">
                     <span
                       className="absolute inset-0 block rounded-full p-[2px]"
-                      style={{ background: 'conic-gradient(from 200deg,#ffe977,#8a6a00,#fff6c8,#8a6a00,#ffe977)' }}
+                      style={{ background: 'conic-gradient(from 200deg,#FFF3D6,#8A5E12,#F7E3AE,#8A5E12,#FFF3D6)' }}
                     >
-                      <span className="w-full h-full rounded-full bg-[#141414] flex items-center justify-center font-black text-xl text-[#FFE9B8]">
-                        {m.kick.charAt(0).toUpperCase()}
+                      <span className="w-full h-full rounded-full bg-wine-950 flex items-center justify-center font-black text-xl text-gold-light">
+                        {m.kick.replace(/[^A-Za-z0-9\u0600-\u06FF]/g, '').charAt(0).toUpperCase() || 'خ'}
                       </span>
                       {p.avatar && (
                         <img
                           src={p.avatar} alt={p.name} loading="lazy" decoding="async"
                           width={200} height={200}
                           onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                          className="absolute inset-[2px] rounded-full object-cover bg-black"
+                          className="absolute inset-[2px] rounded-full object-cover bg-wine-950"
                         />
                       )}
                     </span>
                     {p.live && (
-                      <span className="absolute bottom-0 end-0 w-3.5 h-3.5 rounded-full bg-[#53FC18] border-2 border-[#0b0b0b] shadow-[0_0_10px_#53FC18]" />
+                      <span className="absolute bottom-0 end-0 w-3.5 h-3.5 rounded-full bg-gold border-2 border-wine-950 shadow-[0_0_10px_#E3B341]" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1 pb-0.5">
@@ -439,32 +332,55 @@ const ModeratorsSection: React.FC<{ lang: Language }> = ({ lang }) => {
                       {p.name}
                     </p>
                     <p className="text-[11px] font-bold text-white/40 truncate" dir="ltr">
-                      @{p.handle} <span className="text-[#C9A24B]/70">• KICK: {m.kick}</span>
+                      {isDiscordOnly ? (
+                        <span className="text-gold/70">DISCORD · {m.discordId}</span>
+                      ) : (
+                        <>@{p.handle} <span className="text-gold/60">• KICK: {m.kick}</span></>
+                      )}
                     </p>
                   </div>
                 </div>
+
                 <p className="text-[11.5px] text-white/45 font-medium leading-relaxed mt-2 line-clamp-2 min-h-[32px]" dir="auto">
-                  {p.bio || '---'}
+                  {p.bio || (isDiscordOnly ? t.house : '---')}
                 </p>
+
                 <div className="flex items-center gap-2 mt-2.5">
-                  <span className="text-[11px] font-black text-white/70" dir="ltr">
-                    {compact(p.followers)} <span className="font-bold text-white/35">{t.followers}</span>
-                  </span>
+                  {isDiscordOnly ? (
+                    <span className="text-[11px] font-black text-gold/80">{t.discordOnly}</span>
+                  ) : (
+                    <span className="text-[11px] font-black text-white/70" dir="ltr">
+                      {compact(p.followers)} <span className="font-bold text-white/35">{t.followers}</span>
+                    </span>
+                  )}
                   <span className="ms-auto flex items-center gap-1.5">
-                    <a
-                      href={`https://x.com/${m.x}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 h-8 px-3 rounded-xl bg-white text-black text-[11px] font-black hover:brightness-90 active:scale-95 transition-all"
-                    >
-                      <XIconSmall className="w-3 h-3" />
-                      {t.follow}
-                    </a>
+                    {isDiscordOnly ? (
+                      <a
+                        href={discordDm(m.discordId)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={lang === 'ar' ? 'مراسلة خاصة على ديسكورد' : 'Direct message on Discord'}
+                        className="inline-flex items-center gap-1 h-8 px-3 rounded-xl bg-gradient-to-b from-gold-light to-gold text-wine-950 text-[11px] font-black hover:brightness-105 active:scale-95 transition-all"
+                      >
+                        <MessageIcon className="w-3.5 h-3.5" />
+                        {t.dm}
+                      </a>
+                    ) : (
+                      <a
+                        href={`https://x.com/${m.x}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 h-8 px-3 rounded-xl bg-white text-black text-[11px] font-black hover:brightness-90 active:scale-95 transition-all"
+                      >
+                        <XIconSmall className="w-3 h-3" />
+                        {t.follow}
+                      </a>
+                    )}
                   </span>
                 </div>
               </div>
               {/* خط سفلي ذهبي يتمدد */}
-              <span className="absolute bottom-0 start-0 h-[2px] w-0 group-hover:w-full bg-gradient-to-r from-[#FFE9B8] to-[#C9A24B] transition-all duration-500" />
+              <span className="absolute bottom-0 start-0 h-[2px] w-0 group-hover:w-full bg-gradient-to-r from-gold-light to-gold-deep transition-all duration-500" />
             </div>
           );
         })}

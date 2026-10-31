@@ -3,12 +3,23 @@
 @tailwind utilities;
 
 /* ============================================================
-   iABS — Design tokens
+   xlxwi — Royal burgundy & gold design tokens
+   مستوحى من شعار الأسد الذهبي على الخمري + خلفية الإطار الملكي
    ============================================================ */
 :root {
   color-scheme: dark;
-  --kick: #FF2D2D;
-  --neon: #53FC18;
+  --wine-950: #120307;
+  --wine-900: #1b0509;
+  --wine-850: #24070d;
+  --wine-800: #2e0a12;
+  --wine-700: #3e0e1a;
+  --wine-600: #55131f;
+  --gold: #e3b341;
+  --gold-light: #f7e3ae;
+  --gold-deep: #b8860b;
+  --gold-dark: #8a5e12;
+  --ivory: #fff7ec;
+  --crimson: #c21e3a;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -16,34 +27,45 @@
 
 html {
   scroll-behavior: smooth;
-  /* يمنع القفز الأفقي على الجوال */
   overflow-x: hidden;
 }
 
 body {
-  background: #050505;
+  background: var(--wine-950);
+  color: var(--ivory);
   overflow-x: hidden;
 }
 
-::selection { background: #FF2D2D; color: #000; }
+::selection { background: var(--gold); color: #1b0509; }
 
 ::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-track { background: #080808; }
-::-webkit-scrollbar-thumb { background: linear-gradient(#FF2D2D, #7a0e0e); border-radius: 99px; border: 2px solid #080808; }
+::-webkit-scrollbar-track { background: #170409; }
+::-webkit-scrollbar-thumb { background: linear-gradient(#e3b341, #6b4708); border-radius: 99px; border: 2px solid #170409; }
 
 /* ============================================================
    Backgrounds
    ============================================================ */
+/* الإطار الملكي (Royal Burgundy Heraldic Frame) — برغندي + ذهبي */
 .responsive_bg {
-  background-image: url('/bg-mobile.jpg');
+  background-image: url('/bg-heraldic.webp');
+  /* الشاشات الطولية: وسط الخلفية فقط، بلا تمديد مشوّه */
   background-size: cover;
-  background-position: center top;
+  background-position: center;
   background-repeat: no-repeat;
-  /* صورة الخلفية ما تحتاج إعادة رسم */
   will-change: auto;
 }
-@media (min-width: 768px) {
-  .responsive_bg { background-image: url('/bg-pc.jpg'); }
+/* الشاشات العريضة: الإطار التزييني يظهر كاملاً حول المحتوى */
+@media (min-width: 768px) and (min-aspect-ratio: 4/3) {
+  .responsive_bg { background-size: 100% 100%; }
+}
+/* الجوال: خلفية رأسية مصمّمة للشاشات الطولية — أخف (15KB) وأدق اقتصاصاً.
+   100% 100% بدل cover: الإطار بزواياه الذهبية يظهر كاملاً بدل قصّ الجانبين */
+@media (max-width: 767px) {
+  .responsive_bg {
+    background-image: url('/bg-mobile.webp');
+    background-size: 100% 100%;
+    opacity: 1;
+  }
 }
 
 .grain::after {
@@ -52,35 +74,86 @@ body {
   inset: 0;
   z-index: 5;
   pointer-events: none;
-  opacity: 0.06;
+  opacity: 0.05;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .grid-lines {
-  background-image: linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(227, 179, 65, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(227, 179, 65, 0.045) 1px, transparent 1px);
   background-size: 56px 56px;
   mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 30%, transparent 75%);
   -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 30%, transparent 75%);
 }
 
-.text-stroke { -webkit-text-stroke: 1.5px rgba(255,255,255,0.22); color: transparent; }
-.text-stroke-red { -webkit-text-stroke: 1.5px rgba(255,45,45,0.65); color: transparent; }
+/* ============================================================
+   Gold typography helpers
+   ============================================================ */
+.text-stroke { -webkit-text-stroke: 1.5px rgba(227, 179, 65, 0.35); color: transparent; }
+.text-stroke-gold { -webkit-text-stroke: 1.5px rgba(227, 179, 65, 0.7); color: transparent; }
 @media (min-width: 768px) {
-  .text-stroke, .text-stroke-red { -webkit-text-stroke-width: 2px; }
+  .text-stroke, .text-stroke-gold { -webkit-text-stroke-width: 2px; }
 }
+
+.gold-foil {
+  background: linear-gradient(168deg, #fff3d6 0%, #e3b341 34%, #9a6b15 58%, #f7e3ae 78%, #b8860b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.65));
+}
+
+/* علامة الاسم في القائمة العلوية — ذهب مصقول يتوهّج عند المرور */
+.nav-brand:hover .nav-wm { filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.7)) drop-shadow(0 0 11px rgba(227, 179, 65, 0.6)); }
+.nav-wm {
+  background: linear-gradient(180deg, #fff3d6 0%, #e3b341 46%, #b8860b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.7));
+  transition: filter .35s ease;
+}
+
+/* thin engraved hairline used under section titles */.rule-gold {
+  height: 1px;
+  background: linear-gradient(to left, rgba(227, 179, 65, 0.65), rgba(227, 179, 65, 0.08) 45%, transparent);
+}
+
+/* ornament divider — diamond in a gold thread */
+.ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.ornament::before,
+.ornament::after {
+  content: "";
+  height: 1px;
+  width: min(120px, 22vw);
+  background: linear-gradient(to var(--dir, left), transparent, rgba(227, 179, 65, 0.7));
+}
+.ornament::after { --dir: right; }
 
 /* ============================================================
    Glass — أخف على الجوال (blur أقل + بدون طبقة إضافية)
    ============================================================ */
 .glass {
-  background: rgba(12, 12, 12, 0.72);
+  background: rgba(27, 5, 9, 0.78);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 .glass-soft {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 247, 236, 0.045);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+}
+
+/* card surface used across the whole site */
+.panel {
+  background: linear-gradient(165deg, rgba(46, 10, 18, 0.92), rgba(18, 3, 7, 0.94));
+  border: 1px solid rgba(227, 179, 65, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 243, 214, 0.06), 0 24px 60px -28px rgba(0, 0, 0, 0.9);
 }
 
 /* ============================================================
@@ -108,7 +181,6 @@ body {
    ============================================================ */
 .glitch-active { animation: glitchFx 0.35s steps(2) infinite; filter: brightness(1.25) contrast(1.15); }
 
-/* نبض ناعم (أيقونة البوت في نافذة الشات) */
 @keyframes breathe {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.06); opacity: 0.85; }
@@ -125,7 +197,7 @@ body {
   left: -60%;
   z-index: 2;
   pointer-events: none;
-  background: linear-gradient(105deg, transparent, rgba(255,255,255,0.14), transparent);
+  background: linear-gradient(105deg, transparent, rgba(255, 243, 214, 0.12), transparent);
   transform: skewX(-18deg);
   animation: shinePeriodic 5.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
@@ -139,24 +211,25 @@ body {
 .btn-arena:active { transform: translateY(1px) scale(0.99); }
 .btn-arena:focus-visible,
 a:focus-visible,
-button:focus-visible { outline: 2px solid #FF2D2D; outline-offset: 3px; border-radius: 12px; }
+button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 12px; }
 
+/* crest rings around the profile picture */
 .profile-3d-ring {
   position: absolute;
   inset: -14px;
   border-radius: 9999px;
   border: 1px solid transparent;
-  border-top-color: rgba(255, 45, 45, 0.9);
-  border-bottom-color: rgba(255, 45, 45, 0.9);
+  border-top-color: rgba(227, 179, 65, 0.9);
+  border-bottom-color: rgba(227, 179, 65, 0.9);
   animation: spin 6s linear infinite;
   pointer-events: none;
-  opacity: 0.55;
+  opacity: 0.6;
 }
 .profile-3d-ring-inner {
   position: absolute;
   inset: -7px;
   border-radius: 9999px;
-  border: 1px dashed rgba(255, 45, 45, 0.35);
+  border: 1px dashed rgba(227, 179, 65, 0.35);
   animation: spin 13s linear infinite reverse;
   pointer-events: none;
 }
@@ -166,7 +239,7 @@ button:focus-visible { outline: 2px solid #FF2D2D; outline-offset: 3px; border-r
   height: 22%;
   width: 100%;
   top: -22%;
-  background: linear-gradient(to bottom, transparent, rgba(255, 45, 45, 0.35), transparent);
+  background: linear-gradient(to bottom, transparent, rgba(227, 179, 65, 0.32), transparent);
   animation: scanMove 3.6s linear infinite;
   pointer-events: none;
   z-index: 20;
@@ -179,29 +252,99 @@ button:focus-visible { outline: 2px solid #FF2D2D; outline-offset: 3px; border-r
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.tech-corner { position: absolute; width: 14px; height: 14px; border-color: #FF2D2D; opacity: 0.7; z-index: 25; }
+.tech-corner { position: absolute; width: 14px; height: 14px; border-color: var(--gold); opacity: 0.75; z-index: 25; }
 .tech-corner-tl { top: -6px; left: -6px; border-top-width: 2px; border-left-width: 2px; }
 .tech-corner-tr { top: -6px; right: -6px; border-top-width: 2px; border-right-width: 2px; }
 .tech-corner-bl { bottom: -6px; left: -6px; border-bottom-width: 2px; border-left-width: 2px; }
 .tech-corner-br { bottom: -6px; right: -6px; border-bottom-width: 2px; border-right-width: 2px; }
 
-.marquee-mask {
-  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+/* ============================================================
+   شريط الهوية — يتحرّك بلا طرف ولا نهاية
+   ============================================================ */
+.hq-strip {
+  position: relative;
+  overflow: hidden;
+  margin: 26px -12px 0;
+  padding: 12px 0;
+  background:
+    linear-gradient(90deg, rgba(18, 3, 7, 0.92) 0%, rgba(46, 10, 18, 0.7) 14%, rgba(62, 14, 26, 0.6) 50%, rgba(46, 10, 18, 0.7) 86%, rgba(18, 3, 7, 0.92) 100%);
+  box-shadow: inset 0 14px 26px -16px rgba(0, 0, 0, 0.95), inset 0 -14px 26px -16px rgba(0, 0, 0, 0.95);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+@media (min-width: 640px) {
+  .hq-strip { margin-inline: -16px; }
+}
+@media (min-width: 768px) {
+  .hq-strip { margin-inline: -32px; padding: 15px 0; }
+}
+/* خيطان ذهبيان رفيعان يحضنان الشريط */
+.hq-strip::before,
+.hq-strip::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(138, 94, 18, 0.5) 12%, #e3b341 38%, #fff3d6 50%, #e3b341 62%, rgba(138, 94, 18, 0.5) 88%, transparent);
+  opacity: 0.55;
+}
+.hq-strip::before { top: 0; }
+.hq-strip::after { bottom: 0; }
+.hq-track {
+  display: flex;
+  width: max-content;
+  animation: hq-run 96s linear infinite;
+  will-change: transform;
+}
+.hq-strip:hover .hq-track { animation-play-state: paused; }
+@keyframes hq-run {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hq-track { animation-duration: 240s; }
+}
+.hq-item {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 0 28px;
+  white-space: nowrap;
+  font-family: "Cairo", "Tajawal", sans-serif;
+  font-size: 12.5px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+}
+@media (min-width: 768px) {
+  .hq-item { font-size: 14px; letter-spacing: 0.3em; gap: 34px; padding: 0 34px; }
+}
+.hq-txt { color: rgba(255, 247, 236, 0.58); }
+.hq-txt-gold {
+  color: #e3b341;
+  text-shadow: 0 0 20px rgba(227, 179, 65, 0.45);
+}
+.hq-dia {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  transform: rotate(45deg);
+  background: linear-gradient(140deg, #fff3d6, #e3b341 55%, #8a5e12);
+  box-shadow: 0 0 12px rgba(227, 179, 65, 0.65);
 }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* Theater chat scrollbar */
-.theater-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,45,45,0.65) rgba(255,255,255,0.04); scroll-behavior: auto; }
+.theater-scroll { scrollbar-width: thin; scrollbar-color: rgba(227,179,65,0.6) rgba(255,247,236,0.04); scroll-behavior: auto; }
 .theater-scroll::-webkit-scrollbar { width: 6px; }
 .theater-scroll::-webkit-scrollbar-track { background: transparent; border-radius: 99px; margin: 12px 0; }
 .theater-scroll::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #ff6b6b, #FF2D2D 45%, #7a0e0e);
+  background: linear-gradient(to bottom, #f7e3ae, #e3b341 45%, #7a5a12);
   border-radius: 99px;
-  box-shadow: 0 0 10px rgba(255, 45, 45, 0.45);
+  box-shadow: 0 0 10px rgba(227, 179, 65, 0.4);
 }
-.theater-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(to bottom, #ff8585, #FF2D2D 45%, #a31212); }
+.theater-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(to bottom, #fff3d6, #e3b341 45%, #9a6b15); }
 
 @keyframes chat-in {
   0% { opacity: 0; transform: translateY(10px) scale(0.99); }
@@ -211,9 +354,9 @@ button:focus-visible { outline: 2px solid #FF2D2D; outline-offset: 3px; border-r
 @media (prefers-reduced-motion: reduce) { .chat-msg { animation: none; } }
 
 @keyframes live-ring {
-  0% { box-shadow: 0 0 0 0 rgba(83, 252, 24, 0.55); }
-  70% { box-shadow: 0 0 0 9px rgba(83, 252, 24, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(83, 252, 24, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(194, 30, 58, 0.6); }
+  70% { box-shadow: 0 0 0 9px rgba(194, 30, 58, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(194, 30, 58, 0); }
 }
 .live-dot { animation: live-ring 1.8s ease-out infinite; }
 .perspective-1000 { perspective: 1200px; }
@@ -240,15 +383,16 @@ button:focus-visible { outline: 2px solid #FF2D2D; outline-offset: 3px; border-r
 }
 
 /* ============================================================
-   Hero watermark "iABS" — الأصل كما كان بالضبط:
-   دخول متتابع + موجة طفو + لمعة زاحفة + هالة خلفية
-   (نفس الشكل الأصلي حرفياً، بدون أي إضافة)
+   Hero wordmark "XLXWI" — gold foil, engraved depth, slow sheen
    ============================================================ */
+.wm-mark {
+  filter: drop-shadow(0 0 34px rgba(227, 179, 65, 0.18));
+}
 .wm-mark::before {
   content: "";
   position: absolute;
   inset: -12% -6%;
-  background: radial-gradient(ellipse 55% 45% at 50% 55%, rgba(255, 45, 45, 0.28), transparent 70%);
+  background: radial-gradient(ellipse 55% 45% at 50% 55%, rgba(227, 179, 65, 0.24), transparent 70%);
   filter: blur(30px);
   animation: wm-aura 4.5s ease-in-out infinite;
   pointer-events: none;
@@ -258,18 +402,18 @@ button:focus-visible { outline: 2px solid #FF2D2D; outline-offset: 3px; border-r
   50% { opacity: 1; transform: scale(1.08); }
 }
 
+/* نفس معادلة iABS: خط رفيع + وهج خفيف (مو خط سميك) */
 .wm-stroke {
   color: transparent;
-  -webkit-text-stroke: 2px rgba(255, 70, 70, 0.9);
+  -webkit-text-stroke: 2px rgba(227, 179, 65, 0.92);
   paint-order: stroke fill;
 }
 @media (min-width: 768px) { .wm-stroke { -webkit-text-stroke-width: 2.5px; } }
 
 .wm-depth { position: absolute; inset: 0; display: block; pointer-events: none; color: transparent; paint-order: stroke fill; user-select: none; }
-.wm-depth-1 { transform: translate(3px, 3px); -webkit-text-stroke: 2px rgba(255, 45, 45, 0.22); }
-.wm-depth-2 { transform: translate(7px, 7px); -webkit-text-stroke: 2px rgba(255, 45, 45, 0.10); }
+.wm-depth-1 { transform: translate(3px, 3px); -webkit-text-stroke: 2px rgba(194, 30, 58, 0.24); }
+.wm-depth-2 { transform: translate(7px, 7px); -webkit-text-stroke: 2px rgba(227, 179, 65, 0.11); }
 
-/* دخول متتابع + موجة طفو (كما كان الأصل) */
 .wm-letter {
   display: inline-block;
   opacity: 0;
@@ -280,6 +424,7 @@ button:focus-visible { outline: 2px solid #FF2D2D; outline-offset: 3px; border-r
 .wm-mark .wm-letter:nth-child(2) { animation-delay: 90ms, 0.45s; }
 .wm-mark .wm-letter:nth-child(3) { animation-delay: 180ms, 0.9s; }
 .wm-mark .wm-letter:nth-child(4) { animation-delay: 270ms, 1.35s; }
+.wm-mark .wm-letter:nth-child(5) { animation-delay: 360ms, 1.8s; }
 
 @keyframes wm-in {
   0% { opacity: 0; transform: translateY(18px) scale(0.97); }
@@ -290,14 +435,14 @@ button:focus-visible { outline: 2px solid #FF2D2D; outline-offset: 3px; border-r
   50% { transform: translateY(-7px) rotate(-1deg); }
 }
 
-.wm-mark:hover .wm-stroke { color: rgba(255, 45, 45, 0.14); -webkit-text-stroke-color: rgba(255, 90, 90, 1); }
+.wm-mark:hover .wm-stroke { color: rgba(227, 179, 65, 0.12); -webkit-text-stroke-color: rgba(247, 227, 174, 1); }
 .wm-sheen {
   position: absolute;
   inset: 0;
   display: block;
   color: transparent;
-  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.55) 46%, rgba(255, 120, 120, 0.6) 50%, rgba(255, 255, 255, 0.55) 54%, transparent 70%);
-  background-size: 280% 100%;
+  background: linear-gradient(100deg, transparent 43%, rgba(255, 251, 235, 0.26) 47%, rgba(227, 179, 65, 0.32) 50%, rgba(255, 251, 235, 0.26) 53%, transparent 57%);
+  background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   animation: wm-sheen 4.5s ease-in-out infinite;
@@ -309,17 +454,182 @@ button:focus-visible { outline: 2px solid #FF2D2D; outline-offset: 3px; border-r
 }
 
 /* ============================================================
-   60-DAY CHALLENGE
+   Clan Level One — درع الكلان
    ============================================================ */
-.d60-ring { transform-origin: 50% 50%; transform-box: view-box; }
-.d60-bar-fill { transition: width 0.9s var(--ease); }
+.clan-crest {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  padding: 7px 18px 7px 7px;
+  border-radius: 18px;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(150deg, rgba(62, 14, 26, 0.92), rgba(18, 3, 7, 0.95)) padding-box,
+    linear-gradient(120deg, rgba(255, 243, 214, 0.85), #e3b341 32%, #8a5e12 62%, #f7e3ae 100%) border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 243, 214, 0.12), 0 18px 40px -20px rgba(0, 0, 0, 0.95), 0 0 26px -8px rgba(227, 179, 65, 0.35);
+}
+.clan-crest-shield {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: radial-gradient(125% 125% at 50% 0%, #3e0e1a 0%, #1b0509 60%, #120307 100%);
+  box-shadow:
+    inset 0 0 0 1.2px rgba(227, 179, 65, 0.6),
+    inset 0 1px 0 rgba(255, 243, 214, 0.16),
+    0 8px 20px -8px rgba(0, 0, 0, 0.9),
+    0 0 24px -8px rgba(227, 179, 65, 0.6);
+}
+.clan-crest-shield img {
+  width: 30px;
+  height: 37px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.65));
+}
+.clan-crest-shield b {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  min-width: 19px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: #1b0509;
+  border: 1px solid rgba(227, 179, 65, 0.6);
+  color: #f7e3ae;
+  font-family: "Bangers", "Outfit", cursive;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 16px;
+  text-align: center;
+}
+.clan-crest-txt { display: grid; gap: 1px; }
+.clan-crest-txt i {
+  font-style: normal;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.34em;
+  color: rgba(227, 179, 65, 0.7);
+}
+.clan-crest-txt em {
+  font-style: normal;
+  font-family: "Bangers", "Outfit", cursive;
+  font-size: 23px;
+  line-height: 0.95;
+  letter-spacing: 0.06em;
+  color: transparent;
+  background: linear-gradient(168deg, #fff3d6 0%, #e3b341 34%, #9a6b15 58%, #f7e3ae 78%, #b8860b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.65));
+}
+.clan-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(194, 30, 58, 0.5);
+  background: linear-gradient(160deg, rgba(194, 30, 58, 0.22), rgba(194, 30, 58, 0.06));
+  color: #e4506a;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  box-shadow: 0 0 22px -8px rgba(228, 80, 106, 0.8);
+  transition: transform 0.2s var(--ease), color 0.2s, border-color 0.2s;
+}
+.clan-tag:hover { transform: translateY(-2px); color: #fff3d6; border-color: rgba(247, 227, 174, 0.75); }
+.clan-ar {
+  font-family: "Cairo", "Tajawal", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: rgba(255, 247, 236, 0.42);
+}
 
 /* ============================================================
-   =====  PERFORMANCE GUARDS  =====
+   Hero stat tiles — مربعات الأرقام في الواجهة
+   ============================================================ */
+.stat-tile {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  text-align: center;
+  padding: 13px 8px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(227, 179, 65, 0.16);
+  background: linear-gradient(168deg, rgba(62, 14, 26, 0.6) 0%, rgba(27, 5, 9, 0.72) 55%, rgba(18, 3, 7, 0.82) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 243, 214, 0.08), 0 16px 32px -20px rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(6px);
+}
+.stat-tile::before {
+  content: '';
+  position: absolute;
+  inset: -40% -10% auto -55%;
+  height: 180%;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 243, 214, 0.1) 48%, transparent 62%);
+  pointer-events: none;
+}
+.stat-tile-line {
+  position: absolute;
+  top: 0;
+  left: 22%;
+  right: 22%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, rgba(227, 179, 65, 0.55), transparent);
+}
+.stat-tile-hot {
+  border-color: rgba(227, 179, 65, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 243, 214, 0.16), 0 0 30px -10px rgba(227, 179, 65, 0.55),
+    0 16px 32px -20px rgba(0, 0, 0, 0.95);
+}
+.stat-tile-hot .stat-tile-line { background: linear-gradient(90deg, transparent, #f7e3ae, transparent); }
+.stat-tile-v {
+  font-size: clamp(21px, 5.4vw, 30px);
+  line-height: 1.05;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  color: transparent;
+  background: linear-gradient(168deg, #fff3d6 0%, #e3b341 36%, #9a6b15 60%, #f7e3ae 80%, #b8860b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.55));
+}
+.stat-tile-l {
+  margin-top: 4px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.42);
+}
+@media (min-width: 768px) {
+  .stat-tile { padding: 16px 12px 14px; border-radius: 20px; }
+  .stat-tile-l { font-size: 11px; letter-spacing: 0.18em; }
+}
+
+/* ============================================================
+   Media modal (in-site Kick player)
+   ============================================================ */
+.modal-backdrop {
+  animation: modal-back 0.25s ease forwards;
+}
+.modal-sheet {
+  animation: modal-sheet 0.4s var(--ease) forwards;
+}
+@keyframes modal-back { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-sheet {
+  from { opacity: 0; transform: translateY(22px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ============================================================
+  =====  PERFORMANCE GUARDS  =====
    أخفف التأثيرات الثقيلة على الجوال — نفس الشكل، أداء أسرع
    ============================================================ */
 @media (max-width: 767px) {
-  /* backdrop-filter مع كل عنصر = طبقة GPU لكل عنصر. نقلّلها كلها على الجوال */
   html, html * {
     --tw-backdrop-blur: 5px;
     --tw-backdrop-blur-sm: 5px;
@@ -329,14 +639,26 @@ button:focus-visible { outline: 2px solid #FF2D2D; outline-offset: 3px; border-r
     --tw-backdrop-blur-2xl: 8px;
     --tw-backdrop-blur-3xl: 10px;
   }
-  /* كل التوهجات صارت تدرّجات شعاعية بدون فلتر — لا حاجة لتعطيل أي blur */
 
   .glass { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-  .glass-soft { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(255, 255, 255, 0.055); }
+  .glass-soft { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgba(255, 247, 236, 0.055); }
   .card-sheen::before { animation: none; opacity: 0; }
   .grain::after { display: none; }
   .profile-scanner { animation-duration: 5s; }
   .live-dot { animation: none; }
+
+  /* المربعات الرقمية: blur إضافي فوق backdrop-filter العام = إعادة رسم لكل إطار */
+  .stat-tile { backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+  /* الشعار المتحرّك: نبض الوهج + لمعان النص = أغلى رسميتين على الجوال.
+     الحركة الدخول (wm-in) تبقى، والموجبة المستمرة تُطفأ. */
+  .wm-letter { animation: wm-in 0.6s var(--ease) forwards; }
+  .wm-sheen { animation: none; opacity: 0; }
+  .wm-mark::before { animation: none; filter: none; opacity: 0.7; transform: scale(1); }
+  .wm-mark { filter: none; }
+
+  /* الأورورا: تدوير/تعتيم مستمر لدوائر نصف-قطرية كبيرة */
+  .animate-aurora { animation: none; }
 }
 
 @media (hover: none) {

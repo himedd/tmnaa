@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/HSG116/iABS_AR/main/public/channels4_banner.jpg" alt="iABS Stream Hub Banner" width="100%" style="border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);" />
+  <img src="public/og-cover.jpg" alt="xlxwi Stream Hub Banner" width="100%" style="border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);" />
 </p>
 
-<h1 align="center">🎮 iABS Stream Hub</h1>
+<h1 align="center">🎮 xlxwi Stream Hub</h1>
 
 <p align="center">
-  <strong>— منصة iABS الشاملة للبث المباشر والتفاعل والمجتمع —</strong>
+  <strong>— منصة علي الهاشمي (xlxwi) الرسمية للبث المباشر والدعم وكلان ليفل ون —</strong>
   <br>
-  <em>The Ultimate Streaming Command Center for iABS • Kick • MT RP • Community</em>
+  <em>The Official Streaming Hub for xlxwi • Kick • Clan Level One</em>
 </p>
 
 <p align="center">
@@ -15,16 +15,15 @@
   <img src="https://img.shields.io/badge/TypeScript-5.8-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Vite-6-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite 6" />
   <img src="https://img.shields.io/badge/Supabase-FF2D2D?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
-  <img src="https://img.shields.io/badge/DeepSeek-AI-4F46E5?style=for-the-badge&logo=deepseek&logoColor=white" alt="DeepSeek AI" />
   <img src="https://img.shields.io/badge/Vercel-Edge-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel Edge" />
   <img src="https://img.shields.io/badge/GitHub-Pages-222222?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Pages" />
 </p>
 
 <p align="center">
-  <a href="https://discord.com/users/1416151331965767810">💬 Discord</a> •
-  <a href="https://x.com/Moh_HSG">🐦 X (Twitter)</a> •
-  <a href="https://github.com/HSG116/iABS_AR">📦 GitHub</a> •
-  <a href="https://iabs.stream">🌐 Live Site</a>
+  <a href="https://kick.com/xlxwi">🎮 Kick</a> •
+  <a href="https://discord.gg/tmfx">💬 Discord</a> •
+  <a href="https://x.com/xlxwi">🐦 X</a> •
+  <a href="https://github.com/hsg117/xlxwi">📦 GitHub</a>
 </p>
 
 ---
@@ -38,49 +37,42 @@
 ### 📺 Live Streaming
 - **Kick Embed** player with low-latency HLS.js
 - Auto-reconnect on stream drop
-- Dual-view: featured section + sidebar
 - Cinema mode for immersive watching
+- **In-site playback** — VODs and clips open in a modal player without leaving the site
 
-### 🤖 AI Chat — أبو سعد
-- **DeepSeek-powered** with Saudi dialect
-- Custom Kick emotes rendering (`[emote:ID]`)
-- Social link buttons (`[social:platform:count:url]`)
-- **Botrix integration** for leaderboard queries
-- 3-key fallback chain for reliability
-- Chat logs saved to Supabase
+### 🏆 Chat Legends — أساطير الشات
+- Live Botrix leaderboard with sort tabs (ساعات / لفل)
+- Gold podium for the top 3 + ranked list
+- Real Kick avatars with letter fallback
 
-### 📊 Live Social Stats
-- Real-time follower counts (Kick, YouTube, TikTok, X, Snapchat, Instagram, Discord, WhatsApp)
-- Animated stat cards with platform colors
-- Automatic refresh every 60 seconds
+### 🫂 Support Arena — الدعم
+- Two sources: **Streamlabs** and **Dokan** (creators.sa)
+- All-time / monthly / weekly intervals
+- **Names and ranks only** — no amounts shown
+- Revealed behind a tip CTA
 
 </td>
 <td width="50%" valign="top">
 
-### 🏆 Botrix Leaderboard
-- Top supporters ranked by watchtime
-- Level, XP, and points per user
-- Profile avatars from Kick API
-- Sorted by leaderboard ranking
+### 📊 Live Social Stats
+- KICK · Snapchat · Instagram · TikTok · X · WhatsApp · Discord
+- Counts hide when a platform can't be read publicly
+- Animated reveal on scroll
 
-### 🎬 Media & Content
-- **Highlight Clips** gallery (YouTube/TikTok)
-- **Studio Section** — community submissions with approve/reject moderation
-- **Media Library** — image/video/link assets
+### 🛡️ Moderators
+- Live X profiles via FixTweet (avatar, banner, bio, followers)
+- Discord-only moderators supported
+- 30-min cache + silent 10-min refresh, paused when the tab is hidden
 
-### 📋 Community Tools
-- **📢 Announcement Bar** — scrolling ticker
-- **📅 Stream Schedule** — weekly plan toggle
-- **❓ FAQ Section** — expandable Q&A
-- **💰 Sponsors & Promo Codes** — one-click copy
-- **📊 Live Polls** — real-time voting
+### 🎬 Content & Tools
+- **Highlight Clips** gallery and past VODs (both in-site players)
+- **Stream Schedule**, **FAQ**, **Sponsors & Promo Codes**
+- **Live Polls** — real-time voting
+- **Announcement Bar** — scrolling ticker
 
 ### 🔐 Admin Dashboard
 - **Full RBAC** — admin/editor/viewer roles
-- **SEO Settings** — title, description, keywords
-- **Audit Logs** — full activity trail
-- **AI Chat Logs** — view all conversations
-- **Studio Review** — approve/reject submissions
+- **SEO Settings**, **Audit Logs**, **Studio Review**
 - **Media Manager** — upload & organize assets
 
 </td>
@@ -94,24 +86,22 @@
 ```mermaid
 graph TD
     A[User Browser] --> B[GitHub Pages CDN]
-    A --> C[Vercel Edge - api/kick.ts]
+    A --> C[Vercel Edge - api/kick.ts + api/social.ts]
     C --> D[Kick.com API]
     C --> E[Botrix.live API]
-    B --> F[Supabase REST]
-    F --> G[(PostgreSQL)]
-    A --> H[DeepSeek API]
-    H --> I[AI Chat Responses]
-    B --> J[Kick Emote CDN]
+    C --> F[FixTweet / Streamlabs / creators.sa]
+    B --> G[Supabase REST]
+    G --> H[(PostgreSQL)]
+    B --> I[player.kick.com - in-site modal]
 ```
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | **Frontend** | React 19 + TypeScript + Vite 6 | SPA with instant HMR |
-| **Styling** | Tailwind CSS (utility-first) | Responsive, dark-theme UI |
+| **Styling** | Tailwind CSS + CSS layers | Royal burgundy & gold theme, RTL-first |
 | **State** | React hooks + Supabase realtime | Live data without polling |
 | **Auth** | Supabase Auth + RBAC | Secure admin access |
 | **API Proxy** | Vercel Edge Function | CORS-free fetching |
-| **AI** | DeepSeek Chat API | Smart conversational agent |
 | **Database** | Supabase PostgreSQL | All dynamic content |
 | **Hosting** | GitHub Pages + Vercel | Static + serverless |
 
@@ -120,28 +110,30 @@ graph TD
 ## 📁 Project Structure — هيكل المشروع
 
 ```
-iABS_AR/
+xlxwi/
 ├── api/                          # Vercel Edge Functions
-│   └── kick.ts                   #   Universal API proxy
+│   ├── kick.ts                   #   Universal CORS proxy
+│   └── social.ts                 #   Live follower counters
 ├── components/
-│   ├── AdminDashboard.tsx         #   Full admin panel (10+ tabs)
-│   ├── AIChat.tsx                 #   AI assistant with emotes
-│   ├── BotrixLeaderboard.tsx      #   Top supporters table
-│   ├── StatsSection.tsx           #   Live stats + leaderboard
-│   ├── KICKsSection.tsx           #   Stream player embed
-│   ├── StudioSection.tsx          #   Community submissions
-│   ├── PublicWidgets.tsx          #   Schedule, FAQ, sponsors
-│   ├── SocialMediaAdmin.tsx       #   Social count editor
+│   ├── ChatLegends.tsx            #   Botrix chat leaderboard + podium
+│   ├── StatsSection.tsx           #   Live stats, VODs, clips
+│   ├── MediaModal.tsx             #   In-site Kick player (VOD/clip)
+│   ├── ModeratorsSection.tsx      #   Mod roster from X + Discord
+│   ├── StreamPlayer.tsx           #   Kick embed + HLS
+│   ├── PublicWidgets.tsx          #   Schedule, FAQ, sponsors, clips
+│   ├── AdminDashboard.tsx         #   Full admin panel
 │   └── ...                        #   Icons, utilities & more
-├── public/                        # Static assets
-│   ├── favicon.png                #   Site icon
-│   ├── channels4_banner.jpg       #   YouTube banner
-│   └── *.png                      #   Background images
-├── App.tsx                        # Main app with routing
-├── supabaseClient.ts              # Supabase singleton
-├── vite.config.ts                 # Vite + dev proxy config
-├── package.json                   # Dependencies & scripts
-└── README.md                      # You are here 📍
+├── utils/                        # botrixApi, supportersApi, socialMediaApi
+├── services/                     # chatService (Kick live chat)
+├── public/                       # Static assets
+│   ├── xlxwi-logo.webp           #   Site icon + brand mark
+│   ├── bg-heraldic.webp          #   PC background — royal burgundy heraldic frame
+│   ├── bg-mobile.webp            #   Phone-only background (<768px, 15 KB)
+│   └── og-cover.jpg              #   Social share (OG/Twitter) image
+├── App.tsx                       # Main single-page app
+├── supabaseClient.ts             # Supabase singleton
+├── vite.config.ts                # Vite + dev proxy config
+└── README.md                     # You are here 📍
 ```
 
 ---
@@ -157,26 +149,40 @@ iABS_AR/
 
 ```bash
 # Clone the repository
-git clone https://github.com/HSG116/iABS_AR.git
-cd iABS_AR
+git clone https://github.com/hsg117/xlxwi.git
+cd xlxwi
 
 # Install dependencies
 npm install
 
-# Start development server (port 3000)
+# Start development server (http://localhost:3003)
 npm run dev
 
-# Build for production
+# Build for production (Vercel / any root-domain host)
 npm run build
 
 # Preview production build
 npm run preview
 ```
 
-### Deploy to GitHub Pages
+### Deploy to Vercel — النشر على فيركل
+
+`vercel.json` يهيّئ كل شيء (Vite + `dist` + دوال `api/`). اربط المستودع بـ Vercel مباشرة، أو:
 
 ```bash
-# One command — builds + deploys
+npm i -g vercel
+vercel --prod
+```
+
+> **مهم:** بيانات كيك وشات كيك تمرّ عبر دالة `api/kick.ts`. هذه لا تعمل على GitHub Pages
+> (لا توجد دوال سيرفر هناك)، فالموقع يحتاج **Vercel** أو أي مستضيف يدعمها.
+> النطاق الحالي في وسوم `canonical` و`og:url` و`sitemap.xml` هو `https://xlxwi.vercel.app/` —
+> غيّره إن أعطى Vercel مشروعك اسماً مختلفاً.
+
+### Deploy to GitHub Pages (بدون دوال — الشات وأرقام كيك تتعطل)
+
+```bash
+# One command — builds + deploys (base path /xlxwi/)
 npm run deploy
 ```
 
@@ -191,52 +197,48 @@ const supabaseUrl = 'https://your-project.supabase.co';
 const supabaseKey = 'your-anon-key';
 ```
 
-### DeepSeek API Keys
-Edit `components/AIChat.tsx` — the `API_KEYS` array:
+### Identity & Social Links
+All identity lives at the top of `App.tsx`:
 ```ts
-const API_KEYS = [
-  'sk-your-key-1',
-  'sk-your-key-2',  // Fallback
-  'sk-your-key-3',  // Fallback
-];
+const CHANNEL_SLUG = 'xlxwi';
+const BRAND_LOGO = 'xlxwi-logo.webp';
+const SITE_BACKGROUND = 'bg-heraldic.webp';
+const CLAN = { latin: 'LEVEL ONE', ar: 'كلان ليفل ون', tag: '#StayOne' };
 ```
+`createSocialLink()` covers Snapchat, Instagram, TikTok, X, WhatsApp and Discord; KICK is the `KICK_SOCIAL` constant.
 
-### Social Links
-Edit `App.tsx` — `createSocialLink()` function handles:
-- Kick, X, Instagram, TikTok, YouTube
-- Snapchat, Discord, WhatsApp
-
-### Botrix Leaderboard
-The endpoint is configured in `AIChat.tsx`:
-```
-https://botrix.live/api/public/leaderboard?platform=kick&user=iabs
-```
+### Leaderboard Sources
+| Source | Endpoint | File |
+|--------|----------|------|
+| **Botrix** | `https://botrix.live/api/public/leaderboard?platform=kick&user=xlxwi` | `utils/botrixApi.ts` |
+| **Streamlabs** | `https://streamlabs.com/api/v6/{id}/leaderboard/tip` | `utils/supportersApi.ts` |
+| **Dokan** | `https://api.creators.sa/v1/kebab/unified/xlxwi/leaderboard` | `utils/supportersApi.ts` |
+| **Social counts** | handles `xlxwi` / `3.4i` | `api/social.ts` + mirrored in `vite.config.ts` |
 
 ---
 
 ## 🎯 Key Components Breakdown
 
-### 🤖 AIChat (`components/AIChat.tsx`)
-- **763 lines** of pure React + AI logic
-- `renderFormattedText()` — parses `[emote:ID]`, `[social:NAME:COUNT:URL]`, bold/italic markdown
-- `sendMessage()` — streaming DeepSeek response with 3-key fallback
-- `SYSTEM_PROMPT` — fully customized Saudi personality with few-shot examples
-- Logs every conversation to Supabase `ai_chat_logs`
+### 🏆 ChatLegends (`components/ChatLegends.tsx`)
+- Fetches Botrix and converts watchtime (minutes) to hours
+- Two sort tabs — الأكثر ساعات / الأعلى لفل
+- Podium for the top 3, scrollable ranked list below
 
 ### 📊 StatsSection (`components/StatsSection.tsx`)
-- 4 animated stat cards (Kick, YouTube, TikTok, X)
-- Live follower count from Supabase `social_links` table
-- Renders `BotrixLeaderboard` inline under "Top Gifters"
+- Live stat cards + VOD and clip grids
+- Every card calls `onPlay()` → opens `MediaModal`, so playback never leaves the site
 
-### 🏆 BotrixLeaderboard (`components/BotrixLeaderboard.tsx`)
-- Fetches via Vercel Edge proxy (`/api/kick?endpoint=...`)
-- Displays rank, avatar, username, level, watchtime, XP, points
-- Batches Kick avatar fetches (5 at a time)
+### 🎬 MediaModal (`components/MediaModal.tsx`)
+- `https://player.kick.com/xlxwi?video={id}` and `?clip={id}`
+- ESC to close, body scroll lock, loading spinner
+
+### 🛡️ ModeratorsSection (`components/ModeratorsSection.tsx`)
+- `ROSTER` — each entry has a Kick name plus an optional X handle or `discordId`
+- Discord-only moderators show the invite button instead of an X profile
 
 ### 🔐 AdminDashboard (`components/AdminDashboard.tsx`)
-- 12-tab panel: Overview, Announcements, Sponsors, Clips, Studio Review, Schedule, FAQs, SEO, Admins, Audit, Media, AI Logs
+- Tabs: Overview, Announcements, Sponsors, Clips, Studio Review, Schedule, FAQs, SEO, Admins, Audit, Media
 - Supabase CRUD for every content type
-- Cartoon-style UI with shadows and gradients
 
 ---
 
@@ -256,16 +258,7 @@ https://botrix.live/api/public/leaderboard?platform=kick&user=iabs
 | `audit_logs` | Activity trail |
 | `media_assets` | Image/video/link library |
 | `studio_submissions` | Community content |
-| `ai_chat_logs` | AI conversation history |
 | `daily_views` | Visitor analytics |
-
----
-
-## 📸 Screenshots — لقطات من الموقع
-
-<p align="center">
-  <em>(Coming soon — screenshots of the live site)</em>
-</p>
 
 ---
 
@@ -280,8 +273,7 @@ https://botrix.live/api/public/leaderboard?platform=kick&user=iabs
 ### Guidelines
 - Follow the existing code style (inline Tailwind, functional components)
 - Test with `npm run build` before submitting
-- Keep the Saudi dialect in AI prompts authentic
-- No Unicode emojis in AI responses — use Kick emotes instead
+- Keep the burgundy/gold palette: gold = accent and rank, crimson = fills, Kick green only on the Kick brand mark
 
 ---
 
@@ -289,32 +281,23 @@ https://botrix.live/api/public/leaderboard?platform=kick&user=iabs
 
 | Channel | Info |
 |---------|------|
-| 📧 **Business Email** | ABSX84@gmail.com |
-| 📞 **Phone** | +966 550 348 751 |
-| 💬 **Discord** | [Moh_HSG](https://discord.com/users/1416151331965767810) |
-| 🐦 **X (Twitter)** | [@Moh_HSG](https://x.com/Moh_HSG) |
-| 🎮 **Kick** | [iABS](https://kick.com/iABS) |
+| 🎮 **Kick** | [xlxwi](https://kick.com/xlxwi) |
+| 🐦 **X** | [@xlxwi](https://x.com/xlxwi) |
+| 📸 **Instagram** | [@3.4i](https://www.instagram.com/3.4i/) |
+| 🎵 **TikTok** | [@xlxwi](https://www.tiktok.com/@xlxwi) |
+| 👻 **Snapchat** | [@xlxwiii](https://www.snapchat.com/@xlxwiii) |
+| 💬 **Discord** | [Clan Level One](https://discord.gg/tmfx) |
+| 📣 **WhatsApp** | [Channel](https://www.whatsapp.com/channel/0029VadcjLc4Y9lnhHoOAw0a) |
+| 🛠 **Site Author** | [Moh_HSG](https://discord.com/users/1416151331965767810) |
 
 ---
 
 ## 📜 License — الترخيص
 
 ```
-© 2026 iABS Stream Hub. All Rights Reserved.
+© 2026 xlxwi Stream Hub. All Rights Reserved.
 POWERED BY HSG
 ```
-
-<p align="center">
-  <a href="https://discord.com/users/1416151331965767810">
-    <img src="https://img.shields.io/badge/💬_Join_Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Join Discord" />
-  </a>
-  <a href="https://x.com/Moh_HSG">
-    <img src="https://img.shields.io/badge/🐦_Follow_on_X-000000?style=for-the-badge&logo=x&logoColor=white" alt="Follow on X" />
-  </a>
-  <a href="https://github.com/HSG116/iABS_AR">
-    <img src="https://img.shields.io/badge/📦_GitHub_Repo-222222?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" />
-  </a>
-</p>
 
 <p align="center">
   <strong>POWERED BY HSG</strong>

@@ -1,6 +1,6 @@
 // ============================================================
 //  Botrix leaderboard — المصدر الموحد لأهل الشات
-//  يستخدمه: BotrixLeaderboard (العرض) + AIChat (أسئلة الشات)
+//  يستخدمه: ChatLegends (أساطير الشات)
 //  كاش 5 دقائق (ذاكرة + localStorage) عشان ما نضرب الـ API مع كل رسالة
 // ============================================================
 
@@ -14,9 +14,9 @@ export interface BotrixEntry {
 
 const API_URL =
   '/api/kick?endpoint=' +
-  encodeURIComponent('https://botrix.live/api/public/leaderboard?platform=kick&user=iabs');
+  encodeURIComponent('https://botrix.live/api/public/leaderboard?platform=kick&user=xlxwi');
 
-const CACHE_KEY = 'iabs_botrix_cache_v1';
+const CACHE_KEY = 'xlxwi_botrix_cache_v1';
 const TTL_MS = 5 * 60 * 1000;
 
 let memCache: { at: number; data: BotrixEntry[] } | null = null;

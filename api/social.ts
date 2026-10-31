@@ -1,5 +1,5 @@
 // Vercel Edge Function — Live Social Counters API
-// GET /api/social?platform=tiktok|instagram|youtube|twitter
+// GET /api/social?platform=kick|tiktok|instagram|twitter|discord|snapchat
 // Server-side fetch = no CORS issues, fresh numbers every call.
 // Vercel caches success responses for 4 minutes (s-maxage).
 
@@ -11,20 +11,22 @@ const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 
 const HANDLES = {
-  tiktok: 'iabsq',
-  instagram: 'absq',
-  twitter: 'iABSq',
-  youtube: 'UCdIM7MB-8G-FgE7ld3XAQ8w',
+  kick: 'xlxwi',
+  tiktok: 'xlxwi',
+  instagram: '3.4i',
+  twitter: 'xlxwi',
+  discord: 'tmfx',
+  snapchat: 'xlxwiii',
 } as const;
 
 type Platform = keyof typeof HANDLES;
 
-async function fetchJson(url: string, timeoutMs = 9000): Promise<any> {
+async function fetchJson(url: string, timeoutMs = 9000, extraHeaders: Record<string, string> = {}): Promise<any> {
   const c = new AbortController();
   const t = setTimeout(() => c.abort(), timeoutMs);
   try {
     const r = await fetch(url, {
-      headers: { Accept: 'application/json', 'User-Agent': UA, 'Accept-Language': 'en-US,en;q=0.9' },
+      headers: { Accept: 'application/json', 'User-Agent': UA, 'Accept-Language': 'en-US,en;q=0.9', ...extraHeaders },
       signal: c.signal,
     });
     if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
@@ -34,12 +36,12 @@ async function fetchJson(url: string, timeoutMs = 9000): Promise<any> {
   }
 }
 
-async function fetchText(url: string, timeoutMs = 9000): Promise<string> {
+async function fetchText(url: string, timeoutMs = 9000, extraHeaders: Record<string, string> = {}): Promise<string> {
   const c = new AbortController();
   const t = setTimeout(() => c.abort(), timeoutMs);
   try {
     const r = await fetch(url, {
-      headers: { Accept: 'text/html,application/xhtml+xml', 'User-Agent': UA, 'Accept-Language': 'en-US,en;q=0.9' },
+      headers: { Accept: 'text/html,application/xhtml+xml', 'User-Agent': UA, 'Accept-Language': 'en-US,en;q=0.9', ...extraHeaders },
       signal: c.signal,
     });
     if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
@@ -65,6 +67,59 @@ function parseCompact(input: unknown): number | null {
   return out > 0 ? out : null;
 }
 
+async function fetchMarkdown(url: string, timeoutMs = 14000): Promise<string> {
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), timeoutMs);
+  try {
+    const r = await fetch(`https://r.jina.ai/${url}`, {
+      headers: { Accept: 'text/plain', 'User-Agent': UA, 'X-Return-Format': 'markdown' },
+      signal: c.signal,
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+    return await r.text();
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+/** "26.7K Followers" من نص الصفحة — أول نتيجة هي رقم الحساب نفسه */
+function parseFollowersFromText(text: string): number | null {
+  const m = String(text || '').match(/([\d][\d.,]*\s*[KMB]?)\s*\*{0,2}\s*(?:Followers|followers|subscribers|Subscribers)/);
+  return m ? parseCompact(m[1]) : null;
+}
+
+async function getKick(): Promise<{ count: number; source: string }> {
+  const d = await fetchJson(`https://kick.com/api/v2/channels/${HANDLES.kick}`);
+  const n = parseCompact(d?.channel?.followers_count ?? d?.followers_count);
+  if (!n) throw new Error('kick: empty');
+  return { count: n, source: 'kick_v2' };
+}
+
+async function getDiscord(): Promise<{ count: number; source: string }> {
+  const d = await fetchJson(`https://discord.com/api/v9/invites/${HANDLES.discord}?with_counts=true`);
+  const n = parseCompact(d?.approximate_member_count);
+  if (!n) throw new Error('discord: empty');
+  return { count: n, source: 'discord_invite' };
+}
+
+async function getSnapchat(): Promise<{ count: number; source: string }> {
+  // 1) JSON-LD الرسمي — interactionStatistic / subscriberCount
+  try {
+    const html = await fetchText(`https://www.snapchat.com/add/${HANDLES.snapchat}`);
+    const ld = html.match(/"subscriberCount"\s*:\s*"?([\d.]+[KMB]?)"?/i)?.[1]
+      || html.match(/"userInteractionCount"\s*:\s*"?([\d.]+[KMB]?)"?/i)?.[1];
+    const n = ld ? parseCompact(ld) : null;
+    if (n) return { count: n, source: 'json_ld' };
+  } catch {}
+  // 2) نص الصفحة عبر قارئ
+  try {
+    const txt = await fetchMarkdown(`https://www.snapchat.com/@${HANDLES.snapchat}`);
+    const n = parseFollowersFromText(txt);
+    if (n) return { count: n, source: 'reader' };
+  } catch {}
+  throw new Error('snapchat: no public counter');
+}
+
 async function getTikTok(): Promise<{ count: number; source: string }> {
   // 1) TikMatrix — open JSON, exact count
   try {
@@ -78,38 +133,13 @@ async function getTikTok(): Promise<{ count: number; source: string }> {
     const n = parseCompact(d?.followerCount ?? d?.followers ?? d?.follower_count);
     if (n) return { count: n, source: 'countik' };
   } catch {}
+  // 3) نص صفحة البروفايل
+  try {
+    const txt = await fetchMarkdown(`https://www.tiktok.com/@${HANDLES.tiktok}`);
+    const n = parseFollowersFromText(txt);
+    if (n) return { count: n, source: 'reader' };
+  } catch {}
   throw new Error('tiktok: all sources failed');
-}
-
-async function getYouTube(): Promise<{ count: number; source: string }> {
-  // 1) LemnosLife operational API — exact subscriber count, no key
-  try {
-    const d = await fetchJson(`https://yt.lemnoslife.com/noKey/channels?part=statistics&id=${HANDLES.youtube}`);
-    const n = parseCompact(d?.items?.[0]?.statistics?.subscriberCount);
-    if (n) return { count: n, source: 'lemnoslife' };
-  } catch {}
-  // 2) Mixerno — exact subscriber count
-  try {
-    const d = await fetchJson(`https://mixerno.space/api/youtube-channel-counter/user/${HANDLES.youtube}`);
-    const entry = Array.isArray(d?.counts) ? d.counts.find((c: any) => c?.value === 'subscribers') : null;
-    const n = parseCompact(entry?.count);
-    if (n) return { count: n, source: 'mixerno' };
-  } catch {}
-  // 3) Piped mirrors (kavin.rocks is often dead — try several)
-  const mirrors = [
-    'https://pipedapi.adminforge.de',
-    'https://pipedapi.reallyaweso.me',
-    'https://pipedapi.leptons.xyz',
-    'https://pipedapi.kavin.rocks',
-  ];
-  for (const m of mirrors) {
-    try {
-      const d = await fetchJson(`${m}/channel/${HANDLES.youtube}`);
-      const n = parseCompact(d?.subscriberCount);
-      if (n) return { count: n, source: `piped:${new URL(m).hostname}` };
-    } catch {}
-  }
-  throw new Error('youtube: all sources failed');
 }
 
 async function getTwitter(): Promise<{ count: number; source: string }> {
@@ -130,20 +160,73 @@ async function getTwitter(): Promise<{ count: number; source: string }> {
   throw new Error('twitter: all sources failed');
 }
 
+/** معرّف تطبيق إنستغرام العام (الويب) — بدونه ترجع 429 دائماً */
+const IG_APP_ID = '936619743392459';
+const IG_HEADERS = {
+  'x-ig-app-id': IG_APP_ID,
+  Origin: 'https://www.instagram.com',
+  Referer: `https://www.instagram.com/${HANDLES.instagram}/`,
+};
+
+/** إنستغرام ينشر عدّاده للزواحف فقط — المتصفح العادي ياخد جدار تسجيل دخول */
+const IG_CRAWLER_UA =
+  'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+
+/** يستخرج "N Followers" من أي نص (og:description أو بيانات مضمّنة) */
+function followersFromText(text: string): number | null {
+  const s = String(text || '');
+  const m =
+    s.match(/([\d.,]+[KMB]?)\s+(?:Followers|متابع)/i) ||
+    s.match(/"follower_count"\s*:\s*"?([\d.,]+[KMB]?)"?/i) ||
+    s.match(/"edge_followed_by"\s*:\s*\{\s*"count"\s*:\s*([\d]+)/i);
+  return m ? parseCompact(m[1]) : null;
+}
+
 async function getInstagram(): Promise<{ count: number; source: string }> {
-  // 1) Instagram private web API (works server-side when not walled)
+  // 1) واجهة الويب الخاصة — أدق مصدر (تشتغل من سيرفر غير محجوب)
+  for (const host of ['i.instagram.com', 'www.instagram.com']) {
+    try {
+      const d = await fetchJson(
+        `https://${host}/api/v1/users/web_profile_info/?username=${HANDLES.instagram}`,
+        9000,
+        IG_HEADERS,
+      );
+      const n = parseCompact(d?.data?.user?.edge_followed_by?.count ?? d?.user?.follower_count);
+      if (n) return { count: n, source: `web_profile_info:${host}` };
+    } catch {}
+  }
+  // 2) ?__a=1&__d=dis — نفس البيانات بصيغة أخرى
   try {
-    const d = await fetchJson(`https://i.instagram.com/api/v1/users/web_profile_info/?username=${HANDLES.instagram}`);
-    const n = parseCompact(d?.data?.user?.edge_followed_by?.count);
-    if (n) return { count: n, source: 'web_profile_info' };
+    const d = await fetchJson(
+      `https://www.instagram.com/api/v1/users/web_profile_info/?username=${HANDLES.instagram}&__a=1&__d=dis`,
+      9000,
+      IG_HEADERS,
+    );
+    const n = parseCompact(d?.user?.follower_count ?? d?.data?.user?.edge_followed_by?.count);
+    if (n) return { count: n, source: 'web_profile_dis' };
   } catch {}
-  // 2) og:description meta ("21.3K Followers, ...")
+  // 3) HTML البروفايل بواصفة زاحف — إنستغرام يعيد للزواحف الصفحة الكاملة
+  //    وفيها og:description ("8,175 Followers, …")، بينما يرد للمتصفح بقشرة JS فارغة
+  const ogFromHtml = (html: string) => {
+    const og = html.match(/property="og:description"\s+content="([^"]+)"/)?.[1] || '';
+    return followersFromText(og) ?? followersFromText(html);
+  };
+  try {
+    const html = await fetchText(`https://www.instagram.com/${HANDLES.instagram}/?hl=en`, 12000, { 'User-Agent': IG_CRAWLER_UA });
+    const n = ogFromHtml(html);
+    if (n) return { count: n, source: 'og_description_crawler' };
+  } catch {}
+  // 4) نفس المحاولة بواصفة متصفح عادي
   try {
     const html = await fetchText(`https://www.instagram.com/${HANDLES.instagram}/`);
-    const og = html.match(/property="og:description"\s+content="([^"]+)"/)?.[1] || '';
-    const m = og.match(/([\d.,]+[KMB]?)\s+Followers/i);
-    const n = m ? parseCompact(m[1]) : null;
+    const n = ogFromHtml(html);
     if (n) return { count: n, source: 'og_description' };
+  } catch {}
+  // 5) نص الصفحة عبر قارئ (يحتاج الحساب يكون غير مقفل بتسجيل دخول)
+  try {
+    const txt = await fetchMarkdown(`https://www.instagram.com/${HANDLES.instagram}/`);
+    const n = followersFromText(txt);
+    if (n) return { count: n, source: 'reader' };
   } catch {}
   throw new Error('instagram: all sources failed (login-walled)');
 }
@@ -153,7 +236,7 @@ export default async function handler(request: Request) {
   const platform = (searchParams.get('platform') || '').toLowerCase() as Platform;
 
   if (!platform || !(platform in HANDLES)) {
-    return new Response(JSON.stringify({ error: 'Use ?platform=tiktok|instagram|youtube|twitter' }), {
+    return new Response(JSON.stringify({ error: 'Use ?platform=kick|tiktok|instagram|twitter|discord|snapchat' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -161,10 +244,12 @@ export default async function handler(request: Request) {
 
   try {
     const loaders: Record<Platform, () => Promise<{ count: number; source: string }>> = {
+      kick: getKick,
       tiktok: getTikTok,
       instagram: getInstagram,
-      youtube: getYouTube,
       twitter: getTwitter,
+      discord: getDiscord,
+      snapchat: getSnapchat,
     };
     const { count, source } = await loaders[platform]();
     return new Response(JSON.stringify({ platform, count, source, updatedAt: new Date().toISOString() }), {

@@ -1,17 +1,137 @@
 
 import Pusher from 'pusher-js';
-import { ChatMessage } from '../types';
+import { ChatBadge, ChatMessage } from '../types';
 
 type MessageCallback = (message: ChatMessage) => void;
 type StatusCallback = (isConnected: boolean, error?: boolean, details?: string) => void;
 
-const getRoleFromIdentity = (identity: any): 'owner' | 'moderator' | 'vip' | 'user' => {
-  if (!identity || !identity.badges) return 'user';
-  const badges = identity.badges;
-  if (badges.some((b: any) => b.type === 'broadcaster')) return 'owner';
-  if (badges.some((b: any) => b.type === 'moderator')) return 'moderator';
-  if (badges.some((b: any) => b.type === 'vip')) return 'vip';
+/** بيانات اعتماد Pusher قد تتغيّر من كيك، لذا تُجلب ديناميكياً وتُخزَّن 6 ساعات */
+const REALTIME_CONNECTION_URL = 'https://web.kick.com/api/v1/realtime/connection';
+const CREDENTIALS_CACHE_KEY = 'kick_pusher_credentials';
+const CREDENTIALS_TTL_MS = 6 * 3600_000;
+const PUSHER_FALLBACK = { key: '34bf7a0ff419a2a775b9', cluster: 'us2' };
+/** المفتاح المرفوض يردّ بهذه الأكواد — عندها يجب مسح الكاش وجلب مفتاح جديد */
+const INVALID_KEY_CODES = [4001, 4000];
+
+/**
+ * أنواع الشارات كما تُعرّفها كيك نفسها (مأخوذة من حزمة نصوص الهوية في موقعها):
+ * broadcaster / moderator / staff / vip / og / founder / kick_founder22 / kick_whale /
+ * sidekick / early_follower / sub_gifter / kicks_gifter / subscriber / verified / bot / level
+ */
+const BADGE_ALIASES: Record<string, string> = {
+  mod: 'moderator', mods: 'moderator', executor: 'moderator', channel_mod: 'moderator',
+  owner: 'broadcaster', channel_owner: 'broadcaster', caster: 'broadcaster',
+  admin: 'staff', team: 'staff',
+  sub: 'subscriber', subscriber_badge: 'subscriber',
+  gifter: 'sub_gifter', gifted_sub: 'sub_gifter', gifted_subs: 'sub_gifter',
+  og_kick: 'og', early: 'early_follower', founder_22: 'kick_founder22', whale: 'kick_whale',
+  verified_account: 'verified', trust: 'verified',
+  botrix: 'bot', assistant: 'bot', xp: 'level', chat_level: 'level',
+};
+
+/** أدوار عامة تصل مع الحدث وليست شارة تُعرض */
+const BADGE_NOISE = new Set(['member', 'viewer', 'user', 'public', 'default', 'none', 'registered', 'follower']);
+
+/** ترتيب العرض: الأدوار الثقيلة أولاً حتى تُقرأ الهوية في لمحة */
+const BADGE_ORDER = ['broadcaster', 'op', 'staff', 'moderator', 'founder', 'kick_founder22', 'vip', 'og', 'sidekick',
+  'kicks_gifter', 'sub_gifter', 'kick_whale', 'subscriber', 'verified', 'bot', 'level', 'early_follower', 'chat_identity'];
+
+const normType = (raw: unknown): string => {
+  const key = String(raw ?? '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+  if (!key || BADGE_NOISE.has(key)) return '';
+  return BADGE_ALIASES[key] || key;
+};
+
+const isBotAccount = (username: string): boolean => /^(botrix|kickassistant|nightbot|moobot)/i.test(username.trim());
+
+const getRoleFromBadges = (types: Set<string>): 'owner' | 'moderator' | 'vip' | 'user' => {
+  if (types.has('broadcaster')) return 'owner';
+  if (types.has('moderator') || types.has('staff') || types.has('op')) return 'moderator';
+  if (types.has('vip')) return 'vip';
   return 'user';
+};
+
+/**
+ * كيك يغيّر مكان الشارات بين نسخة وأخرى (مصفوفة، نص مفرد، كائن اشتراك، دور)،
+ * فتُجمع كل المصادر في قائمة واحدة بلا تكرار.
+ */
+const collectBadges = (sender: any, data: any, username: string): ChatBadge[] => {
+  const identity = sender?.identity || data?.identity || {};
+  const found = new Map<string, ChatBadge>();
+  const push = (rawType: unknown, rawVersion?: unknown) => {
+    const type = normType(rawType);
+    if (!type) return;
+    const version = String(rawVersion ?? '').trim().replace(/[^0-9]/g, '');
+    const prev = found.get(type);
+    if (!prev || (version && !(prev.version || ''))) found.set(type, { type, version: version || undefined });
+  };
+
+  const arrays = [identity?.badges, sender?.badges, data?.badges, data?.message?.sender?.badges, data?.sender?.identity?.badges];
+  for (const arr of arrays) {
+    if (!Array.isArray(arr)) continue;
+    for (const b of arr) {
+      if (typeof b === 'string') push(b);
+      else push(b?.type ?? b?.name ?? b?.slug, b?.version ?? b?.text);
+    }
+  }
+
+  const single = identity?.badge ?? sender?.badge ?? data?.badge;
+  if (typeof single === 'string' && single.trim()) for (const part of single.split(/[,+|/]/)) push(part);
+  else if (single && typeof single === 'object') push(single.type ?? single.name, single.version);
+
+  for (const role of [sender?.role?.type, sender?.role, ...(Array.isArray(sender?.roles) ? sender.roles.map((r: any) => r?.type ?? r) : [])]) push(role);
+
+  if (identity?.is_vip || sender?.is_vip || data?.is_vip) push('vip');
+  if (identity?.verified || sender?.verified || sender?.is_verified) push('verified');
+
+  const months = Number(sender?.subscription?.months ?? identity?.subscription?.months ?? data?.subscription?.months ?? 0);
+  if (months > 0) push('subscriber', String(months));
+  else if (identity?.is_subscriber || sender?.is_subscriber) push('subscriber');
+
+  if (isBotAccount(username)) push('bot');
+
+  return [...found.values()]
+    .sort((a, b) => {
+      const ia = BADGE_ORDER.indexOf(a.type);
+      const ib = BADGE_ORDER.indexOf(b.type);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    })
+    .slice(0, 5);
+};
+
+const normalizeUrl = (value: string): string => {  if (value.startsWith('//')) return `https:${value}`;
+  if (value.startsWith('/')) return `https://kick.com${value}`;
+  if (!/^https?:\/\//i.test(value)) return `https://kick.com/${value}`;
+  return value;
+};
+
+const pickAvatar = (sender: any): string => {
+  const candidates = [
+    sender?.profilepic, sender?.profile_pic, sender?.profile_pic_url,
+    sender?.profilePic, sender?.avatar?.url, sender?.avatar_url,
+    sender?.user?.profilepic, sender?.user?.profile_pic,
+  ];
+  for (const c of candidates) {
+    if (typeof c === 'string' && c.includes('http')) return c;
+  }
+  const anyUrl = Object.values(sender || {}).find(
+    (v): v is string => typeof v === 'string' && /^https?:\/\/.+\.(jpg|jpeg|png|webp)/i.test(v)
+  );
+  return anyUrl || '';
+};
+
+/** fetch بمهلة — بلا بروكسي يعني طلب معلق يوقف سلسلة إعادة الاتصال */
+const fetchWithTimeout = (url: string, init: RequestInit = {}, ms = 8000): Promise<Response> => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
+};
+
+const parseProxyPayload = (rawUrl: string, json: any): any => {
+  if (rawUrl.includes('allorigins')) {
+    return typeof json?.contents === 'string' ? JSON.parse(json.contents) : json?.contents || json;
+  }
+  return json;
 };
 
 class ChatService {
@@ -23,169 +143,298 @@ class ChatService {
   private channel: any = null;
 
   private KNOWN_CHATROOM_IDS: Record<string, number> = {
-    // We removed 'iabs' from here to force a fresh lookup from the API, 
-    // ensuring we get the correct Chatroom ID every time.
+    // معرّف معروف مسبقاً = اتصال فوري بدون انتظار البحث من الـ API
+    'xlxwi': 5976096,
     'xeid': 47582,
   };
+
+  private connectionId = 0;
+  private isConnecting = false;
+  private autoReconnect = true;
+  private reconnectAttempts = 0;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private safetyTimer: ReturnType<typeof setTimeout> | null = null;
+  private healthTimer: ReturnType<typeof setInterval> | null = null;
+  private currentChatroomId: number | null = null;
+  private credentials: { key: string; cluster: string } | null = null;
+  private seenMessageIds = new Set<string>();
 
   async getChatroomId(channelSlug: string): Promise<number | null> {
     const slug = channelSlug.toLowerCase().trim();
 
-    // 1. Check Memory Cache
-    if (this.KNOWN_CHATROOM_IDS[slug]) {
-      return this.KNOWN_CHATROOM_IDS[slug];
-    }
+    if (this.KNOWN_CHATROOM_IDS[slug]) return this.KNOWN_CHATROOM_IDS[slug];
 
-    // 2. Check Local Storage Cache (Fastest persistent)
     const cachedId = localStorage.getItem(`kick_chatroom_id_${slug}`);
-    if (cachedId) {
-      console.log(`[ChatService] Using cached ID for ${slug}: ${cachedId}`);
-      return parseInt(cachedId);
-    }
+    if (cachedId && /^\d+$/.test(cachedId)) return parseInt(cachedId, 10);
 
-    // 3. Fetch from Proxies
-    const proxies = [
-      `https://kick.com/api/v1/channels/${slug}`, // Direct (if CORS allows or via extension)
-      `https://api.allorigins.win/get?url=${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`,
-      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`
+    const kickUrl = `https://kick.com/api/v2/channels/${slug}/chatroom`;
+    const attempts = [
+      // كيك يفتح القراءة للمتصفح عبر CORS — المباشر أولاً وأسرع وسيط داخلي بعدها
+      { url: kickUrl, wrapped: false },
+      { url: `/api/kick?endpoint=${encodeURIComponent(kickUrl)}`, wrapped: false },
+      { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(kickUrl)}`, wrapped: true },
+      { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(kickUrl)}`, wrapped: true },
     ];
 
     try {
-      const result = await Promise.any(
-        proxies.map(async (proxyUrl) => {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
-
-          const response = await fetch(proxyUrl, { signal: controller.signal });
-
-          if (!response.ok) {
-            clearTimeout(timeoutId);
-            throw new Error(`Failed with status ${response.status}`);
-          }
-
-          const rawData = await response.json();
-          clearTimeout(timeoutId);
-          const data = proxyUrl.includes('allorigins') ? JSON.parse(rawData.contents) : rawData;
-
-          let foundId = null;
-          if (data?.chatroom?.id) foundId = data.chatroom.id;
-          else if (data?.id) foundId = data.id;
-
-          if (foundId) {
-            console.log(`[ChatService] ✅ Found ID: ${foundId}`);
-            // Cache it for future sessions
-            localStorage.setItem(`kick_chatroom_id_${slug}`, foundId.toString());
-            return foundId;
-          }
-          throw new Error('No ID found in response');
-        })
-      );
-      if (result) return result;
-    } catch (e) {
-      console.warn(`[ChatService] All proxies failed for ${slug}.`);
+      const found = await Promise.any(attempts.map(async ({ url, wrapped }) => {
+        const res = await fetchWithTimeout(url, { headers: { Accept: 'application/json' } });
+        if (!res.ok) throw new Error(`status ${res.status}`);
+        const json = await res.json();
+        const data = wrapped ? parseProxyPayload(url, json) : json;
+        const id = data?.id || data?.chatroom?.id || data?.data?.id || data?.data?.chatroom?.id;
+        if (!id) throw new Error('no chatroom id');
+        localStorage.setItem(`kick_chatroom_id_${slug}`, String(id));
+        return Number(id);
+      }));
+      return found;
+    } catch {
+      console.warn(`[ChatService] Chatroom lookup failed for ${slug}.`);
     }
+
+    // آخر محاولة: بيانات القناة نفسها (تحتوي chatroom.id)
+    try {
+      const res = await fetchWithTimeout(`/api/kick?endpoint=${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`);
+      const data = res.ok ? await res.json() : null;
+      const id = data?.chatroom?.id || data?.channel?.chatroom?.id;
+      if (id) {
+        localStorage.setItem(`kick_chatroom_id_${slug}`, String(id));
+        return Number(id);
+      }
+    } catch { /* لا شيء */ }
 
     return null;
   }
 
-  private connectionId = 0;
-
-  async connect(channelSlug: string = 'iabs') {
-    const slug = channelSlug.toLowerCase().trim();
-    this.disconnect();
-    const myConnectionId = this.connectionId;
-
-    this.notifyStatus(false, false, `جاري البحث عن قناة ${slug}...`);
+  /** الجلب من web.kick.com يعكس Origin في CORS، فلا يحتاج وسيطاً */
+  private async fetchCredentials(forceRefresh = false): Promise<{ key: string; cluster: string }> {
+    if (!forceRefresh) {
+      if (this.credentials) return this.credentials;
+      try {
+        const raw = localStorage.getItem(CREDENTIALS_CACHE_KEY);
+        if (raw) {
+          const cached = JSON.parse(raw);
+          if (cached?.app_key && cached.cluster && Date.now() - (cached.ts || 0) < CREDENTIALS_TTL_MS) {
+            this.credentials = { key: cached.app_key, cluster: cached.cluster };
+            return this.credentials;
+          }
+        }
+      } catch { /* كاش تالف */ }
+    }
 
     try {
-      let chatroomId = await this.getChatroomId(slug);
+      const res = await fetchWithTimeout(REALTIME_CONNECTION_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'x-app-platform': 'web',
+        },
+        body: JSON.stringify({
+          client: { id: crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`, type: 'web' },
+          capabilities: { accepted_providers: [{ provider: 'pusher' }] },
+        }),
+      }, 6000);
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      const json = await res.json();
+      const pusherConn = json?.data?.connections?.find((c: any) => c?.provider === 'pusher');
+      const app_key = pusherConn?.credentials?.app_key;
+      const cluster = pusherConn?.credentials?.cluster || PUSHER_FALLBACK.cluster;
+      if (!app_key) throw new Error('no pusher credentials');
+      this.credentials = { key: app_key, cluster };
+      localStorage.setItem(CREDENTIALS_CACHE_KEY, JSON.stringify({ app_key, cluster, ts: Date.now() }));
+      return this.credentials;
+    } catch (e) {
+      console.warn('[ChatService] Credential fetch failed, using fallback key.', e);
+      this.credentials = PUSHER_FALLBACK;
+      return PUSHER_FALLBACK;
+    }
+  }
 
-      // Check if this connection attempt is still valid
-      if (this.connectionId !== myConnectionId) {
-        console.warn(`[ChatService] Connection attempt ${myConnectionId} aborted (superseded).`);
-        return;
+  /** مفتاح مرفوض (4001/4000) = الكاش صار قديماً — امسحه ليُجلب جديد في المحاولة التالية */
+  private invalidateCredentials() {
+    this.credentials = null;
+    try { localStorage.removeItem(CREDENTIALS_CACHE_KEY); } catch { /* التخزين محظور */ }
+  }
+
+  private clearTimers() {
+    if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null; }
+    if (this.safetyTimer) { clearTimeout(this.safetyTimer); this.safetyTimer = null; }
+    if (this.healthTimer) { clearInterval(this.healthTimer); this.healthTimer = null; }
+  }
+
+  private scheduleReconnect(myConnectionId: number) {
+    if (!this.autoReconnect || this.connectionId !== myConnectionId) return;
+    if (this.reconnectTimer) return;
+    const delay = Math.min(1500 * Math.pow(1.5, this.reconnectAttempts), 15000);
+    this.reconnectAttempts++;
+    this.notifyStatus(false, false, `إعادة المحاولة بعد ${Math.round(delay / 1000)} ث`);
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      if (this.connectionId === myConnectionId) this.openPusher(myConnectionId, true);
+    }, delay);
+  }
+
+  private startHealthCheck(myConnectionId: number) {
+    if (this.healthTimer) clearInterval(this.healthTimer);
+    // حالة اتصال كاذبة (كيبل مقطوع، تبويب معلّق) تُكشف هنا لا بالرسائل
+    this.healthTimer = setInterval(() => {
+      if (this.connectionId !== myConnectionId) return;
+      const state = this.pusher?.connection?.state;
+      if (state && state !== 'connected') {
+        console.warn(`[ChatService] Health check found state=${state}; reconnecting.`);
+        this.openPusher(myConnectionId, true);
       }
+    }, 10_000);
+  }
 
-      // If iabs look up fails, log it clearly but don't auto-switch to xeid unless user asked.
-      // We will stick to the requested channel to avoid confusion.
+  private openPusher(myConnectionId: number, forceCredentialRefresh = false) {
+    if (this.connectionId !== myConnectionId || !this.currentChatroomId) return;
 
-      if (!chatroomId) {
-        console.error(`[ChatService] Could not find ID for ${slug}.`);
-        throw new Error(`لم يتم العثور على القناة: ${slug}`);
-      }
+    this.cleanupPusher();
+    void (async () => {
+      const creds = await this.fetchCredentials(forceCredentialRefresh);
+      if (this.connectionId !== myConnectionId) return;
 
-      console.log(`[ChatService] Connecting to Chatroom: ${chatroomId}`);
-
-      // Initialize Pusher with a fresh instance
       const PusherClient = (Pusher as any).default || Pusher;
-      this.pusher = new PusherClient('32cbd69e4b950bf97679', {
-        cluster: 'us2',
+      this.pusher = new PusherClient(creds.key, {
+        cluster: creds.cluster,
         forceTLS: true,
-        enabledTransports: ['ws', 'wss']
+        enabledTransports: ['ws', 'wss'],
+        disabledTransports: ['xhr_polling', 'xhr_streaming'],
+        statsTimeout: 0,
+        pongTimeout: 30000,
+        wsTimeout: 30000,
+        maxRetries: 9999,
+        loopBackTimer: 2000,
       });
 
-      this.channel = this.pusher.subscribe(`chatrooms.${chatroomId}.v2`);
-
-      // DEBUG: Listen to ALL events (Disabled for performance)
-      // this.channel.bind_global((eventName: string, data: any) => {
-      //   console.log(`[ChatService] GLOBAL EVENT: ${eventName}`, data);
-      // });
+      this.channel = this.pusher.subscribe(`chatrooms.${this.currentChatroomId}.v2`);
 
       this.channel.bind('App\\Events\\ChatMessageEvent', (data: any) => {
+        if (this.connectionId !== myConnectionId) return;
+        const id = data?.id || Math.random().toString(36).slice(2, 11);
+        if (this.seenMessageIds.has(id)) return;
+        this.seenMessageIds.add(id);
+        if (this.seenMessageIds.size > 500) {
+          this.seenMessageIds = new Set([...this.seenMessageIds].slice(-250));
+        }
+
+        const sender = data?.sender || data?.user || {};
+        const username = sender?.username || 'Unknown';
+        const badges = collectBadges(sender, data, username);
+        const isBot = badges.some(b => b.type === 'bot');
+
         const message: ChatMessage = {
-          id: data.id || Math.random().toString(36).substr(2, 9),
+          id,
           user: {
-            id: data.sender?.id || '0',
-            username: data.sender?.username || 'Unknown',
-            color: data.sender?.identity?.color || '#31d6d6',
-            avatar: data.sender?.profile_pic || '',
+            id: String(sender?.id || '0'),
+            username,
+            color: isBot ? '#3FA9FF' : (sender?.identity?.color || data?.identity?.color || '#E3B341'),
+            avatar: pickAvatar(sender),
           },
-          content: data.content || '',
-          role: getRoleFromIdentity(data.sender?.identity),
+          content: data?.content || '',
+          role: getRoleFromBadges(new Set(badges.map(b => b.type))),
+          badges,
           timestamp: Date.now()
         };
 
-        // Safety: ensure one listener failure doesn't stop others
         this.listeners.forEach(cb => {
           try {
             cb(message);
           } catch (e) {
-            console.error("[ChatService] Listener error:", e);
+            console.error('[ChatService] Listener error:', e);
           }
         });
       });
 
       this.channel.bind('App\\Events\\MessageDeletedEvent', (data: any) => {
-        console.log("[ChatService] Message Deleted Received:", data);
-        const messageId = data.message?.id;
-        if (messageId) {
-          this.deleteListeners.forEach(cb => cb(messageId));
-        }
+        const messageId = data?.message?.id;
+        if (messageId) this.deleteListeners.forEach(cb => cb(messageId));
       });
 
       this.pusher.connection.bind('connected', () => {
-        // Double check validity (though less likely to race here if pusher instance is exclusive)
         if (this.connectionId !== myConnectionId) return;
-
-        console.log("[ChatService] WebSocket Connected!");
         this.isConnected = true;
-        this.notifyStatus(true, false, `متصل (ID: ${chatroomId})`);
+        this.isConnecting = false;
+        this.reconnectAttempts = 0;
+        if (this.safetyTimer) { clearTimeout(this.safetyTimer); this.safetyTimer = null; }
+        this.startHealthCheck(myConnectionId);
+        this.notifyStatus(true, false, `متصل (ID: ${this.currentChatroomId})`);
+      });
+
+      this.pusher.connection.bind('disconnected', () => {
+        if (this.connectionId !== myConnectionId) return;
+        this.isConnected = false;
+        this.scheduleReconnect(myConnectionId);
       });
 
       this.pusher.connection.bind('error', (err: any) => {
         if (this.connectionId !== myConnectionId) return;
-        console.error("[ChatService] Pusher Error:", err);
-        this.notifyStatus(false, true, "خطأ في الاتصال بسيرفر الشات");
+        const code = err?.error?.code ?? err?.code;
+        console.error('[ChatService] Pusher Error:', err);
+        if (INVALID_KEY_CODES.includes(Number(code))) {
+          this.invalidateCredentials();
+          this.scheduleReconnect(myConnectionId);
+          return;
+        }
+        this.notifyStatus(false, true, 'خطأ في الاتصال بسيرفر الشات');
       });
+    })();
+  }
 
-      this.pusher.connection.bind('state_change', (states: any) => {
-        console.log("[ChatService] Connection State:", states.current);
-      });
+  private cleanupPusher() {
+    if (this.channel) {
+      this.channel.unbind_all();
+      this.channel.unsubscribe();
+      this.channel = null;
+    }
+    if (this.pusher) {
+      this.pusher.unbind_all();
+      this.pusher.disconnect();
+      this.pusher = null;
+    }
+    this.isConnected = false;
+  }
 
+  async connect(channelSlug: string = 'xlxwi') {
+    const slug = channelSlug.toLowerCase().trim();
+    this.connectionId++;
+    const myConnectionId = this.connectionId;
+
+    this.clearTimers();
+    this.cleanupPusher();
+    this.seenMessageIds.clear();
+    this.reconnectAttempts = 0;
+    this.autoReconnect = true;
+    this.isConnecting = true;
+    this.currentChatroomId = null;
+
+    this.notifyStatus(false, false, `جاري البحث عن قناة ${slug}...`);
+
+    try {
+      const chatroomId = await this.getChatroomId(slug);
+      if (this.connectionId !== myConnectionId) return;
+
+      if (!chatroomId) {
+        this.isConnecting = false;
+        throw new Error(`لم يتم العثور على القناة: ${slug}`);
+      }
+
+      this.currentChatroomId = chatroomId;
+      this.openPusher(myConnectionId);
+
+      // مهلة أمان: الاتصال معلق بلا events = تعامل للمحاولة التالية
+      this.safetyTimer = setTimeout(() => {
+        if (this.connectionId !== myConnectionId || this.isConnected) return;
+        console.warn('[ChatService] Connection timeout; retrying.');
+        this.openPusher(myConnectionId, true);
+      }, 15_000);
     } catch (error: any) {
       if (this.connectionId !== myConnectionId) return;
-      console.error("[ChatService] Fatal Error:", error);
-      this.notifyStatus(false, true, error.message);
+      this.isConnecting = false;
+      console.error('[ChatService] Fatal Error:', error);
+      this.notifyStatus(false, true, error?.message || String(error));
     }
   }
 
@@ -217,69 +466,37 @@ class ChatService {
   async fetchKickAvatar(username: string): Promise<string> {
     try {
       const slug = username.toLowerCase().trim().replace('@', '');
+      const kickUrl = `https://kick.com/api/v1/users/${slug}`;
 
-      // Proxies list in order of reliability
-      const proxies = [
-        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`,
-        `https://api.allorigins.win/get?url=${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`
+      const attempts = [
+        { url: kickUrl, wrapped: false },
+        { url: `/api/kick?endpoint=${encodeURIComponent(kickUrl)}`, wrapped: false },
+        { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(kickUrl)}&disableCache=true`, wrapped: true },
+        { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(kickUrl)}`, wrapped: true },
       ];
 
-      try {
-        const result = await Promise.any(
-          proxies.map(async (proxyUrl) => {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
-
-            const response = await fetch(proxyUrl, { cache: 'no-store', signal: controller.signal });
-            if (!response.ok) {
-              clearTimeout(timeoutId);
-              throw new Error(`Failed with status ${response.status}`);
-            }
-
-            const rawData = await response.json();
-            clearTimeout(timeoutId);
-            let data: any;
-
-            if (proxyUrl.includes('allorigins')) {
-              if (!rawData.contents) throw new Error("No contents");
-              data = JSON.parse(rawData.contents);
-            } else {
-              data = rawData;
-            }
-
-            // Check all possible locations for avatar in Kick API v2
-            const avatar = data.user?.profile_pic || data.profile_pic || data.user?.profilepic || '';
-
-            if (avatar && avatar.includes('http')) {
-              console.log(`[ChatService] Successfully fetched avatar for ${slug}`);
-              return avatar;
-            }
-            throw new Error("No avatar found");
-          })
-        );
-        if (result) return result;
-      } catch (e) {
-        // All proxies failed
-      }
-    } catch (e) {
-      console.error(`[ChatService] Fatal error fetching avatar for ${username}`, e);
+      const result = await Promise.any(attempts.map(async ({ url, wrapped }) => {
+        const res = await fetchWithTimeout(url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+        if (!res.ok) throw new Error(`status ${res.status}`);
+        const json = await res.json();
+        const data = wrapped ? parseProxyPayload(url, json) : json;
+        const avatar = pickAvatar(data?.user || data?.data || data);
+        if (!avatar) throw new Error('no avatar');
+        return normalizeUrl(avatar);
+      }));
+      return result;
+    } catch {
+      return '';
     }
-    return '';
   }
 
   disconnect() {
-    this.connectionId++; // Invalidate pending connections
-    if (this.channel) {
-      this.channel.unbind_all();
-      this.channel.unsubscribe();
-      this.channel = null;
-    }
-    if (this.pusher) {
-      this.pusher.unbind_all();
-      this.pusher.disconnect();
-      this.pusher = null;
-    }
-    this.isConnected = false;
+    this.autoReconnect = false;
+    this.connectionId++;
+    this.isConnecting = false;
+    this.clearTimers();
+    this.cleanupPusher();
+    this.currentChatroomId = null;
   }
 }
 

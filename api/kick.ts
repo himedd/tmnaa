@@ -3,12 +3,32 @@ export const config = {
   runtime: 'edge',
 };
 
+/**
+ * البروكسي عام على الإنترنت، لذا يُسمح فقط بنطاقات البيانات التي يستهلكها الموقع.
+ * بدونه يتحول إلى مفتاح تمرير مجاني لأي عنوان (استهلاك رصيد فيركل + SSRF).
+ */
+const ALLOWED_HOSTS = new Set(['kick.com', 'web.kick.com', 'streamlabs.com', 'api.creators.sa']);
+
+const isAllowed = (raw: string): boolean => {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== 'https:') return false;
+  return ALLOWED_HOSTS.has(url.hostname) || [...ALLOWED_HOSTS].some(h => url.hostname.endsWith(`.${h}`));
+};
+
 export default async function handler(request: Request) {
   const { searchParams } = new URL(request.url);
-  const endpoint = searchParams.get('endpoint');
+  const endpoint = searchParams.get('endpoint') || '';
 
   if (!endpoint) {
     return new Response(JSON.stringify({ error: 'Endpoint is required' }), { status: 400 });
+  }
+  if (!isAllowed(endpoint)) {
+    return new Response(JSON.stringify({ error: 'Endpoint not allowed' }), { status: 403 });
   }
 
   try {
@@ -23,7 +43,7 @@ export default async function handler(request: Request) {
 
     if (!apiResponse.ok) {
       const errorText = await apiResponse.text();
-      return new Response(JSON.stringify({ error: `Kick API request failed: ${errorText}` }), { status: apiResponse.status });
+      return new Response(JSON.stringify({ error: `API request failed: ${errorText.slice(0, 200)}` }), { status: apiResponse.status });
     }
 
     const data = await apiResponse.json();

@@ -27,3 +27,22 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Verification scratch — scripts and screenshots, deleted at the end of a task
+/_*.cjs
+/_*.png
+/_*.json
+/_*.log
+
+# Decoy copy of the old iABS project (194 MB, local reference only)
+xlxwi7/
+
+# Internal notes — moved out of public/ so they are never served to visitors
+/chat-extraction-guide.md
+
+# User-supplied source art parked at repo root — the shipped copies live in public/
+/*.webp
+/*.png
+/*.jpg
+/*.jpeg
+/*.mp3

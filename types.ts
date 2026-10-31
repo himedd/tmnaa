@@ -14,6 +14,14 @@ export interface SocialLink {
   specialDetail?: string;
 }
 
+export interface ChatBadge {
+  /** نوع الشارة كما يرسلها كيك: broadcaster / moderator / staff / vip / og / founder / subscriber / verified … */
+  type: string;
+  /** رقم الشارة: شهور الاشتراك أو مستوى الخبرة */
+  version?: string;
+  text?: string;
+}
+
 export interface ChatMessage {
   id: string;
   username?: string; // Legacy support
@@ -26,6 +34,7 @@ export interface ChatMessage {
     avatar: string;
   };
   role: 'owner' | 'moderator' | 'vip' | 'user';
+  badges?: ChatBadge[];
   color?: string; // Legacy support
   timestamp?: number;
 }
@@ -57,6 +66,8 @@ export interface Clip {
   view_count: number;
   created_at: string;
   url: string;
+  clip_url?: string;   // رابط الـ m3u8 المباشر للقطه
+  video_url?: string;
   creator: {
     username: string;
   };
@@ -64,6 +75,9 @@ export interface Clip {
 
 export interface Video {
   id: number;
+  uuid?: string;
+  title?: string;
+  video?: any;
   session_title: string;
   thumbnail: {
     url?: string;
