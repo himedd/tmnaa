@@ -47,3 +47,9 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Secrets and exported chat history (contain base64 screenshots from a personal device)
+.env
+.env.*
+!.env.example
+migrated_prompt_history/
