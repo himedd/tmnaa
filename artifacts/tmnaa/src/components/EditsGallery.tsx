@@ -19,6 +19,8 @@ const MAX_RATIO = 1.85;
 type SortMode = 'shuffle' | 'newest' | 'top';
 
 function mediaRatio(sub: WallItem): number {
+  // نسبة العرض/الارتفاع الحقيقية، محصورة بين 9:16 (طولي) و 1.85 (عريض)
+  // عشان لا صورة طويلة تكسر العمود ولا صورة عريضة تصير شريط رفيع
   if (sub.width && sub.height) {
     const r = sub.width / sub.height;
     return Math.min(MAX_RATIO, Math.max(MIN_RATIO, r));
@@ -27,7 +29,9 @@ function mediaRatio(sub: WallItem): number {
 }
 
 function mediaCost(sub: WallItem): number {
-  return 1 / mediaRatio(sub);
+  // التكلفة = ارتفاع الميديا + ارتفاع جسم الكارد (الاسم + الكابشن + الوقت ≈ 0.35)
+  // بدون الثابت: عمود مليان صور landscape بيبين أطول بصرياً من الحساب
+  return 1 / mediaRatio(sub) + 0.35;
 }
 
 function orientationOf(sub: WallItem): 'portrait' | 'landscape' | 'square' {
@@ -36,6 +40,17 @@ function orientationOf(sub: WallItem): 'portrait' | 'landscape' | 'square' {
   if (r > 1.05) return 'landscape';
   if (r < 0.95) return 'portrait';
   return 'square';
+}
+
+function hashIds(items: WallItem[]): number {
+  // هاش حقيقي لمحتوى الـ ids (مو بس طولها) — wall مختلف = ترتيب مختلف
+  let h = 7;
+  for (const item of items) {
+    for (let i = 0; i < item.id.length; i++) {
+      h = (Math.imul(h, 31) + item.id.charCodeAt(i)) | 0;
+    }
+  }
+  return h;
 }
 
 function mulberry32(seed: number) {
@@ -49,7 +64,12 @@ function mulberry32(seed: number) {
   };
 }
 
+const ORIENTATION_PENALTY = 0.55;
+
 function packColumns(items: WallItem[], n: number): WallItem[][] {
+  // Masonry متوازن: كل عنصر بينحط بالعمود الأقصر حالياً
+  // + عقوبة لو العمود آخره نفس الاتجاه (portrait ورا portrait) عشان التنويع البصري
+  // هاي هي الخدعة اللي مخلية الترتيب "خرافي" — لا عمود أطول من الثاني ولا صورتين طوليات لازقات ببعض
   const cols: WallItem[][] = Array.from({ length: n }, () => []);
   const heights = new Array(n).fill(0);
   const lastOrient = new Array(n).fill(null as 'portrait' | 'landscape' | 'square' | null);
@@ -59,7 +79,7 @@ function packColumns(items: WallItem[], n: number): WallItem[][] {
     let best = 0;
     let bestScore = Infinity;
     for (let c = 0; c < n; c++) {
-      const score = heights[c] + (lastOrient[c] === o ? 0.55 : 0);
+      const score = heights[c] + (lastOrient[c] === o ? ORIENTATION_PENALTY : 0);
       if (score < bestScore) {
         bestScore = score;
         best = c;
@@ -78,15 +98,14 @@ function useColumnCount(): number {
     const w = window.innerWidth;
     if (w >= 1440) return 4;
     if (w >= 1024) return 3;
-    if (w >= 768) return 2;
-    if (w >= 420) return 2;
+    if (w >= 640) return 2;
     return 1;
   });
 
   useEffect(() => {
     const compute = () => {
       const w = window.innerWidth;
-      setCount(w >= 1440 ? 4 : w >= 1024 ? 3 : w >= 768 ? 2 : w >= 420 ? 2 : 1);
+      setCount(w >= 1440 ? 4 : w >= 1024 ? 3 : w >= 640 ? 2 : 1);
     };
     compute();
     window.addEventListener('resize', compute);
@@ -310,11 +329,13 @@ function Lightbox({
   onToggleLike: (sub: WallItem) => void;
   onReport: (sub: WallItem) => void;
 }) {
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
   const [playing, setPlaying] = useState(true);
   const [buffering, setBuffering] = useState(false);
   const [broken, setBroken] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // يبدأ muted عشان المتصفح يسمح بالـ autoplay — المستخدم بيفك الكتم بزر الصوت
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -654,12 +675,9 @@ export function EditsGallery({ submissions }: { submissions: WallItem[] }) {
     if (sort === 'top') {
       return [...src].sort((a, b) => b.likes - a.likes);
     }
-    // balanced shuffle: deterministic random order, reseeded when the wall changes
-    let seed = 7;
-    for (let i = 0; i < src.length; i++) {
-      seed = (seed * 31 + src[i].id.length) | 0;
-    }
-    const rnd = mulberry32(seed);
+    // balanced shuffle: ترتيب عشوائي ثابت (deterministic) — نفس الـ wall = نفس الترتيب
+    // بيتغير فقط لما يتغير محتوى الـ wall، عشان الكروت ما تقفز كل re-render
+    const rnd = mulberry32(hashIds(src));
     const arr = [...src];
     for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(rnd() * (i + 1));
