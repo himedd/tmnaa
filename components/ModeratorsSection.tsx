@@ -244,7 +244,7 @@ const LeadModCard: React.FC<{ m: RosterEntry; p: Merged; lang: Language; eager: 
               <div className="min-w-0">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/45 bg-gold/12 px-3.5 py-1.5 text-[10px] sm:text-[11px] font-black tracking-[0.2em] uppercase text-gold-light">
                   <ShieldIcon className="w-3.5 h-3.5" />
-                  {ar ? 'المشرف الرئيسي' : 'Head moderator'}
+                  {ar ? 'المشرف' : 'Moderator'}
                 </span>
 
                 <h3 className={`mt-3 pb-[0.09em] leading-[1.2] gold-foil ${ar ? 'font-heading font-black text-[40px] sm:text-[54px]' : 'font-gaming text-[38px] sm:text-[50px] tracking-wide'}`}>
