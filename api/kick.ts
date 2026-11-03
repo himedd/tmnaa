@@ -9,10 +9,8 @@ export const config = {
  */
 const ALLOWED_HOSTS = new Set([
   'kick.com', // يشمل web.kick.com و files.kick.com عبر فحص النطاق الفرعي
-  'streamlabs.com',
-  'api.creators.sa',
+  'api.creators.sa', // لوحة متصدرين دكان
   'botrix.live', // أساطير الشات + ساعات مشاهدة الكلان
-  'api.fxtwitter.com', // صور المشرفين من إكس
 ]);
 
 const isAllowed = (raw: string): boolean => {

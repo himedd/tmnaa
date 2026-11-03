@@ -33,7 +33,7 @@ const G = {
 const BADGE_STYLES: Record<string, BadgeStyle> = {
   broadcaster: {
     ar: 'المالك', en: 'OWNER', numbered: false,
-    cls: 'text-wine-950 border-transparent bg-gradient-to-b from-[#FFF3D6] via-[#E3B341] to-[#B8860B] shadow-[0_0_10px_rgba(227,179,65,0.45)]',
+    cls: 'text-navy-950 border-transparent bg-gradient-to-b from-[#FFF3D6] via-[#E3B341] to-[#B8860B] shadow-[0_0_10px_rgba(227,179,65,0.45)]',
     glyph: <Glyph d={G.crown} />,
   },
   moderator: {
@@ -83,17 +83,17 @@ const BADGE_STYLES: Record<string, BadgeStyle> = {
   },
   sub_gifter: {
     ar: 'هدية اشتراك', en: 'GIFTER',
-    cls: 'text-gold-light border-gold/45 bg-gradient-to-b from-gold/25 to-wine-800/70',
+    cls: 'text-gold-light border-gold/45 bg-gradient-to-b from-gold/25 to-navy-800/70',
     glyph: <Glyph d={G.gift} stroke />,
   },
   kicks_gifter: {
     ar: 'هدية كيكس', en: 'KICKS GIFTER',
-    cls: 'text-gold-light border-gold/45 bg-gradient-to-b from-gold/25 to-wine-800/70',
+    cls: 'text-gold-light border-gold/45 bg-gradient-to-b from-gold/25 to-navy-800/70',
     glyph: <Glyph d={G.gift} stroke />,
   },
   subscriber: {
     ar: 'مشترك', en: 'SUB', numbered: true,
-    cls: 'text-wine-950 border-transparent bg-gradient-to-b from-[#F7E3AE] via-[#E3B341] to-[#B8860B]',
+    cls: 'text-navy-950 border-transparent bg-gradient-to-b from-[#F7E3AE] via-[#E3B341] to-[#B8860B]',
     glyph: <Glyph d={G.diamond} />,
   },
   verified: {
@@ -108,7 +108,7 @@ const BADGE_STYLES: Record<string, BadgeStyle> = {
   },
   level: {
     ar: 'المستوى', en: 'LEVEL', numbered: true,
-    cls: 'text-gold-light border-gold/35 bg-wine-800/80',
+    cls: 'text-gold-light border-gold/35 bg-navy-800/80',
     glyph: <Glyph d={G.star} />,
   },
   early_follower: {
@@ -148,7 +148,7 @@ const MONOGRAM_BG: Record<string, string> = {
   moderator: 'linear-gradient(150deg, #D1FAE5, #34D399 58%, #059669)',
   vip: 'linear-gradient(150deg, #FFD9EC, #F542A8 60%, #B3146F)',
   bot: 'linear-gradient(150deg, #CFEBFF, #3FA9FF 55%, #0F6FBF)',
-  user: 'linear-gradient(150deg, #3E0E1A, #1B0509)',
+  user: 'linear-gradient(150deg, #142C4C, #071120)',
 };
 
 const ROW_STYLE: Record<string, string> = {
@@ -234,7 +234,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang }) => {
     });
 
     // 4. Connect to the channel
-    chatService.connect('xlxwi');
+    chatService.connect('tmnaa');
 
     // 5. Cleanup
     return () => {
@@ -253,7 +253,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang }) => {
     const tick = setInterval(() => {
       seconds -= 1;
       setRetryIn(seconds);
-      if (seconds <= 0) { clearInterval(tick); chatService.connect('xlxwi'); }
+      if (seconds <= 0) { clearInterval(tick); chatService.connect('tmnaa'); }
     }, 1000);
     return () => clearInterval(tick);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -369,25 +369,25 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang }) => {
   ];
 
   return (
-    <div className="flex flex-col h-full max-h-full min-h-0 w-full bg-gradient-to-b from-wine-900 via-wine-950 to-wine-900 overflow-hidden relative isolate">
+    <div className="flex flex-col h-full max-h-full min-h-0 w-full bg-gradient-to-b from-navy-900 via-navy-950 to-navy-900 overflow-hidden relative isolate">
       {/* top red energy line */}
       <div className="absolute top-0 inset-x-8 h-[2px] rounded-full bg-gradient-to-l from-transparent via-[#E3B341] to-transparent shadow-[0_0_12px_#E3B341] z-30 pointer-events-none" />
       {/* ambient glow */}
       <div className="absolute -top-16 -end-16 w-48 h-48 rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(227,179,65,0.11) 0%, transparent 68%)' }} />
       <div className="absolute -bottom-20 -start-16 w-48 h-48 rounded-full pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(110,27,43,0.45) 0%, transparent 68%)' }} />
+        style={{ background: 'radial-gradient(circle, rgba(39,80,127,0.45) 0%, transparent 68%)' }} />
 
       {/* --- Premium Header --- */}
       <div className="shrink-0 z-20 bg-gradient-to-b from-white/[0.07] to-white/[0.02] border-b border-white/[0.07] backdrop-blur-md">
         <div className="flex items-center gap-3 px-4 pt-3.5 pb-3">
           <div className="relative shrink-0">
-            <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-b from-[#FFF3D6] via-[#E3B341] to-[#B8860B] text-wine-950 shadow-[0_0_20px_rgba(227,179,65,0.45)]">
+            <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-gradient-to-b from-[#FFF3D6] via-[#E3B341] to-[#B8860B] text-navy-950 shadow-[0_0_20px_rgba(227,179,65,0.45)]">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </div>
-            <span className={`absolute -bottom-0.5 -end-0.5 w-3 h-3 rounded-full border-2 border-wine-950 ${isConnected ? 'bg-gold live-dot' : connectionError ? 'bg-red-500' : 'bg-yellow-400 animate-pulse'}`} />
+            <span className={`absolute -bottom-0.5 -end-0.5 w-3 h-3 rounded-full border-2 border-navy-950 ${isConnected ? 'bg-gold live-dot' : connectionError ? 'bg-red-500' : 'bg-yellow-400 animate-pulse'}`} />
           </div>
           <div className="flex flex-col min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -408,7 +408,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang }) => {
           </div>
           {connectionError ? (
             <button
-              onClick={() => chatService.connect('xlxwi')}
+              onClick={() => chatService.connect('tmnaa')}
               className="shrink-0 px-3 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] border border-gold/15 text-white/70 hover:text-white transition-colors text-xs font-black flex items-center gap-1.5"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
@@ -416,7 +416,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang }) => {
             </button>
           ) : (
             <a
-              href="https://kick.com/xlxwi/chatroom"
+              href="https://kick.com/tmnaa/chatroom"
               target="_blank"
               rel="noopener noreferrer"
               className="shrink-0 w-9 h-9 rounded-xl bg-white/[0.05] border border-gold/15 text-white/50 hover:text-white hover:border-[#E3B341]/50 hover:bg-[#E3B341]/10 transition-all flex items-center justify-center"
@@ -431,7 +431,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang }) => {
       {/* --- شريط المؤشرات المحسوبة --- */}
       <div className="shrink-0 z-10 grid grid-cols-3 gap-px bg-white/[0.07] border-b border-white/[0.07]">
         {metricCells.map(cell => (
-          <div key={cell.label} className="bg-wine-950/75 px-2 py-2 text-center">
+          <div key={cell.label} className="bg-navy-950/75 px-2 py-2 text-center">
             <p className="text-[8px] font-black tracking-[0.14em] uppercase text-white/35">{cell.label}</p>
             <p className="text-[13px] font-black text-gold-light leading-tight mt-0.5" dir="ltr">{cell.value}</p>
           </div>
@@ -454,7 +454,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang }) => {
                     <path strokeLinecap="round" d="M4 4l16 16" />
                   </svg>
                 </div>
-                <span className="absolute -bottom-1 -end-1 w-5 h-5 rounded-full bg-wine-950 border border-gold/40 flex items-center justify-center">
+                <span className="absolute -bottom-1 -end-1 w-5 h-5 rounded-full bg-navy-950 border border-gold/40 flex items-center justify-center">
                   <span className="w-2 h-2 rounded-full bg-gold animate-pulse" />
                 </span>
               </div>
@@ -462,8 +462,8 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang }) => {
                 <p className={`text-[13.5px] font-black text-white/80 ${lang === 'ar' ? 'font-arabic' : ''}`}>{t.downTitle}</p>
                 <p className={`text-[11.5px] font-bold text-white/40 leading-relaxed mt-1.5 max-w-[240px] mx-auto ${lang === 'ar' ? 'font-arabic' : ''}`}>{t.downHint}</p>
               </div>
-              <a href="https://kick.com/xlxwi/chatroom" target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-[12px] font-black px-4 py-2.5 rounded-xl text-wine-950 hover:brightness-110 active:scale-[0.98] transition-all"
+              <a href="https://kick.com/tmnaa/chatroom" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-[12px] font-black px-4 py-2.5 rounded-xl text-navy-950 hover:brightness-110 active:scale-[0.98] transition-all"
                 style={{ background: 'linear-gradient(150deg, #FFF3D6, #E3B341 58%, #B8860B)', boxShadow: '0 10px 24px -10px rgba(227,179,65,0.8)' }}>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                 {t.openChat}
@@ -499,7 +499,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang }) => {
                     className="shrink-0 mt-0.5 w-[26px] h-[26px] rounded-xl border border-white/10 flex items-center justify-center text-[11px] font-black leading-none shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]"
                     style={{
                       background: MONOGRAM_BG[bot ? 'bot' : msg.role] || MONOGRAM_BG.user,
-                      color: msg.role === 'owner' && !bot ? '#1B0509' : '#FFFFFF',
+                      color: msg.role === 'owner' && !bot ? '#071120' : '#FFFFFF',
                     }}
                   >
                     {initialOf(msg.user.username)}
@@ -537,17 +537,17 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ lang }) => {
         )}
 
         {/* fade masks */}
-        <div className="absolute top-0 inset-x-0 h-6 bg-gradient-to-b from-wine-950 to-transparent pointer-events-none" />
-        <div className="absolute bottom-0 inset-x-0 h-6 bg-gradient-to-t from-wine-950 to-transparent pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-6 bg-gradient-to-b from-navy-950 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 inset-x-0 h-6 bg-gradient-to-t from-navy-950 to-transparent pointer-events-none" />
       </div>
 
       {/* --- Beautiful bottom action bar --- */}
       <div className="shrink-0 z-20 p-3 bg-gradient-to-t from-black/60 to-transparent border-t border-white/[0.06]">
         <a
-          href="https://kick.com/xlxwi"
+          href="https://kick.com/tmnaa"
           target="_blank"
           rel="noopener noreferrer"
-          className="group relative flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-gradient-to-b from-[#FFF3D6] via-[#E3B341] to-[#B8860B] text-wine-950 font-black text-[13px] shadow-[0_10px_28px_-8px_rgba(227,179,65,0.7)] hover:brightness-110 hover:-translate-y-px active:translate-y-0 active:scale-[0.99] transition-all overflow-hidden"
+          className="group relative flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-gradient-to-b from-[#FFF3D6] via-[#E3B341] to-[#B8860B] text-navy-950 font-black text-[13px] shadow-[0_10px_28px_-8px_rgba(227,179,65,0.7)] hover:brightness-110 hover:-translate-y-px active:translate-y-0 active:scale-[0.99] transition-all overflow-hidden"
         >
           <span className="absolute inset-0 bg-gradient-to-l from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none" />
           <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>

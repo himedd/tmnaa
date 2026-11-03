@@ -13,25 +13,23 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', '"Tajawal"', 'sans-serif'],
+        sans: ['"Tajawal"', '"Cairo"', 'sans-serif'],
         heading: ['"Outfit"', '"Cairo"', '"Tajawal"', 'sans-serif'],
         arabic: ['"Tajawal"', '"Cairo"', 'sans-serif'],
-        cairo: ['"Cairo"', '"Tajawal"', 'sans-serif'],
         gaming: ['"Bangers"', '"Outfit"', 'cursive'],
-        display: ['"Bangers"', '"Outfit"', 'cursive'],
       },
       colors: {
-        /* Royal burgundy — the wine of the lion crest */
-        wine: {
-          950: '#120307',
-          900: '#1B0509',
-          850: '#24070D',
-          800: '#2E0A12',
-          700: '#3E0E1A',
-          600: '#55131F',
-          500: '#6E1B2B',
+        /* Midnight steel — ليل القلعة في البانر */
+        navy: {
+          950: '#040A14',
+          900: '#071120',
+          850: '#0A1828',
+          800: '#0E2038',
+          700: '#142C4C',
+          600: '#1C3B66',
+          500: '#27507F',
         },
-        /* Antique gold — the lion itself */
+        /* Antique gold — الوسم المحفور في البانر */
         gold: {
           DEFAULT: '#E3B341',
           light: '#F7E3AE',
@@ -39,9 +37,9 @@ export default {
           deep: '#B8860B',
           dark: '#8A5E12',
         },
-        crimson: { DEFAULT: '#C21E3A', soft: '#E4506A' },
-        accent: { gold: '#E3B341', wine: '#2E0A12', deep: '#120307' },
-        ink: { 950: '#120307', 900: '#1B0509', 800: '#24070D', 700: '#2E0A12' },
+        azure: { DEFAULT: '#2F7FD6', soft: '#6FB8FF' },
+        accent: { gold: '#E3B341', navy: '#0E2038', deep: '#040A14' },
+        ink: { 950: '#040A14', 900: '#071120', 800: '#0A1828', 700: '#0E2038' },
       },
       gridTemplateColumns: {
         15: 'repeat(15, minmax(0, 1fr))',

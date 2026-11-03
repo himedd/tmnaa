@@ -1,7 +1,6 @@
-// Tip leaderboards — two live sources, names + rank only.
-//   • Streamlabs v6 public leaderboard (no token needed)
-//   • creators.sa unified (Dokan) leaderboard
-// Both go through /api/kick proxy first (no CORS), then direct, then stale cache.
+// لوحة المتصدرين — دكان (creators.sa unified) فقط: أسماء الداعمين ورتبهم.
+// ستريم لابس لا يملك API عاماً يرجع متصدري باسم الحساب، فبقي دعمه رابطاً فقط.
+// المسار: بروكسي /api/kick (بلا CORS) ← مباشر ← كاش قديم.
 
 import { kickFetch } from './kickApi';
 
@@ -11,13 +10,11 @@ export interface TipDonor {
 }
 
 export type TipInterval = 'all' | 'week' | 'month';
-export type TipSource = 'streamlabs' | 'dokan';
 
-const STREAMLABS_BASE = 'https://streamlabs.com/api/v6/370edb1df07a702/leaderboard/tip';
-const DOKAN_BASE = 'https://api.creators.sa/v1/kebab/unified/xlxwi/leaderboard';
+const DOKAN_BASE = 'https://api.creators.sa/v1/kebab/unified/tmnaa/leaderboard';
 
-const CACHE_PREFIX = 'xlxwi_tipboard_';
-export const TIP_TTL_MS = 5 * 60 * 1000;
+const CACHE_PREFIX = 'tmnaa_tipboard_';
+const TIP_TTL_MS = 5 * 60 * 1000;
 
 const DURATION_OF: Record<TipInterval, string> = {
   all: 'lifetime',
@@ -25,24 +22,15 @@ const DURATION_OF: Record<TipInterval, string> = {
   week: 'weekly',
 };
 
-function cacheKey(source: TipSource, interval: TipInterval): string {
-  return `${CACHE_PREFIX}${source}_${interval}`;
-}
+const cacheKey = (interval: TipInterval): string => `${CACHE_PREFIX}${interval}`;
 
-function normalizeStreamlabs(input: any): TipDonor[] {
-  const arr = Array.isArray(input?.donors) ? input.donors : [];
-  return arr
-    .filter((d: any) => d && typeof d.name === 'string' && d.name.trim())
-    .map((d: any) => ({ name: d.name.trim(), rank: Number(d.rank) || 0 }))
-    .sort((a: TipDonor, b: TipDonor) => a.rank - b.rank)
-    .slice(0, 10);
-}
-
+// الرد مصفوفة مرتبة تنازلياً بمجموع الدعم ولا تحمل حقل rank، فتُشتق الرتبة من موضعها
 function normalizeDokan(input: any): TipDonor[] {
   const arr = Array.isArray(input) ? input : Array.isArray(input?.data) ? input.data : [];
   return arr
     .filter((d: any) => d && typeof d.uname === 'string' && d.uname.trim())
     .map((d: any, i: number) => ({ name: d.uname.trim(), rank: Number(d.rank) || i + 1 }))
+    .sort((a: TipDonor, b: TipDonor) => a.rank - b.rank)
     .slice(0, 10);
 }
 
@@ -65,24 +53,22 @@ function writeCache(key: string, list: TipDonor[]): void {
   } catch {}
 }
 
-function urlFor(source: TipSource, interval: TipInterval): string {
-  return source === 'dokan'
-    ? `${DOKAN_BASE}?limit=10&duration=${DURATION_OF[interval]}`
-    : `${STREAMLABS_BASE}?interval=${interval}`;
-}
+/** مصفوفة فارغة = المصدر يعمل ولا داعمين في الفترة. null = تعذّر الوصول للمصدر. */
+export async function getTipLeaderboard(interval: TipInterval): Promise<TipDonor[] | null> {
+  const key = cacheKey(interval);
+  const url = `${DOKAN_BASE}?limit=10&duration=${DURATION_OF[interval]}`;
 
-function normalizeFor(source: TipSource): (raw: any) => TipDonor[] {
-  return source === 'dokan' ? normalizeDokan : normalizeStreamlabs;
-}
+  const fresh = readCache(key);
+  if (fresh) return fresh;
 
-export async function getTipLeaderboard(source: TipSource, interval: TipInterval): Promise<TipDonor[]> {
-  const key = cacheKey(source, interval);
-  const url = urlFor(source, interval);
-  const normalize = normalizeFor(source);
-
-  // 1) server proxy
+  // 1) server proxy — رد مصفوفة صالح ولو فارغة يعني «لا داعمين في الفترة»
   try {
-    const list = normalize(await kickFetch(url));
+    const raw = await kickFetch(url);
+    const list = normalizeDokan(raw);
+    if (Array.isArray(raw) || Array.isArray(raw?.data)) {
+      writeCache(key, list);
+      return list;
+    }
     if (list.length) {
       writeCache(key, list);
       return list;
@@ -95,7 +81,12 @@ export async function getTipLeaderboard(source: TipSource, interval: TipInterval
     const res = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json' } });
     clearTimeout(t);
     if (res.ok) {
-      const list = normalize(await res.json());
+      const raw = await res.json();
+      const list = normalizeDokan(raw);
+      if (Array.isArray(raw) || Array.isArray(raw?.data)) {
+        writeCache(key, list);
+        return list;
+      }
       if (list.length) {
         writeCache(key, list);
         return list;
@@ -107,8 +98,8 @@ export async function getTipLeaderboard(source: TipSource, interval: TipInterval
     const raw = localStorage.getItem(key);
     if (raw) {
       const { list } = JSON.parse(raw);
-      if (Array.isArray(list) && list.length) return list;
+      if (Array.isArray(list)) return list;
     }
   } catch {}
-  return [];
+  return null;
 }

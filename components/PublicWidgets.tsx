@@ -11,7 +11,7 @@ export const SponsorsSection = ({ sponsors, className = '' }: { sponsors: any[],
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                 {sponsors.map((sponsor) => (
-                    <div key={sponsor.id} className="w-full bg-wine-950/90 border border-gold/15 rounded-[32px] p-6 relative overflow-hidden group hover:-translate-y-2 transition-all duration-300 shadow-2xl hover:shadow-[0_20px_40px_rgba(227,179,65,0.15)] flex flex-col justify-between">
+                    <div key={sponsor.id} className="w-full bg-navy-950/90 border border-gold/15 rounded-[32px] p-6 relative overflow-hidden group hover:-translate-y-2 transition-all duration-300 shadow-2xl hover:shadow-[0_20px_40px_rgba(227,179,65,0.15)] flex flex-col justify-between">
                         <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#E3B341]/10 blur-[50px] rounded-full group-hover:bg-[#E3B341]/20 transition-colors pointer-events-none"></div>
                         <h3 className="text-xl md:text-2xl font-black text-white mb-2 relative z-10">{sponsor.brand_name}</h3>
                         <p className="text-xs md:text-sm text-white/60 mb-6 font-bold relative z-10">{sponsor.discount_desc}</p>
@@ -64,7 +64,7 @@ export const ClipsSection = ({ clips, className = '' }: { clips: any[], classNam
                 {clips.map((clip) => {
                     const isVertical = clip.platform === 'tiktok' || clip.video_url?.includes('youtube.com/shorts/') || clip.video_url?.includes('instagram.com/reel/') || clip.platform === 'instagram';
                     return (
-                        <div key={clip.id} className="w-full bg-wine-950/90 border border-gold/15 rounded-[32px] overflow-hidden group hover:border-[#E3B341]/50 transition-colors shadow-2xl flex flex-col h-fit">
+                        <div key={clip.id} className="w-full bg-navy-950/90 border border-gold/15 rounded-[32px] overflow-hidden group hover:border-[#E3B341]/50 transition-colors shadow-2xl flex flex-col h-fit">
                             <div className={`${isVertical ? 'aspect-[9/16]' : 'aspect-video'} bg-black relative`}>
                                 <iframe src={getEmbedUrl(clip.video_url)} className="w-full h-full" allowFullScreen></iframe>
                             </div>
@@ -88,7 +88,7 @@ export const ScheduleSection = ({ schedule }: { schedule: any[] }) => {
                 <h2 className="text-3xl font-black text-white uppercase tracking-widest drop-shadow-lg">جدول البثوث 📅</h2>
                 <div className="flex-1 h-px bg-gradient-to-r from-[#E3B341]/50 to-transparent"></div>
             </div>
-            <div className="bg-wine-950/90 border border-gold/15 rounded-[32px] p-6 overflow-hidden shadow-2xl">
+            <div className="bg-navy-950/90 border border-gold/15 rounded-[32px] p-6 overflow-hidden shadow-2xl">
                 <div className="flex flex-col gap-2">
                     {schedule.map((day, index) => (
                         <div key={day.id} className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl ${index % 2 === 0 ? 'bg-white/5' : 'bg-transparent'} hover:bg-white/10 transition-colors border border-transparent hover:border-gold/15`}>
@@ -124,7 +124,7 @@ export const FAQSection = ({ faqs }: { faqs: any[] }) => {
                 {faqs.map((faq) => (
                     <div 
                         key={faq.id} 
-                        className={`bg-wine-950/90 border ${openId === faq.id ? 'border-[#E3B341]/50 shadow-[0_0_20px_rgba(227,179,65,0.1)]' : 'border-gold/15'} rounded-3xl overflow-hidden transition-all duration-300`}
+                        className={`bg-navy-950/90 border ${openId === faq.id ? 'border-[#E3B341]/50 shadow-[0_0_20px_rgba(227,179,65,0.1)]' : 'border-gold/15'} rounded-3xl overflow-hidden transition-all duration-300`}
                     >
                         <button 
                             onClick={() => setOpenId(openId === faq.id ? null : faq.id)}

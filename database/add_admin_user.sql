@@ -1,6 +1,6 @@
--- Add abs@gmail.com as admin
+-- Add <admin-email> as admin
 -- IMPORTANT: Replace 'YOUR_USER_UUID_HERE' with the actual user_id from Supabase Auth > Users
--- You can find this in Supabase Dashboard > Authentication > Users > click on abs@gmail.com
+-- You can find it in Supabase Dashboard > Authentication > Users > the account you want to promote
 
 -- First, temporarily disable RLS for this operation
 alter table public.admin_users disable row level security;

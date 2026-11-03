@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://xlxwi.vercel.app/sitemap.xml
+Sitemap: https://tmnaa.vercel.app/sitemap.xml

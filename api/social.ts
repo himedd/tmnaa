@@ -1,5 +1,5 @@
 // Vercel Edge Function — Live Social Counters API
-// GET /api/social?platform=kick|tiktok|instagram|twitter|discord|snapchat
+// GET /api/social?platform=kick|tiktok|instagram|twitter|discord|youtube
 // Server-side fetch = no CORS issues, fresh numbers every call.
 // Vercel caches success responses for 4 minutes (s-maxage).
 
@@ -11,12 +11,12 @@ const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
 
 const HANDLES = {
-  kick: 'xlxwi',
-  tiktok: 'xlxwi',
-  instagram: '3.4i',
-  twitter: 'xlxwi',
+  kick: 'tmnaa',
+  tiktok: 'tmnaa0',
+  instagram: 'tmnaa16',
+  twitter: 'tmnaa16',
   discord: 'tmfx',
-  snapchat: 'xlxwiii',
+  youtube: 'tmnaa1',
 } as const;
 
 type Platform = keyof typeof HANDLES;
@@ -89,7 +89,8 @@ function parseFollowersFromText(text: string): number | null {
 }
 
 async function getKick(): Promise<{ count: number; source: string }> {
-  const d = await fetchJson(`https://kick.com/api/v2/channels/${HANDLES.kick}`);
+  // UA مختصر: الـ UA الكامل يفعّل حظر Kick الأمني (403) — نفس ما يفعّل في /api/kick
+  const d = await fetchJson(`https://kick.com/api/v2/channels/${HANDLES.kick}`, 12000, { 'User-Agent': 'Mozilla/5.0' });
   const n = parseCompact(d?.channel?.followers_count ?? d?.followers_count);
   if (!n) throw new Error('kick: empty');
   return { count: n, source: 'kick_v2' };
@@ -102,22 +103,24 @@ async function getDiscord(): Promise<{ count: number; source: string }> {
   return { count: n, source: 'discord_invite' };
 }
 
-async function getSnapchat(): Promise<{ count: number; source: string }> {
-  // 1) JSON-LD الرسمي — interactionStatistic / subscriberCount
+/** يوتيوب ما ينشر عدّاده في API عام بلا مفتاح — قراءة من صفحة القناة نفسها. */
+async function getYouTube(): Promise<{ count: number; source: string }> {
+  const subsRe = /([\d][\d.,]*)\s*(?:\u0645\u0634\u062a\u0631\u0643|subscribers)/i;
   try {
-    const html = await fetchText(`https://www.snapchat.com/add/${HANDLES.snapchat}`);
-    const ld = html.match(/"subscriberCount"\s*:\s*"?([\d.]+[KMB]?)"?/i)?.[1]
-      || html.match(/"userInteractionCount"\s*:\s*"?([\d.]+[KMB]?)"?/i)?.[1];
-    const n = ld ? parseCompact(ld) : null;
-    if (n) return { count: n, source: 'json_ld' };
+    const html = await fetchText(`https://www.youtube.com/@${HANDLES.youtube}/about`);
+    const ld = html.match(/"subscriberCountText"\s*:\s*\{\s*"simpleText"\s*:\s*"([^"]+)"/)?.[1];
+    const n = (ld ? parseCompact(ld) : null) || parseFollowersFromText(html);
+    if (n) return { count: n, source: 'yt_page' };
+    const m = html.match(subsRe);
+    const n2 = m ? parseCompact(m[1]) : null;
+    if (n2) return { count: n2, source: 'yt_regex' };
   } catch {}
-  // 2) نص الصفحة عبر قارئ
   try {
-    const txt = await fetchMarkdown(`https://www.snapchat.com/@${HANDLES.snapchat}`);
-    const n = parseFollowersFromText(txt);
+    const txt = await fetchMarkdown(`https://www.youtube.com/@${HANDLES.youtube}`);
+    const n = parseFollowersFromText(txt) || (() => { const m = txt.match(subsRe); return m ? parseCompact(m[1]) : null; })();
     if (n) return { count: n, source: 'reader' };
   } catch {}
-  throw new Error('snapchat: no public counter');
+  throw new Error('youtube: no public counter');
 }
 
 async function getTikTok(): Promise<{ count: number; source: string }> {
@@ -156,6 +159,12 @@ async function getTwitter(): Promise<{ count: number; source: string }> {
     );
     const n = parseCompact(Array.isArray(d) ? d[0]?.followers_count : d?.followers_count);
     if (n) return { count: n, source: 'syndication' };
+  } catch {}
+  // 3) قارئ نصي لصفحة البروفايل — الحقل الوحيد الذي لا يحجبه إكس
+  try {
+    const txt = await fetchMarkdown(`https://x.com/${HANDLES.twitter}`);
+    const n = parseFollowersFromText(txt);
+    if (n) return { count: n, source: 'reader' };
   } catch {}
   throw new Error('twitter: all sources failed');
 }
@@ -236,7 +245,7 @@ export default async function handler(request: Request) {
   const platform = (searchParams.get('platform') || '').toLowerCase() as Platform;
 
   if (!platform || !(platform in HANDLES)) {
-    return new Response(JSON.stringify({ error: 'Use ?platform=kick|tiktok|instagram|twitter|discord|snapchat' }), {
+    return new Response(JSON.stringify({ error: 'Use ?platform=kick|tiktok|instagram|twitter|discord|youtube' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -249,7 +258,7 @@ export default async function handler(request: Request) {
       instagram: getInstagram,
       twitter: getTwitter,
       discord: getDiscord,
-      snapchat: getSnapchat,
+      youtube: getYouTube,
     };
     const { count, source } = await loaders[platform]();
     return new Response(JSON.stringify({ platform, count, source, updatedAt: new Date().toISOString() }), {

@@ -28,8 +28,10 @@ dist-ssr
 
 .vercel
 
-# Verification scratch — scripts and screenshots, deleted at the end of a task
+# Verification scratch — scripts, screenshots and shots, deleted at the end of a task
 /_*.cjs
+/_*.py
+/_*.html
 /_*.png
 /_*.json
 /_*.log
@@ -45,4 +47,18 @@ xlxwi7/
 /*.png
 /*.jpg
 /*.jpeg
+/*.svg
 /*.mp3
+
+# Not part of this site — kept on disk for reference, never published
+/migrated_prompt_history/
+/api/admin/
+/98765890.html
+/81815889203.png
+/REPLICA_IABS_DESIGN.md
+/public/offline-banner.webp
+
+# Admin UI غير موصولة بالموقع (ميتة) — محفوظة محلياً فقط
+/components/SocialMediaAdmin.tsx
+/components/SocialMediaManagement.tsx
+/README_SOCIAL_ADMIN.md

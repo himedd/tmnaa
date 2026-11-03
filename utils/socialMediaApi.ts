@@ -3,9 +3,9 @@
 //   2) قراءة مباشرة من المتصفح للمصادر المفتوحة (fxtwitter / كيك عبر /api/kick)
 //   3) آخر رقم معروف محفوظ في المتصفح — حتى ما يختفي الرقم أبداً
 // واتساب: لا يوجد API عام — رقم ثابت من صاحب الحساب (40,000).
-// إنستغرام وسناب شات: ما تنشر عدّادها للعامة، تظهر بآخر رقم معروف لحين توفر قراءة.
+// إنستغرام ويوتيوب وإكس: بلا API عام، فتُقرأ من صفحة البروفايل نفسها (زاحف/قارئ).
 
-export type CountPlatform = 'kick' | 'instagram' | 'tiktok' | 'twitter' | 'discord' | 'snapchat';
+export type CountPlatform = 'kick' | 'instagram' | 'tiktok' | 'twitter' | 'discord' | 'youtube';
 
 export interface SocialMediaStats {
   kick?: number;
@@ -13,36 +13,35 @@ export interface SocialMediaStats {
   tiktok?: number;
   twitter?: number;
   discord?: number;
-  snapchat?: number;
+  youtube?: number;
   whatsapp?: number;
 }
 
 export const HANDLES: Record<CountPlatform, string> = {
-  kick: 'xlxwi',
-  instagram: '3.4i',
-  tiktok: 'xlxwi',
-  twitter: 'xlxwi',
+  kick: 'tmnaa',
+  instagram: 'tmnaa16',
+  tiktok: 'tmnaa0',
+  twitter: 'tmnaa16',
   discord: 'tmfx',
-  snapchat: 'xlxwiii',
+  youtube: 'tmnaa1',
 };
 
 /**
- * بذرة آخر قراءة موثّقة (31 أكتوبر 2026 من مصادر كل منصة الرسمية).
- * لماذا لا تكون أصفاراً: لو فشل `/api/social` على فيركل — وإنستغرام يحجب
- * عناوين السحابة كثيراً — يبقى البطاقة بلا رقم إطلاقاً عند زائر جديد ما
- * عنده كاش. القراءة الحيّة تتجاوز هذه القيم دائماً وتحدّث الكاش.
+ * بذرة آخر قراءة موثّقة (2 نوفمبر 2026 من /api/social لكل منصة).
+ * كل المنصات تُقرأ حيّاً الآن، فالبذرة رقم حقيقي لا حشو — البطاقة تبدأ
+ * ممتلئة وتُصحَّح لحظة وصول أول طلب.
  */
 export const FALLBACK: SocialMediaStats = {
-  kick: 261372,
-  instagram: 8167,
-  tiktok: 26800,
-  twitter: 72037,
-  discord: 18150,
-  snapchat: 30000, // رقم المالك — سناب ما ينشر عدّاده، يظهر مغّب
+  kick: 309861,
+  instagram: 4725,
+  tiktok: 57000,
+  twitter: 75200,
+  discord: 18196,
+  youtube: 65600,
   whatsapp: 40000, // رقم المالك — لا يوجد API عام
 };
 
-const CACHE_KEY = 'xlxwi_social_cache_v2';
+const CACHE_KEY = 'tmnaa_social_cache_v2';
 export const SOCIAL_TTL_MS = 5 * 60 * 1000;
 
 async function fetchJson(url: string, timeoutMs = 9000): Promise<any> {
@@ -101,7 +100,7 @@ function cachedStats(): SocialMediaStats {
 
 export async function getAllSocialMediaStats(): Promise<SocialMediaStats> {
   const previous = cachedStats();
-  const platforms: CountPlatform[] = ['kick', 'instagram', 'tiktok', 'twitter', 'discord', 'snapchat'];
+  const platforms: CountPlatform[] = ['kick', 'instagram', 'tiktok', 'twitter', 'discord', 'youtube'];
   const results = await Promise.all(platforms.map(readPlatform));
   const stats: SocialMediaStats = { whatsapp: FALLBACK.whatsapp };
   platforms.forEach((p, i) => {

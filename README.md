@@ -1,13 +1,13 @@
 <p align="center">
-  <img src="public/og-cover.jpg" alt="xlxwi Stream Hub Banner" width="100%" style="border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);" />
+  <img src="public/og-cover.jpg" alt="TMNAA Stream Hub Banner" width="100%" style="border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.5);" />
 </p>
 
-<h1 align="center">🎮 xlxwi Stream Hub</h1>
+<h1 align="center">🎮 TMNAA Stream Hub</h1>
 
 <p align="center">
-  <strong>— منصة علي الهاشمي (xlxwi) الرسمية للبث المباشر والدعم وكلان ليفل ون —</strong>
+  <strong>— منصة عبدالله الشمري (TMNAA) الرسمية للبث المباشر والدعم وكلان ليفل ون —</strong>
   <br>
-  <em>The Official Streaming Hub for xlxwi • Kick • Clan Level One</em>
+  <em>The Official Streaming Hub for TMNAA • Kick • Clan Level One</em>
 </p>
 
 <p align="center">
@@ -16,14 +16,13 @@
   <img src="https://img.shields.io/badge/Vite-6-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite 6" />
   <img src="https://img.shields.io/badge/Supabase-FF2D2D?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
   <img src="https://img.shields.io/badge/Vercel-Edge-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel Edge" />
-  <img src="https://img.shields.io/badge/GitHub-Pages-222222?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Pages" />
 </p>
 
 <p align="center">
-  <a href="https://kick.com/xlxwi">🎮 Kick</a> •
+  <a href="https://kick.com/tmnaa">🎮 Kick</a> •
   <a href="https://discord.gg/tmfx">💬 Discord</a> •
-  <a href="https://x.com/xlxwi">🐦 X</a> •
-  <a href="https://github.com/hsg117/xlxwi">📦 GitHub</a>
+  <a href="https://x.com/tmnaa16">🐦 X</a> •
+  <a href="https://github.com/himedd/tmnaa">📦 GitHub</a>
 </p>
 
 ---
@@ -46,7 +45,8 @@
 - Real Kick avatars with letter fallback
 
 ### 🫂 Support Arena — الدعم
-- Two sources: **Streamlabs** and **Dokan** (creators.sa)
+- Single live source: **Dokan** (creators.sa) — Streamlabs has no public leaderboard API
+- One tip gate: a single wide **دعم** button straight to Dokan — no competing vendor cards
 - All-time / monthly / weekly intervals
 - **Names and ranks only** — no amounts shown
 - Revealed behind a tip CTA
@@ -55,13 +55,13 @@
 <td width="50%" valign="top">
 
 ### 📊 Live Social Stats
-- KICK · Snapchat · Instagram · TikTok · X · WhatsApp · Discord
-- Counts hide when a platform can't be read publicly
+- KICK · Instagram · TikTok · X · WhatsApp · Discord · YouTube
+- Every platform is read live server-side; the last good number is cached so a card never goes blank
 - Animated reveal on scroll
 
 ### 🛡️ Moderators
-- Live X profiles via FixTweet (avatar, banner, bio, followers)
-- Discord-only moderators supported
+- Live Kick channels (avatar, banner, bio, real follower count, verified + LIVE badges)
+- Local avatar per mod as the offline fallback
 - 30-min cache + silent 10-min refresh, paused when the tab is hidden
 
 ### 🎬 Content & Tools
@@ -85,11 +85,11 @@
 
 ```mermaid
 graph TD
-    A[User Browser] --> B[GitHub Pages CDN]
+    A[User Browser] --> B[Vercel CDN - dist/]
     A --> C[Vercel Edge - api/kick.ts + api/social.ts]
     C --> D[Kick.com API]
     C --> E[Botrix.live API]
-    C --> F[FixTweet / Streamlabs / creators.sa]
+    C --> F[creators.sa / botrix.live]
     B --> G[Supabase REST]
     G --> H[(PostgreSQL)]
     B --> I[player.kick.com - in-site modal]
@@ -98,38 +98,39 @@ graph TD
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
 | **Frontend** | React 19 + TypeScript + Vite 6 | SPA with instant HMR |
-| **Styling** | Tailwind CSS + CSS layers | Royal burgundy & gold theme, RTL-first |
+| **Styling** | Tailwind CSS + CSS layers | Midnight blue & gold theme, RTL-first |
 | **State** | React hooks + Supabase realtime | Live data without polling |
-| **Auth** | Supabase Auth + RBAC | Secure admin access |
-| **API Proxy** | Vercel Edge Function | CORS-free fetching |
+| **Admin** | Supabase RLS + `seo_settings` / admin tables | Editor access guarded by the database policy |
+| **API Proxy** | Vercel Edge Function | CORS-free fetching, host allowlist |
 | **Database** | Supabase PostgreSQL | All dynamic content |
-| **Hosting** | GitHub Pages + Vercel | Static + serverless |
+| **Hosting** | Vercel | Static `dist` + serverless edge functions |
 
 ---
 
 ## 📁 Project Structure — هيكل المشروع
 
 ```
-xlxwi/
+tmnaa/
 ├── api/                          # Vercel Edge Functions
-│   ├── kick.ts                   #   Universal CORS proxy
-│   └── social.ts                 #   Live follower counters
+│   ├── kick.ts                   #   CORS proxy — https + allowlisted hosts only
+│   └── social.ts                 #   Live follower counters (kick/tiktok/ig/x/discord/yt)
 ├── components/
 │   ├── ChatLegends.tsx            #   Botrix chat leaderboard + podium
 │   ├── StatsSection.tsx           #   Live stats, VODs, clips
 │   ├── MediaModal.tsx             #   In-site Kick player (VOD/clip)
-│   ├── ModeratorsSection.tsx      #   Mod roster from X + Discord
+│   ├── ModeratorsSection.tsx      #   Mod roster: X accounts + one Discord card
 │   ├── StreamPlayer.tsx           #   Kick embed + HLS
 │   ├── PublicWidgets.tsx          #   Schedule, FAQ, sponsors, clips
-│   ├── AdminDashboard.tsx         #   Full admin panel
-│   └── ...                        #   Icons, utilities & more
+│   └── ...                        #   Icons, chat and utilities
 ├── utils/                        # botrixApi, supportersApi, socialMediaApi
 ├── services/                     # chatService (Kick live chat)
 ├── public/                       # Static assets
-│   ├── xlxwi-logo.webp           #   Site icon + brand mark
-│   ├── bg-heraldic.webp          #   PC background — royal burgundy heraldic frame
-│   ├── bg-mobile.webp            #   Phone-only background (<768px, 15 KB)
-│   └── og-cover.jpg              #   Social share (OG/Twitter) image
+│   ├── tmnaa-logo.webp           #   Site icon + brand mark
+│   ├── bg-heraldic.webp          #   Desktop background — castle-night scene (16:9)
+│   ├── bg-mobile.webp            #   Phone-only background (<768px)
+│   ├── og-cover.jpg              #   Social share (OG/Twitter) image — 1200×630
+│   ├── site.webmanifest          #   PWA manifest (ar / rtl)
+│   └── ps5-giveaway.html         #   Standalone giveaway page — /ps5-giveaway.html
 ├── App.tsx                       # Main single-page app
 ├── supabaseClient.ts             # Supabase singleton
 ├── vite.config.ts                # Vite + dev proxy config
@@ -149,13 +150,15 @@ xlxwi/
 
 ```bash
 # Clone the repository
-git clone https://github.com/hsg117/xlxwi.git
-cd xlxwi
+git clone https://github.com/himedd/tmnaa.git
+cd tmnaa
 
 # Install dependencies
 npm install
 
-# Start development server (http://localhost:3003)
+# Start development server (http://localhost:3000)
+# vite.config.ts mounts api/kick.ts and api/social.ts as dev middleware,
+# so the site behaves exactly like it does on Vercel
 npm run dev
 
 # Build for production (Vercel / any root-domain host)
@@ -167,53 +170,56 @@ npm run preview
 
 ### Deploy to Vercel — النشر على فيركل
 
-`vercel.json` يهيّئ كل شيء (Vite + `dist` + دوال `api/`). اربط المستودع بـ Vercel مباشرة، أو:
+`vercel.json` يهيّئ كل شيء: Vite + `dist` + دوال `api/` + كاش الأصول + ترويسات الأمان. خطوات النشر:
 
-```bash
-npm i -g vercel
-vercel --prod
-```
+1. **Import** المستودع `himedd/tmnaa` في Vercel — لا تحتاج تعديل أي حقل، `vercel.json` يضبط البناء.
+2. **Environment Variables** (Project → Settings → Environment Variables):
 
-> **مهم:** بيانات كيك وشات كيك تمرّ عبر دالة `api/kick.ts`. هذه لا تعمل على GitHub Pages
-> (لا توجد دوال سيرفر هناك)، فالموقع يحتاج **Vercel** أو أي مستضيف يدعمها.
-> النطاق الحالي في وسوم `canonical` و`og:url` و`sitemap.xml` هو `https://xlxwi.vercel.app/` —
-> غيّره إن أعطى Vercel مشروعك اسماً مختلفاً.
+   | المتغير | ضروري؟ | الوظيفة |
+   |---------|--------|---------|
+   | `VITE_SUPABASE_URL` | اختياري | الرعاة، المقاطع، الجدول، الأسئلة، الاستطلاع |
+   | `VITE_SUPABASE_ANON_KEY` | اختياري | مفتاح anon العام — يُطبع في حزمة المتصفح anyway |
 
-### Deploy to GitHub Pages (بدون دوال — الشات وأرقام كيك تتعطل)
+   بلاهما يشتغل الموقع ببياناته الافتراضية المحفوظة في الكود — لا شاشة سوداء ولا خطأ بناء.
+3. **الدومين**: وسوم `canonical` و`og:url` و`sitemap.xml` تشير إلى `https://tmnaa.vercel.app/` — بدّلها إن أعطى Vercel مشروعك اسماً آخر.
 
-```bash
-# One command — builds + deploys (base path /xlxwi/)
-npm run deploy
-```
+> **مهم:** أرقام كيك والشات الحيّ يمرّان عبر دالة `api/kick.ts`، وهي لا تعمل على GitHub Pages
+> (لا توجد دوال سيرفر هناك)، فالموقع يحتاج **Vercel** أو أي مستضيف يدعم دوال Node/Edge.
+> لا تضع أي سر في متغيرات `VITE_` — كل ما يبدأ بـ`VITE_` يُخبَز داخل جافاسكربت العام لحظة البناء.
 
 ---
 
 ## 🔧 Configuration — الإعدادات
 
 ### Supabase
-Edit `supabaseClient.ts`:
+
+`supabaseClient.ts` يقرأ المتغيرات البيئية ولا يحتوي أي مفتاح:
+
 ```ts
-const supabaseUrl = 'https://your-project.supabase.co';
-const supabaseKey = 'your-anon-key';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 ```
+
+محلياً: انسخ `.env.example` إلى `.env` واملأ القيمتين (`.env` خارج Git). على Vercel: من إعدادات المشروع.
+بدونهما يرجع العميل بديلاً يمتص الاستدعاءات، فتظهر البيانات الافتراضية بدل الشاشة السوداء.
+مخطّط الجداول في `database/*.sql` و`SUPABASE_SQL.sql`.
 
 ### Identity & Social Links
 All identity lives at the top of `App.tsx`:
 ```ts
-const CHANNEL_SLUG = 'xlxwi';
-const BRAND_LOGO = 'xlxwi-logo.webp';
+const CHANNEL_SLUG = 'tmnaa';
+const BRAND_LOGO = 'tmnaa-logo.webp';
 const SITE_BACKGROUND = 'bg-heraldic.webp';
 const CLAN = { latin: 'LEVEL ONE', ar: 'كلان ليفل ون', tag: '#StayOne' };
 ```
-`createSocialLink()` covers Snapchat, Instagram, TikTok, X, WhatsApp and Discord; KICK is the `KICK_SOCIAL` constant.
+`createSocialLink()` covers Instagram, TikTok, X, WhatsApp, Discord and YouTube; KICK is the `KICK_SOCIAL` constant.
 
 ### Leaderboard Sources
 | Source | Endpoint | File |
 |--------|----------|------|
-| **Botrix** | `https://botrix.live/api/public/leaderboard?platform=kick&user=xlxwi` | `utils/botrixApi.ts` |
-| **Streamlabs** | `https://streamlabs.com/api/v6/{id}/leaderboard/tip` | `utils/supportersApi.ts` |
-| **Dokan** | `https://api.creators.sa/v1/kebab/unified/xlxwi/leaderboard` | `utils/supportersApi.ts` |
-| **Social counts** | handles `xlxwi` / `3.4i` | `api/social.ts` + mirrored in `vite.config.ts` |
+| **Botrix** | `https://botrix.live/api/public/leaderboard?platform=kick&user=tmnaa` | `utils/botrixApi.ts` |
+| **Dokan** | `https://api.creators.sa/v1/kebab/unified/tmnaa/leaderboard` | `utils/supportersApi.ts` |
+| **Social counts** | `tmnaa` · `tmnaa16` · `tmnaa1` · `tmnaa0` · `tmfx` | `api/social.ts`, mirrored in `utils/socialMediaApi.ts` |
 
 ---
 
@@ -229,18 +235,69 @@ const CLAN = { latin: 'LEVEL ONE', ar: 'كلان ليفل ون', tag: '#StayOne'
 - Every card calls `onPlay()` → opens `MediaModal`, so playback never leaves the site
 
 ### 🎬 MediaModal (`components/MediaModal.tsx`)
-- `https://player.kick.com/xlxwi?video={id}` and `?clip={id}`
+- `https://player.kick.com/tmnaa?video={id}` and `?clip={id}`
 - ESC to close, body scroll lock, loading spinner
 
 ### 🛡️ ModeratorsSection (`components/ModeratorsSection.tsx`)
-- `ROSTER` — each entry has a Kick name plus an optional X handle or `discordId`
-- Discord-only moderators show the invite button instead of an X profile
+- `ROSTER` — nine **X** accounts plus one **Discord-only** card; the entry flagged `lead` (YARA) renders as the crowned hero card above the grid
+- Live counters, verified badge and bio come from `api.fxtwitter.com/<handle>` (it sends CORS headers, so the browser calls it directly) — only entries with `x` are fetched; a `discord: { user }` entry links to `discord.com/users/<id>` and hides the follower chip, because Discord exposes no public counter
+- `noPic: true` marks an account still wearing X's default grey egg — the card falls back to its gold initial instead
+- `frame` is a decorative animated WebP laid exactly over the avatar square (Discord collectible frames are square art: ears in the corners, whiskers on the edges), so the frame box and the avatar box share one size and origin
+- Avatars and banners are pulled live from X's CDN (`pbs.twimg.com`, hot-linkable) and refresh silently every 5 min; `public/mods/` keeps a local copy plus a seeded follower count so a card is never blank if the API fails
+- A moderator without a banner gets `CrestBand` — a gold-on-navy crest strip instead of empty space
+- The lead card's crown is static vector art at `public/crown.svg`, seated on the avatar — no sway, no sheen; the card's only motion is the ambient sparkles and the portrait ring
 
-### 🔐 AdminDashboard (`components/AdminDashboard.tsx`)
-- Tabs: Overview, Announcements, Sponsors, Clips, Studio Review, Schedule, FAQs, SEO, Admins, Audit, Media
-- Supabase CRUD for every content type
+### 🗄 Content editing — تعديل المحتوى
+- النسخة المنشورة **لا تحمل أي لوحة تحكم**: لا مسار `/admin` ولا مكوّن admin موصول بـ`App.tsx`، فلا سطح هجوم إضافي
+- التعديل يتم مباشرة على جداول Supabase (`database/*.sql` و`SUPABASE_SQL.sql`) — الرعاة، المقاطع، الجدول، الأسئلة، الاستطلاع
+- صف `seo_settings` (id = 1) يعيد كتابة العنوان والوصف والكلمات المفتاحية و`og:title`/`og:description` لحظة التشغيل، فهو يتجاوز `index.html` (تفصيله في قسم SEO)
+- `admin_users` + سياسات RLS جاهزة في `database/add_admin_user.sql` إن خُطّط لاحقاً لواجهة تحرير
 
 ---
+
+## 🔒 Security — الأمان
+
+| النقطة | الوضع |
+|--------|-------|
+| أسرار في المستودع | لا شيء. `.env` و`.env.*` خارج Git، والمُتبَّع الوحيد `.env.example` بقيمة فارغة |
+| مفاتيح Supabase | تُقرأ من `VITE_*` فقط (مفتاح anon عام بطبيعته). لا يوجد `service_role` في الكود |
+| `api/kick.ts` | بروكسي مفتوح للعامة، لذا يُسمح بـ`https:` فقط ولنطاقات معلومة (`kick.com`, `botrix.live`, `api.creators.sa`) — بدونه يتحول لممر SSRF يستهلك رصيد فيركل |
+| `api/social.ts` | لا يمرّر أي عنوان من المستخدم: المنصة تُفحص ضد قائمة ثابتة ثم يبنى الرابط داخلياً |
+| مسارات الإدارة | لا مسار admin منشور — لا صفحة ولا دالة |
+| ترويسات فيركل | `nosniff`، `X-Frame-Options: DENY` + `frame-ancestors 'none'`، `Referrer-Policy: strict-origin-when-cross-origin`، `Permissions-Policy` مقفلة (كاميرا/ميك/جغرافيا/دفع/USB) |
+| `vite.config.ts` | لا `define` يحقن متغيرات سيرفرية في حزمة المتصفح — كان فيه بقايا `GEMINI_API_KEY` تُطبَع علناً لو وُجدت |
+| صور المشرفين | تُسحب من CDN إكس العام، ومحفوظة نسخ محلية في `public/mods/` — لا كوكيز ولا تسجيل دخول |
+
+---
+
+## 🔎 SEO & Share Preview — الفهرسة وصورة المشاركة
+
+Everything the crawler reads ships in the static `index.html`, so it works with JavaScript off:
+
+| Piece | Where | Notes |
+|-------|-------|-------|
+| Title / description | `index.html` | Arabic-first, sized to Google's limits (≤60 / ≤160 chars) |
+| OG + Twitter tags | `index.html` | `summary_large_image`, `og:image:alt` + `twitter:image:alt` describe the artwork |
+| Share image | `public/og-cover.jpg` | 1200×630, ~112 KB — castle background, gold-foil `TMNAA`, crown, platform chips, `#StayOne / كلان ليفل ون` |
+| Structured data | `index.html` | JSON-LD `@graph`: `Person` + `WebSite` + `ItemList` of the page sections |
+| hreflang | `index.html` | `ar` + `x-default` — one page serves both languages through the in-app switch |
+| PWA manifest | `public/site.webmanifest` | `lang: ar`, `dir: rtl`, `standalone`, maskable icons |
+| `noscript` content | `index.html` (in `<body>`) | Real `<h1>`, description and section links. Vite rejects block content inside a `<head>` `<noscript>`, so it must live in the body |
+| Robots / sitemap | `public/robots.txt`, `public/sitemap.xml` | Canonical host is `https://tmnaa.vercel.app/` |
+
+> **`seo_settings` override:** the admin panel's `seo_settings` row (id = 1) rewrites `document.title`,
+> `description`, `keywords`, `og:title` and `og:description` at runtime. Empty fields are ignored —
+> a blank row can no longer wipe the shipped head — but anything you *do* fill in wins over
+> `index.html`. Keep that row in sync with the static tags, or leave it empty.
+
+### Weight & smoothness — الخفة والنعومة
+- Below-the-fold sections are code-split (`StatsSection`, `ModeratorsSection`, `LiveTheater`, `MediaModal`) and `vendor-hls` only loads with the player.
+- Fonts load once from Google with `preconnect` + `display=swap`; the stack lists only families the site actually requests (Outfit 900, Tajawal 500/700/900, Cairo 500/700/900, Bangers).
+- Badge/crest art is delivered at ≈3× its rendered size, not 5–8× — `dokan-gate`, `dokan-mark`, `level-one-mark` and `mohhsg-icon` were re-encoded down to 22 KB combined.
+- The hero wordmark is `white-space: nowrap` and size-capped so it stays on one line inside its column in both the loaded font and the fallback.
+
+---
+
 
 ## 💾 Database Schema — هيكل قاعدة البيانات
 
@@ -273,7 +330,7 @@ const CLAN = { latin: 'LEVEL ONE', ar: 'كلان ليفل ون', tag: '#StayOne'
 ### Guidelines
 - Follow the existing code style (inline Tailwind, functional components)
 - Test with `npm run build` before submitting
-- Keep the burgundy/gold palette: gold = accent and rank, crimson = fills, Kick green only on the Kick brand mark
+- Keep the midnight-blue/gold palette: gold = accent and rank, azure = fills, Kick green only on the Kick brand mark
 
 ---
 
@@ -281,13 +338,14 @@ const CLAN = { latin: 'LEVEL ONE', ar: 'كلان ليفل ون', tag: '#StayOne'
 
 | Channel | Info |
 |---------|------|
-| 🎮 **Kick** | [xlxwi](https://kick.com/xlxwi) |
-| 🐦 **X** | [@xlxwi](https://x.com/xlxwi) |
-| 📸 **Instagram** | [@3.4i](https://www.instagram.com/3.4i/) |
-| 🎵 **TikTok** | [@xlxwi](https://www.tiktok.com/@xlxwi) |
-| 👻 **Snapchat** | [@xlxwiii](https://www.snapchat.com/@xlxwiii) |
-| 💬 **Discord** | [Clan Level One](https://discord.gg/tmfx) |
-| 📣 **WhatsApp** | [Channel](https://www.whatsapp.com/channel/0029VadcjLc4Y9lnhHoOAw0a) |
+| 🎮 **Kick** | [kick.com/tmnaa](https://kick.com/tmnaa) |
+| 🐦 **X** | [@tmnaa16](https://x.com/tmnaa16) |
+| 📸 **Instagram** | [@tmnaa16](https://www.instagram.com/tmnaa16) |
+| 🎵 **TikTok** | [@tmnaa0](https://www.tiktok.com/@tmnaa0) |
+| ▶️ **YouTube** | [@tmnaa1](https://www.youtube.com/@tmnaa1) |
+| 💬 **Discord** | [discord.gg/tmfx](https://discord.gg/tmfx) |
+| 📣 **WhatsApp** | [قناة TMNAA](https://www.whatsapp.com/channel/0029VadcjLc4Y9lnhHoOAw0a) |
+| 💰 **Dokan** | [tip.dokan.sa/tmnaa](https://tip.dokan.sa/tmnaa) |
 | 🛠 **Site Author** | [Moh_HSG](https://discord.com/users/1416151331965767810) |
 
 ---
@@ -295,7 +353,7 @@ const CLAN = { latin: 'LEVEL ONE', ar: 'كلان ليفل ون', tag: '#StayOne'
 ## 📜 License — الترخيص
 
 ```
-© 2026 xlxwi Stream Hub. All Rights Reserved.
+© 2026 TMNAA Stream Hub. All Rights Reserved.
 POWERED BY HSG
 ```
 

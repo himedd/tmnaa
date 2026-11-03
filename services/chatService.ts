@@ -144,7 +144,7 @@ class ChatService {
 
   private KNOWN_CHATROOM_IDS: Record<string, number> = {
     // معرّف معروف مسبقاً = اتصال فوري بدون انتظار البحث من الـ API
-    'xlxwi': 5976096,
+    'tmnaa': 5976096,
     'xeid': 47582,
   };
 
@@ -397,7 +397,7 @@ class ChatService {
     this.isConnected = false;
   }
 
-  async connect(channelSlug: string = 'xlxwi') {
+  async connect(channelSlug: string = 'tmnaa') {
     const slug = channelSlug.toLowerCase().trim();
     this.connectionId++;
     const myConnectionId = this.connectionId;

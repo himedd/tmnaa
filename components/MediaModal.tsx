@@ -96,8 +96,8 @@ export const MediaModal: React.FC<MediaModalProps> = ({ target, onClose, channel
         onClick={(e) => e.stopPropagation()}
       >
         {/* gold hairline frame */}
-        <div className="absolute -inset-[1px] rounded-[26px] bg-gradient-to-b from-gold/70 via-gold/10 to-wine-600/40 pointer-events-none" aria-hidden="true" />
-        <div className="relative rounded-[25px] bg-wine-950/95 overflow-hidden shadow-[0_40px_120px_-20px_rgba(0,0,0,0.9)]">
+        <div className="absolute -inset-[1px] rounded-[26px] bg-gradient-to-b from-gold/70 via-gold/10 to-navy-600/40 pointer-events-none" aria-hidden="true" />
+        <div className="relative rounded-[25px] bg-navy-950/95 overflow-hidden shadow-[0_40px_120px_-20px_rgba(0,0,0,0.9)]">
           {/* chrome */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-gold/15 bg-gradient-to-b from-white/[0.05] to-transparent">
             <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-2.5 py-1.5 rounded-full bg-gold/15 border border-gold/40 text-gold tracking-[0.18em] uppercase">
@@ -154,7 +154,7 @@ export const MediaModal: React.FC<MediaModalProps> = ({ target, onClose, channel
                   <span className="w-12 h-12 rounded-2xl bg-gold/15 border border-gold/40 flex items-center justify-center text-gold text-xl font-gaming">!</span>
                   <p className="text-[13px] font-bold text-white/70">{L('البث هذا ما اشتغل داخل الموقع', "This stream wouldn't play in-site")}</p>
                   <a href={kickUrl} target="_blank" rel="noopener noreferrer"
-                    className="btn-arena inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-b from-gold-light to-gold text-wine-950 text-[13px] font-black shadow-[0_0_28px_rgba(227,179,65,0.35)]">
+                    className="btn-arena inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-b from-gold-light to-gold text-navy-950 text-[13px] font-black shadow-[0_0_28px_rgba(227,179,65,0.35)]">
                     {L('مشاهدة على كيك', 'WATCH ON KICK')}
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                   </a>
@@ -164,8 +164,8 @@ export const MediaModal: React.FC<MediaModalProps> = ({ target, onClose, channel
           </div>
 
           {/* footer strip */}
-          <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-t border-gold/10 bg-gradient-to-b from-transparent to-wine-950">
-            <p className="text-[10px] font-bold tracking-[0.2em] text-white/30 uppercase" dir="ltr">XLXWI · CLAN LEVEL ONE</p>
+          <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-t border-gold/10 bg-gradient-to-b from-transparent to-navy-950">
+            <p className="text-[10px] font-bold tracking-[0.2em] text-white/30 uppercase" dir="ltr">TMNAA · CLAN LEVEL ONE</p>
             <a href={kickUrl} target="_blank" rel="noopener noreferrer" className="sm:hidden text-[11px] font-black text-gold/70 hover:text-gold">
               {L('افتح في كيك', 'Open on Kick')}
             </a>

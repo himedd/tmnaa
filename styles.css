@@ -3,23 +3,24 @@
 @tailwind utilities;
 
 /* ============================================================
-   xlxwi — Royal burgundy & gold design tokens
-   مستوحى من شعار الأسد الذهبي على الخمري + خلفية الإطار الملكي
+   TMNAA — Midnight blue & gold design tokens
+   مأخوذة من بانر القلعة: ليل أزرق فولاذي + وسم ذهبي عتيق
    ============================================================ */
 :root {
   color-scheme: dark;
-  --wine-950: #120307;
-  --wine-900: #1b0509;
-  --wine-850: #24070d;
-  --wine-800: #2e0a12;
-  --wine-700: #3e0e1a;
-  --wine-600: #55131f;
+  --navy-950: #040A14;
+  --navy-900: #071120;
+  --navy-850: #0A1828;
+  --navy-800: #0E2038;
+  --navy-700: #142C4C;
+  --navy-600: #1C3B66;
   --gold: #e3b341;
   --gold-light: #f7e3ae;
   --gold-deep: #b8860b;
   --gold-dark: #8a5e12;
   --ivory: #fff7ec;
-  --crimson: #c21e3a;
+  --azure: #2F7FD6;
+  --azure-soft: #6FB8FF;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -31,43 +32,36 @@ html {
 }
 
 body {
-  background: var(--wine-950);
+  background: var(--navy-950);
   color: var(--ivory);
   overflow-x: hidden;
 }
 
-::selection { background: var(--gold); color: #1b0509; }
+::selection { background: var(--gold); color: #071120; }
 
 ::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-track { background: #170409; }
-::-webkit-scrollbar-thumb { background: linear-gradient(#e3b341, #6b4708); border-radius: 99px; border: 2px solid #170409; }
+::-webkit-scrollbar-track { background: #050C18; }
+::-webkit-scrollbar-thumb { background: linear-gradient(#e3b341, #6b4708); border-radius: 99px; border: 2px solid #050C18; }
 
 /* ============================================================
    Backgrounds
    ============================================================ */
-/* الإطار الملكي (Royal Burgundy Heraldic Frame) — برغندي + ذهبي */
+/* مشهد القلعة الليلي — صورة فوتوغرافية، فـ cover يملأ بلا تمديد مشوّه */
 .responsive_bg {
   background-image: url('/bg-heraldic.webp');
-  /* الشاشات الطولية: وسط الخلفية فقط، بلا تمديد مشوّه */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   will-change: auto;
 }
-/* الشاشات العريضة: الإطار التزييني يظهر كاملاً حول المحتوى */
-@media (min-width: 768px) and (min-aspect-ratio: 4/3) {
-  .responsive_bg { background-size: 100% 100%; }
-}
-/* الجوال: خلفية رأسية مصمّمة للشاشات الطولية — أخف (15KB) وأدق اقتصاصاً.
-   100% 100% بدل cover: الإطار بزواياه الذهبية يظهر كاملاً بدل قصّ الجانبين */
+/* الجوال: اقتصاص رأسي مسبق من مركز المشهد (القمر والقصر) — أخف وأدق */
 @media (max-width: 767px) {
   .responsive_bg {
     background-image: url('/bg-mobile.webp');
-    background-size: 100% 100%;
-    opacity: 1;
+    background-size: cover;
+    background-position: center top;
   }
 }
-
 .grain::after {
   content: "";
   position: fixed;
@@ -139,7 +133,7 @@ body {
    Glass — أخف على الجوال (blur أقل + بدون طبقة إضافية)
    ============================================================ */
 .glass {
-  background: rgba(27, 5, 9, 0.78);
+  background: rgba(7, 17, 32, 0.78);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -151,7 +145,7 @@ body {
 
 /* card surface used across the whole site */
 .panel {
-  background: linear-gradient(165deg, rgba(46, 10, 18, 0.92), rgba(18, 3, 7, 0.94));
+  background: linear-gradient(165deg, rgba(14, 32, 56, 0.92), rgba(4, 10, 20, 0.94));
   border: 1px solid rgba(227, 179, 65, 0.16);
   box-shadow: inset 0 1px 0 rgba(255, 243, 214, 0.06), 0 24px 60px -28px rgba(0, 0, 0, 0.9);
 }
@@ -267,7 +261,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
   margin: 26px -12px 0;
   padding: 12px 0;
   background:
-    linear-gradient(90deg, rgba(18, 3, 7, 0.92) 0%, rgba(46, 10, 18, 0.7) 14%, rgba(62, 14, 26, 0.6) 50%, rgba(46, 10, 18, 0.7) 86%, rgba(18, 3, 7, 0.92) 100%);
+    linear-gradient(90deg, rgba(4, 10, 20, 0.92) 0%, rgba(14, 32, 56, 0.7) 14%, rgba(20, 44, 76, 0.6) 50%, rgba(14, 32, 56, 0.7) 86%, rgba(4, 10, 20, 0.92) 100%);
   box-shadow: inset 0 14px 26px -16px rgba(0, 0, 0, 0.95), inset 0 -14px 26px -16px rgba(0, 0, 0, 0.95);
   -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
   mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
@@ -367,7 +361,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
   padding-inline-end: 14px;
   border-radius: 999px;
   border: 1px solid rgba(227, 179, 65, 0.24);
-  background: linear-gradient(155deg, rgba(62, 14, 26, 0.92), rgba(18, 3, 7, 0.94));
+  background: linear-gradient(155deg, rgba(20, 44, 76, 0.92), rgba(4, 10, 20, 0.94));
   box-shadow: inset 0 1px 0 rgba(255, 243, 214, 0.08), 0 6px 18px -10px rgba(0, 0, 0, 0.9);
 }
 .hq-char img {
@@ -376,7 +370,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
   flex: none;
   border-radius: 999px;
   object-fit: cover;
-  background: #120307;
+  background: #040A14;
 }
 .hq-char-body {
   display: flex;
@@ -396,12 +390,15 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
   letter-spacing: 0.03em;
   color: rgba(255, 247, 236, 0.5);
 }
-/* السكراب = ذهب المؤسس · IAA = فضي استخباراتي هادئ */
+/* السكراب = فضي هادئ · IAA = ذهب المؤسس · POLICE = أزرق أمني */
 .hq-char-gold img { box-shadow: 0 0 0 1.5px rgba(227, 179, 65, 0.75), 0 0 16px -2px rgba(227, 179, 65, 0.5); }
 .hq-char-gold .hq-char-name { color: #e3b341; }
 .hq-char-ice { border-color: rgba(190, 208, 222, 0.22); }
 .hq-char-ice img { box-shadow: 0 0 0 1.5px rgba(190, 208, 222, 0.6), 0 0 16px -3px rgba(190, 208, 222, 0.35); }
 .hq-char-ice .hq-char-name { color: #cfdde8; }
+.hq-char-blue { border-color: rgba(122, 178, 255, 0.26); }
+.hq-char-blue img { box-shadow: 0 0 0 1.5px rgba(122, 178, 255, 0.7), 0 0 16px -3px rgba(122, 178, 255, 0.45); }
+.hq-char-blue .hq-char-name { color: #9cc4ff; }
 @media (min-width: 768px) {
   .hq-char-name { font-size: 13.5px; }
   .hq-char-role { font-size: 11px; }
@@ -432,9 +429,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
 @media (prefers-reduced-motion: reduce) { .chat-msg { animation: none; } }
 
 @keyframes live-ring {
-  0% { box-shadow: 0 0 0 0 rgba(194, 30, 58, 0.6); }
-  70% { box-shadow: 0 0 0 9px rgba(194, 30, 58, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(194, 30, 58, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(47, 127, 214, 0.6); }
+  70% { box-shadow: 0 0 0 9px rgba(47, 127, 214, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(47, 127, 214, 0); }
 }
 .live-dot { animation: live-ring 1.8s ease-out infinite; }
 .perspective-1000 { perspective: 1200px; }
@@ -461,7 +458,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
 }
 
 /* ============================================================
-   Hero wordmark "XLXWI" — gold foil, engraved depth, slow sheen
+   Hero wordmark "TMNAA" — gold foil, engraved depth, slow sheen
    ============================================================ */
 .wm-mark {
   filter: drop-shadow(0 0 34px rgba(227, 179, 65, 0.18));
@@ -489,7 +486,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
 @media (min-width: 768px) { .wm-stroke { -webkit-text-stroke-width: 2.5px; } }
 
 .wm-depth { position: absolute; inset: 0; display: block; pointer-events: none; color: transparent; paint-order: stroke fill; user-select: none; }
-.wm-depth-1 { transform: translate(3px, 3px); -webkit-text-stroke: 2px rgba(194, 30, 58, 0.24); }
+.wm-depth-1 { transform: translate(3px, 3px); -webkit-text-stroke: 2px rgba(47, 127, 214, 0.24); }
 .wm-depth-2 { transform: translate(7px, 7px); -webkit-text-stroke: 2px rgba(227, 179, 65, 0.11); }
 
 .wm-letter {
@@ -543,7 +540,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
   border-radius: 18px;
   border: 1px solid transparent;
   background:
-    linear-gradient(150deg, rgba(62, 14, 26, 0.92), rgba(18, 3, 7, 0.95)) padding-box,
+    linear-gradient(150deg, rgba(20, 44, 76, 0.92), rgba(4, 10, 20, 0.95)) padding-box,
     linear-gradient(120deg, rgba(255, 243, 214, 0.85), #e3b341 32%, #8a5e12 62%, #f7e3ae 100%) border-box;
   box-shadow: inset 0 1px 0 rgba(255, 243, 214, 0.12), 0 18px 40px -20px rgba(0, 0, 0, 0.95), 0 0 26px -8px rgba(227, 179, 65, 0.35);
   transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
@@ -569,7 +566,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
 }
 .clan-crest-go svg { width: 12px; height: 12px; }
 .clan-crest:hover .clan-crest-go {
-  color: #1b0509;
+  color: #071120;
   border-color: transparent;
   background: linear-gradient(150deg, #fff3d6, #e3b341 60%, #b8860b);
 }
@@ -580,7 +577,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
   width: 46px;
   height: 46px;
   border-radius: 14px;
-  background: radial-gradient(125% 125% at 50% 0%, #3e0e1a 0%, #1b0509 60%, #120307 100%);
+  background: radial-gradient(125% 125% at 50% 0%, #142C4C 0%, #071120 60%, #040A14 100%);
   box-shadow:
     inset 0 0 0 1.2px rgba(227, 179, 65, 0.6),
     inset 0 1px 0 rgba(255, 243, 214, 0.16),
@@ -600,7 +597,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
   min-width: 19px;
   padding: 0 3px;
   border-radius: 7px;
-  background: #1b0509;
+  background: #071120;
   border: 1px solid rgba(227, 179, 65, 0.6);
   color: #f7e3ae;
   font-family: "Bangers", "Outfit", cursive;
@@ -635,13 +632,13 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
   align-items: center;
   padding: 8px 14px;
   border-radius: 14px;
-  border: 1px solid rgba(194, 30, 58, 0.5);
-  background: linear-gradient(160deg, rgba(194, 30, 58, 0.22), rgba(194, 30, 58, 0.06));
-  color: #e4506a;
+  border: 1px solid rgba(47, 127, 214, 0.5);
+  background: linear-gradient(160deg, rgba(47, 127, 214, 0.22), rgba(47, 127, 214, 0.06));
+  color: #6FB8FF;
   font-size: 13px;
   font-weight: 900;
   letter-spacing: 0.06em;
-  box-shadow: 0 0 22px -8px rgba(228, 80, 106, 0.8);
+  box-shadow: 0 0 22px -8px rgba(111, 184, 255, 0.8);
   user-select: none;
 }
 .clan-ar {
@@ -663,7 +660,7 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
   padding: 13px 8px 12px;
   border-radius: 18px;
   border: 1px solid rgba(227, 179, 65, 0.16);
-  background: linear-gradient(168deg, rgba(62, 14, 26, 0.6) 0%, rgba(27, 5, 9, 0.72) 55%, rgba(18, 3, 7, 0.82) 100%);
+  background: linear-gradient(168deg, rgba(20, 44, 76, 0.6) 0%, rgba(7, 17, 32, 0.72) 55%, rgba(4, 10, 20, 0.82) 100%);
   box-shadow: inset 0 1px 0 rgba(255, 243, 214, 0.08), 0 16px 32px -20px rgba(0, 0, 0, 0.95);
   backdrop-filter: blur(6px);
 }
@@ -764,6 +761,38 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
   .animate-aurora { animation: none; }
 }
 
+/* ============ تاج المشرف الرئيسي — ثابت، بلا حركة ============ */
+/* أشعة ثابتة تفتح التاج عن الخلفية الداكنة */
+.crown-rays {
+  width: 200px;
+  height: 200px;
+  background: repeating-conic-gradient(from 0deg,
+    rgba(255, 243, 214, 0.34) 0deg 3deg,
+    rgba(227, 179, 65, 0.16) 3deg 8deg,
+    rgba(227, 179, 65, 0) 8deg 30deg);
+  -webkit-mask-image: radial-gradient(circle, #000 6%, rgba(0, 0, 0, 0.5) 40%, transparent 68%);
+  mask-image: radial-gradient(circle, #000 6%, rgba(0, 0, 0, 0.5) 40%, transparent 68%);
+  filter: blur(1.2px);
+  opacity: 0.85;
+}
+/* شرر ذهبي يومض حول البطاقة */
+.cr-spark {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  background: #FFF3D6;
+  clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+  filter: drop-shadow(0 0 6px rgba(227, 179, 65, 0.9));
+  opacity: 0;
+  pointer-events: none;
+  animation: cr-spark 4.2s ease-in-out infinite;
+}
+@keyframes cr-spark {
+  0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  45% { opacity: 1; transform: scale(1.15) rotate(90deg); }
+  62% { opacity: 0; transform: scale(0.4) rotate(140deg); }
+}
+
 @media (hover: none) {
   .btn-arena:hover { transform: none; }
 }
@@ -777,7 +806,9 @@ button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; bord
   .wm-mark::before,
   .wm-sheen,
   .wm-letter,
+  .cr-spark,
   .live-dot { animation: none !important; opacity: 1 !important; }
+  .cr-spark { opacity: 0.55 !important; }
 }
 
 /* صور: منع القفز عند التحميل */

@@ -2,19 +2,19 @@
    ChatLegends - أساطير الشات (بورغندي ملكي + ذهبي)
    كل الأسماء معزولة تحت .cl حتى لا تتعارض مع باقي الموقع
    ============================================================ */
-.cl { font-family: "Cairo", "Tajawal", system-ui, sans-serif; --au:#E3B341; --au2:#F7E3AE; --cr:#C21E3A; --m:rgba(255,247,236,.55); --b:rgba(227,179,65,.16); }
+.cl { font-family: "Cairo", "Tajawal", system-ui, sans-serif; --au:#E3B341; --au2:#F7E3AE; --cr:#2F7FD6; --m:rgba(255,247,236,.55); --b:rgba(227,179,65,.16); }
 .cl img { max-width: none; }
 
-.cl .lg{max-width:1120px;margin:auto;position:relative;background:linear-gradient(180deg,#1B0509,#120307);border:1px solid var(--b);border-radius:28px;padding:28px;overflow:hidden;box-shadow:0 30px 90px -30px rgba(0,0,0,.85),0 0 70px rgba(227,179,65,.06)}
+.cl .lg{max-width:1120px;margin:auto;position:relative;background:linear-gradient(180deg,#071120,#040A14);border:1px solid var(--b);border-radius:28px;padding:28px;overflow:hidden;box-shadow:0 30px 90px -30px rgba(0,0,0,.85),0 0 70px rgba(227,179,65,.06)}
 .cl .lg:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,transparent,var(--au),transparent)}
 .cl .hd{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.cl .star{width:58px;height:58px;border-radius:18px;background:linear-gradient(145deg,#F7E3AE,#B8860B);color:#1B0509;display:grid;place-items:center;font-size:26px;box-shadow:0 0 30px rgba(227,179,65,.45)}
+.cl .star{width:58px;height:58px;border-radius:18px;background:linear-gradient(145deg,#F7E3AE,#B8860B);color:#071120;display:grid;place-items:center;font-size:26px;box-shadow:0 0 30px rgba(227,179,65,.45)}
 .cl h2{font-size:30px;font-weight:900;color:#FFF7EC}.cl .sub{color:var(--au);font-size:13px;font-weight:700}
 .cl .pill{margin-inline-start:auto;display:flex;gap:8px;align-items:center}
 .cl .pill span{border:1px solid var(--b);background:rgba(255,255,255,.04);border-radius:99px;padding:5px 12px;font-size:12px;font-weight:800;color:rgba(255,247,236,.75)}
 .cl .pill .lv{color:var(--au);border-color:rgba(227,179,65,.4);font-weight:900;letter-spacing:.02em;font-family:"Outfit","Cairo",sans-serif;box-shadow:0 0 18px rgba(227,179,65,.14)}
 
-.cl .av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:900;flex:none;overflow:hidden;color:#FFF3D6;background:linear-gradient(145deg,hsl(var(--h) 45% 32%),#2E0A12);border:2px solid rgba(227,179,65,.35)}.cl .av img{width:100%;height:100%;object-fit:cover}
+.cl .av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:900;flex:none;overflow:hidden;color:#FFF3D6;background:linear-gradient(145deg,hsl(var(--h) 45% 32%),#0E2038);border:2px solid rgba(227,179,65,.35)}.cl .av img{width:100%;height:100%;object-fit:cover}
 
 /* ===== البوديوم ===== */
 .cl .pod{display:flex;justify-content:center;align-items:flex-end;gap:14px;direction:ltr;margin:30px 0 10px}
@@ -28,8 +28,8 @@
   text-shadow:0 0 20px rgba(227,179,65,.4);font-variant-numeric:tabular-nums}
 .cl .p1 .mv .n{font-size:38px}
 .cl .mv .u{font-size:11px;font-weight:800;color:var(--m)}
-.cl .base{width:100%;border-radius:14px 14px 0 0;display:grid;place-items:center;font-size:34px;font-weight:900;font-style:italic;color:rgba(227,179,65,.32);border:1px solid var(--b);border-bottom:0;background:linear-gradient(#24070D,#120307)}
-.cl .p1 .base{height:96px;background:linear-gradient(#55131F,#120307);box-shadow:0 -10px 40px rgba(227,179,65,.22)}.cl .p2 .base{height:68px}.cl .p3 .base{height:50px}
+.cl .base{width:100%;border-radius:14px 14px 0 0;display:grid;place-items:center;font-size:34px;font-weight:900;font-style:italic;color:rgba(227,179,65,.32);border:1px solid var(--b);border-bottom:0;background:linear-gradient(#0A1828,#040A14)}
+.cl .p1 .base{height:96px;background:linear-gradient(#1C3B66,#040A14);box-shadow:0 -10px 40px rgba(227,179,65,.22)}.cl .p2 .base{height:68px}.cl .p3 .base{height:50px}
 
 /* ===== القائمة ===== */
 .cl .list{max-height:560px;overflow:auto;margin-top:16px;display:grid;gap:8px;padding:2px 4px 2px 8px;scrollbar-width:thin;scrollbar-color:var(--au) transparent}
@@ -40,7 +40,7 @@
 .cl .st{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .cl .st span{font-size:12px;font-weight:800;padding:4px 10px;border-radius:99px;background:rgba(255,255,255,.05);
   color:rgba(255,247,236,.65);font-variant-numeric:tabular-nums;white-space:nowrap}
-.cl .st .h{color:#1B0509;background:linear-gradient(150deg,var(--au2),var(--au) 60%,#B8860B);
+.cl .st .h{color:#071120;background:linear-gradient(150deg,var(--au2),var(--au) 60%,#B8860B);
   box-shadow:0 0 16px rgba(227,179,65,.3)}
 .cl .bar{grid-column:1/-1;height:3px;border-radius:9px;background:rgba(255,255,255,.06);overflow:hidden}.cl .bar i{display:block;height:100%;width:var(--w);background:linear-gradient(90deg,var(--cr),var(--au));border-radius:9px}
 @keyframes up{from{opacity:0;transform:translateY(14px)}}@keyframes fl{50%{transform:translateY(-5px)}}
@@ -49,7 +49,7 @@
 .cl .cl-tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:26px 0 6px}
 .cl .cl-tab{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--b);background:rgba(255,255,255,.04);border-radius:99px;padding:8px 18px;font-size:13px;font-weight:800;color:rgba(255,247,236,.65);cursor:pointer;transition:.25s;font-family:inherit}
 .cl .cl-tab:hover{border-color:rgba(227,179,65,.5);color:#FFF7EC;transform:translateY(-1px)}
-.cl .cl-tab.on{background:linear-gradient(150deg,#F7E3AE,#E3B341 55%,#B8860B);border-color:transparent;color:#1B0509;box-shadow:0 0 22px rgba(227,179,65,.4)}
+.cl .cl-tab.on{background:linear-gradient(150deg,#F7E3AE,#E3B341 55%,#B8860B);border-color:transparent;color:#071120;box-shadow:0 0 22px rgba(227,179,65,.4)}
 .cl .cl-sortnote{text-align:center;font-size:12px;color:var(--m);margin:10px 0 0;font-weight:700}
 .cl .cl-sortnote b{color:var(--au2)}
 

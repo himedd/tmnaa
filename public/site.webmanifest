@@ -1,0 +1,21 @@
+{
+  "name": "TMNAA Official Hub | عبدالله الشمري",
+  "short_name": "TMNAA",
+  "description": "مركز بث عبدالله الشمري (TMNAA) — البث المباشر على كيك، تقرير آخر جلسة، ومتصدرو الدعم. كلان ليفل ون.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["entertainment", "games", "social"],
+  "display": "standalone",
+  "display_override": ["minimal-ui"],
+  "orientation": "any",
+  "background_color": "#040A14",
+  "theme_color": "#040A14",
+  "icons": [
+    { "src": "tmnaa-logo-64.webp", "sizes": "64x64", "type": "image/webp", "purpose": "any" },
+    { "src": "tmnaa-logo.webp", "sizes": "350x350", "type": "image/webp", "purpose": "any" },
+    { "src": "tmnaa-logo.webp", "sizes": "350x350", "type": "image/webp", "purpose": "maskable" }
+  ]
+}

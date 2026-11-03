@@ -96,7 +96,7 @@ export const SubscribeGuide: React.FC<{ lang: Language }> = ({ lang }) => {
   return (
     <>
       <button type="button" onClick={() => setOpen(true)}
-        className="group inline-flex items-center gap-1.5 text-[10px] font-black px-3 py-1.5 rounded-full border border-[#E3B341]/45 bg-[#E3B341]/10 text-[#F7E3AE] hover:bg-[#E3B341] hover:text-wine-950 hover:shadow-[0_0_22px_rgba(227,179,65,0.55)] active:scale-95 transition-all duration-300">
+        className="group inline-flex items-center gap-1.5 text-[10px] font-black px-3 py-1.5 rounded-full border border-[#E3B341]/45 bg-[#E3B341]/10 text-[#F7E3AE] hover:bg-[#E3B341] hover:text-navy-950 hover:shadow-[0_0_22px_rgba(227,179,65,0.55)] active:scale-95 transition-all duration-300">
         <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.5a2.25 2.25 0 113.4 1.93c-.66.44-1.4.98-1.4 1.94v.63" />
           <circle cx="12" cy="17.25" r=".9" fill="currentColor" stroke="none" />
@@ -108,13 +108,13 @@ export const SubscribeGuide: React.FC<{ lang: Language }> = ({ lang }) => {
       {open && createPortal(
         <div className="modal-backdrop fixed inset-0 z-[130] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md"
           role="dialog" aria-modal="true" aria-label={c.title} onClick={() => setOpen(false)}>
-          <div className="modal-sheet relative w-full max-w-[640px] max-h-[92vh] overflow-hidden rounded-[26px] border border-gold/25 bg-gradient-to-b from-wine-900 via-wine-950 to-black shadow-[0_40px_120px_-20px_rgba(0,0,0,0.95)]"
+          <div className="modal-sheet relative w-full max-w-[640px] max-h-[92vh] overflow-hidden rounded-[26px] border border-gold/25 bg-gradient-to-b from-navy-900 via-navy-950 to-black shadow-[0_40px_120px_-20px_rgba(0,0,0,0.95)]"
             onClick={(e) => e.stopPropagation()}>
             <div className="absolute top-0 inset-x-0 h-[3px] bg-gradient-to-l from-transparent via-gold to-transparent pointer-events-none" />
 
             {/* header */}
             <div className="relative flex items-center gap-3.5 px-5 sm:px-7 pt-6 pb-5 border-b border-gold/15 bg-[radial-gradient(130%_130%_at_50%_0%,rgba(227,179,65,0.16),transparent_68%)]">
-              <span className="w-11 h-11 shrink-0 rounded-2xl flex items-center justify-center text-wine-950"
+              <span className="w-11 h-11 shrink-0 rounded-2xl flex items-center justify-center text-navy-950"
                 style={{ background: 'linear-gradient(150deg, #FFF3D6, #E3B341 55%, #B8860B)', boxShadow: '0 10px 26px -8px rgba(227,179,65,0.8), inset 0 1px 0 rgba(255,255,255,0.6)' }}>
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
@@ -126,7 +126,7 @@ export const SubscribeGuide: React.FC<{ lang: Language }> = ({ lang }) => {
                 <h4 className="text-lg sm:text-2xl font-black text-white leading-tight">{c.title}</h4>
               </div>
               <button type="button" onClick={() => setOpen(false)} aria-label={c.close}
-                className="ms-auto w-9 h-9 shrink-0 rounded-xl grid place-items-center bg-white/[0.06] border border-gold/20 text-white/60 hover:text-wine-950 hover:bg-gold hover:border-gold transition-all duration-300">
+                className="ms-auto w-9 h-9 shrink-0 rounded-xl grid place-items-center bg-white/[0.06] border border-gold/20 text-white/60 hover:text-navy-950 hover:bg-gold hover:border-gold transition-all duration-300">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}><path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" /></svg>
               </button>
             </div>
@@ -150,7 +150,7 @@ export const SubscribeGuide: React.FC<{ lang: Language }> = ({ lang }) => {
                       className="w-full max-h-[60vh] object-contain rounded-xl" />
                   </div>
                   <button type="button" onClick={() => setZoom(null)}
-                    className={`self-center inline-flex items-center gap-2 text-[11px] font-black px-4 py-2 rounded-full bg-white/[0.07] border border-gold/30 text-white/75 hover:bg-gold hover:text-wine-950 hover:border-gold transition-all duration-300 ${lang === 'ar' ? 'flex-row-reverse' : ''}`}>
+                    className={`self-center inline-flex items-center gap-2 text-[11px] font-black px-4 py-2 rounded-full bg-white/[0.07] border border-gold/30 text-white/75 hover:bg-gold hover:text-navy-950 hover:border-gold transition-all duration-300 ${lang === 'ar' ? 'flex-row-reverse' : ''}`}>
                     <svg className={`w-3.5 h-3.5 ${lang === 'ar' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.6}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                     {c.back}
                   </button>
@@ -169,7 +169,7 @@ export const SubscribeGuide: React.FC<{ lang: Language }> = ({ lang }) => {
                         {i < c.steps.length - 1 && (
                           <span className="absolute top-11 bottom-[-16px] start-[19px] w-px bg-gradient-to-b from-gold/45 to-gold/5" aria-hidden="true" />
                         )}
-                        <span className="relative z-10 w-10 h-10 shrink-0 rounded-full grid place-items-center text-[13px] font-black text-wine-950"
+                        <span className="relative z-10 w-10 h-10 shrink-0 rounded-full grid place-items-center text-[13px] font-black text-navy-950"
                           style={{ background: 'linear-gradient(150deg, #FFF3D6, #E3B341 58%, #B8860B)', boxShadow: '0 8px 20px -8px rgba(227,179,65,0.85), inset 0 1px 0 rgba(255,255,255,0.55)' }}
                           dir="ltr">{i + 1}</span>
                         <div className="min-w-0 pt-0.5">
@@ -195,7 +195,7 @@ export const SubscribeGuide: React.FC<{ lang: Language }> = ({ lang }) => {
                             <img src={sh.src} alt={sh.alt} loading="lazy"
                               className="w-full max-h-[300px] object-contain transition-transform duration-500 group-hover:scale-[1.04]" />
                             <span className="absolute inset-0 grid place-items-center opacity-0 group-hover:opacity-100 bg-black/45 transition-opacity duration-300">
-                              <span className="w-9 h-9 rounded-full grid place-items-center bg-gold text-wine-950 shadow-[0_0_24px_rgba(227,179,65,0.75)]">
+                              <span className="w-9 h-9 rounded-full grid place-items-center bg-gold text-navy-950 shadow-[0_0_24px_rgba(227,179,65,0.75)]">
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}><path strokeLinecap="round" d="M21 21l-4.35-4.35M16.5 10.5a6 6 0 11-12 0 6 6 0 0112 0zM10.5 7.5v6M7.5 10.5h6" /></svg>
                               </span>
                             </span>
@@ -210,8 +210,8 @@ export const SubscribeGuide: React.FC<{ lang: Language }> = ({ lang }) => {
                   <div className="rounded-2xl border border-gold/30 bg-gradient-to-b from-gold/[0.14] to-transparent px-4 py-4 text-center">
                     <p className="text-[13px] sm:text-[14px] font-black text-gold-light leading-snug">{c.done}</p>
                     <p className="text-[11px] font-medium text-white/45 mt-1">{c.doneSub}</p>
-                    <a href="https://kick.com/xlxwi/subscribe" target="_blank" rel="noopener noreferrer"
-                      className="mt-3.5 inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-[12px] font-black text-wine-950"
+                    <a href="https://kick.com/tmnaa/subscribe" target="_blank" rel="noopener noreferrer"
+                      className="mt-3.5 inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-[12px] font-black text-navy-950"
                       style={{ background: 'linear-gradient(150deg, #FFF3D6, #E3B341 55%, #B8860B)', boxShadow: '0 12px 28px -10px rgba(227,179,65,0.85), inset 0 1px 0 rgba(255,255,255,0.55)' }}>
                       {c.cta}
                       <svg className={`w-3.5 h-3.5 ${lang === 'ar' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.6}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>

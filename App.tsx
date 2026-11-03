@@ -15,14 +15,14 @@ const MediaModal = lazy(() => import('./components/MediaModal').then(m => ({ def
 const LiveTheater = lazy(() => import('./components/LiveTheater').then(m => ({ default: m.LiveTheater })));
 
 // --- Constants ---
-const BRAND_LOGO = "xlxwi-logo.webp";
+const BRAND_LOGO = "tmnaa-logo.webp";
 import { kickFetch } from './utils/kickApi';
 import { getAllSocialMediaStats, formatFollowerCount, readSocialCache, SOCIAL_TTL_MS, FALLBACK } from './utils/socialMediaApi';
 import { fetchBotrixLeaderboard } from './utils/botrixApi';
-import { getTipLeaderboard, type TipSource, TipDonor, TipInterval } from './utils/supportersApi';
+import { getTipLeaderboard, TipDonor, TipInterval } from './utils/supportersApi';
 
 const SITE_BACKGROUND = "bg-heraldic.webp";
-const CHANNEL_SLUG = 'xlxwi';
+const CHANNEL_SLUG = 'tmnaa';
 
 /** كيك ترجع وقت البث بصيغة "2026-10-31 02:37:59" بتوقيت غرينتش بدون منطقة — نحوّلها لطابع زمني صحيح */
 const kickTime = (value?: string | null): number | null => {
@@ -32,7 +32,7 @@ const kickTime = (value?: string | null): number | null => {
     return Number.isNaN(ms) ? null : ms;
 };
 
-const CLAN = { latin: 'LEVEL ONE', ar: 'كلان لفل ون', tag: '#StayOne' };
+const CLAN = { latin: 'LEVEL ONE', ar: 'كلان ليفل ون', tag: '#StayOne' };
 
 /**
  * كاش آخر بث حي — صالح ثلاث ساعات فقط.
@@ -40,7 +40,7 @@ const CLAN = { latin: 'LEVEL ONE', ar: 'كلان لفل ون', tag: '#StayOne' }
  */
 const readStreamCache = (slug: string): StreamDetail | null => {
     try {
-        const raw = localStorage.getItem(`xlxwi_stream_${slug}`);
+        const raw = localStorage.getItem(`tmnaa_stream_${slug}`);
         if (!raw) return null;
         const parsed = JSON.parse(raw) as StreamDetail & { cachedAt?: number };
         if (!parsed?.cachedAt || Date.now() - parsed.cachedAt > 3 * 3600_000) return null;
@@ -58,24 +58,24 @@ const createSocialLink = (key: string, value: string, followerCount?: string, sp
     switch (key) {
         case 'twitter': return { name: 'X', url: value.startsWith('http') ? value : `https://x.com/${handle}`, icon: <XIcon className="w-7 h-7" />, color: '', username: `@${handle}`, hex: '#FFFFFF', followerCount, specialDetail };
         case 'instagram': return { name: 'Instagram', url: value.startsWith('http') ? value : `https://instagram.com/${handle}`, icon: <InstagramIcon className="w-7 h-7" />, color: '', username: `@${handle}`, hex: '#E1306C', followerCount, specialDetail };
-        case 'youtube': return { name: 'YouTube', url: value.startsWith('http') ? value : `https://youtube.com/@${handle}`, icon: <YoutubeIcon className="w-7 h-7" />, color: '', username: 'Channel', hex: '#FF0000', followerCount, specialDetail };
-        case 'discord': return { name: 'Discord', url: value.startsWith('http') ? value : `https://discord.gg/${handle}`, icon: <DiscordIcon className="w-7 h-7" />, color: '', username: 'Community', hex: '#5865F2', followerCount, specialDetail };
+        case 'youtube': return { name: 'YouTube', url: value.startsWith('http') ? value : `https://youtube.com/@${handle}`, icon: <YoutubeIcon className="w-7 h-7" />, color: '', username: `@${handle}`, hex: '#FF0000', followerCount, specialDetail };
+        case 'discord': return { name: 'Discord', url: value.startsWith('http') ? value : `https://discord.gg/${handle}`, icon: <DiscordIcon className="w-7 h-7" />, color: '', username: handle.split('/').pop().toUpperCase(), hex: '#5865F2', followerCount, specialDetail };
         case 'tiktok': return { name: 'TikTok', url: value.startsWith('http') ? value : `https://tiktok.com/@${handle}`, icon: <TikTokIcon className="w-7 h-7" />, color: '', username: `@${handle}`, hex: '#FE2C55', followerCount, specialDetail };
         case 'facebook': return { name: 'Facebook', url: value.startsWith('http') ? value : `https://facebook.com/${handle}`, icon: <FacebookIcon className="w-7 h-7" />, color: '', username: 'Page', hex: '#1877F2', followerCount, specialDetail };
         case 'snapchat': return { name: 'Snapchat', url: value.startsWith('http') ? value : `https://snapchat.com/add/${handle}`, icon: <SnapchatIcon className="w-7 h-7" />, color: '', username: `@${handle}`, hex: '#FFFC00', followerCount, specialDetail };
-        case 'whatsapp': return { name: 'WhatsApp', url: value, icon: <WhatsAppIcon className="w-7 h-7" />, color: '', username: 'Channel', hex: '#25D366', followerCount, specialDetail };
+        case 'whatsapp': return { name: 'WhatsApp', url: value, icon: <WhatsAppIcon className="w-7 h-7" />, color: '', username: 'TMNAA', hex: '#25D366', followerCount, specialDetail };
         default: return null;
     }
 };
 
 const KICK_SOCIAL: SocialLink = {
     name: 'KICK',
-    url: 'https://kick.com/xlxwi',
+    url: 'https://kick.com/tmnaa',
     icon: <KickIcon className="w-8 h-8" />,
     color: '',
-    username: 'xlxwi',
+    username: 'TMNAA',
     hex: '#E3B341',
-    followerCount: '261.3K',
+    followerCount: '309.8K',
     specialDetail: 'البث الأساسي والتفاعل المباشر'
 };
 
@@ -88,22 +88,23 @@ const OWN_SITE_ICON = 'mohhsg-icon.png';
 const TRANSLATIONS = {
     en: {
         status: 'LIVE NOW', statusOffline: 'OFFLINE',
-        headerTitle: 'xlxwi STREAM HUB',
-        bio: 'Ali Al-Hashemi (xlxwi) — a content creator with the Level One clan, broadcasting here daily. Welcome.',
+        headerTitle: 'TMNAA STREAM HUB',
+        bio: 'Abdullah Al-Shammari (TMNAA) — content creator and streamer with Clan Level One. Daily streams of gaming and chat, and every stat on this page is pulled from the last session.',
+        about: 'TMNAA is Abdullah Al-Shammari\'s streaming hub: gaming, Just Chatting and daily interaction with the Clan Level One community. Followers, watch hours, chat legends and the supporter board are all read live — nothing here is decorative.',
         tags: ['Gaming', 'Just Chatting', 'Live Daily'],
-        footer: '© 2026 xlxwi. All Rights Reserved.',
+        footer: '© 2026 TMNAA. All Rights Reserved.',
         poweredBy: 'POWERED BY HSG',
         watchLive: 'Watch Live', joinWhatsapp: 'Join WhatsApp',
         subOnly: 'SUB ONLY', dropsEnabled: 'DROPS ENABLED', noTags: 'No tags',
-        shareTitle: 'xlxwi Stream Hub', shareText: 'Check out xlxwi live on Kick!', copied: 'Link copied!',
+        shareTitle: 'TMNAA Stream Hub', shareText: 'Watch TMNAA live on Kick!', copied: 'Link copied!',
         contact: 'Contact & Business',
         lastSessionReport: 'Last session report', debriefTitle: 'Mission Debrief', debriefSub: 'Everything the last stream did, measured.', ago: 'Ago', duration: 'Duration',
         categoriesSpent: 'Categories in this stream', highlights: 'Stream highlights',
         socialsTitle: 'Social Arena', socialsSub: 'One hub — every platform. Pick your battlefield.',
         supportTitle: 'Support Arena', supportSub: 'Every name here is written in gold. Your support keeps the stream alive.',
         hallTitle: 'HALL OF LEGENDS', hallSub: 'Live top supporters',
-        sourceStreamlabs: 'STREAMLABS', sourceDokan: 'DOKAN',
-        modsTitle: 'Moderators',
+        sourceDokan: 'DOKAN',
+        modsTitle: 'Moderators', modsSub: 'The crew that holds the castle — every one of them on X.',
         tiersTitle: 'Special alert tiers', pollLive: 'LIVE POLL',
         theaterTitle: 'Live Theater', viewers: 'watching',
         theater: {
@@ -124,22 +125,24 @@ const TRANSLATIONS = {
     },
     ar: {
         status: 'بث مباشر الآن', statusOffline: 'غير متصل حالياً',
-        headerTitle: 'مركز xlxwi للبث المباشر',
-        bio: 'علي الهاشمي (xlxwi) صانع محتوى في كلان لفل ون  يبث هنا يومياً — حياكم الله.',
+        headerTitle: 'مركز TMNAA للبث',
+        bio: 'يا مرحباً بعبدالله الشمري (TMNAA) — صانع محتوى ومذيع مباشر مع كلان ليفل ون. أبث يومياً بين الألعاب والسوالف، وكل رقم في هذا الموقع مأخوذ من الجلسة الأخيرة.',
+        about: 'TMNAA هو مركز بث عبدالله الشمري: ألعاب وسوالف وتفاعل يومي مع مجتمع كلان ليفل ون. المتابعون، ساعات المشاهدة، أبطال الشات ولوحة الداعمين كلها تُقرأ مباشرة من المنصات — لا شيء هنا للزينة.',
         tags: ['ألعاب', 'سوالف', 'بث يومي'],
-        footer: '© 2026 xlxwi. جميع الحقوق محفوظة.',
+        footer: '© 2026 TMNAA. جميع الحقوق محفوظة.',
         poweredBy: 'بدعم من HSG',
         watchLive: 'شاهد البث', joinWhatsapp: 'انضم إلى الواتساب',
         subOnly: 'للمشتركين فقط', dropsEnabled: 'الجوائز مفعلة', noTags: 'لا يوجد وسوم',
-        shareTitle: 'مركز بث xlxwi', shareText: 'تابع بث xlxwi المباشر على كيك!', copied: 'تم نسخ الرابط!',
+        shareTitle: 'مركز بث TMNAA', shareText: 'تابع بث TMNAA المباشر على كيك!', copied: 'تم نسخ الرابط!',
         contact: 'للتواصل والإعلان',
         lastSessionReport: 'تقرير الجلسة الأخيرة', debriefTitle: 'خلاصة المهمة', debriefSub: 'كل ما قدّمه البث الأخير — بالأرقام.', ago: 'منذ', duration: 'المدة',
         categoriesSpent: 'الفئات التي تم بثها', highlights: 'لقطات ممتعة من البث',
         socialsTitle: 'ساحة التواصل', socialsSub: 'كل المنصات في مكان واحد — اختر ساحتك.',
         supportTitle: 'ساحة الدعم', supportSub: 'كل اسم هنا مكتوب بالذهب. دعمك يخلي البث يستمر.',
         hallTitle: 'قاعة الأساطير', hallSub: 'أعلى الداعمين المباشرين',
-        sourceStreamlabs: 'ستريم لابس', sourceDokan: 'دكان',
+        sourceDokan: 'دكان',
         modsTitle: 'المشرفون',
+        modsSub: 'الطاقم اللي يمسك القلعة — كلهم على X.',
         tiersTitle: 'مستويات التنبيه الخاصة', pollLive: 'تصويت مباشر',
         theaterTitle: 'مسرح البث المباشر', viewers: 'مشاهد',
         theater: {
@@ -219,7 +222,7 @@ const ArenaBackground: React.FC = () => {
             return c;
         };
         const spriteGold = makeSprite('rgba(247,227,174,0.95)', 'rgba(227,179,65,0.34)');
-        const spriteEmber = makeSprite('rgba(255,255,255,0.8)', 'rgba(194,30,58,0.22)');
+        const spriteEmber = makeSprite('rgba(255,255,255,0.8)', 'rgba(47,127,214,0.22)');
 
         const resize = () => {
             w = window.innerWidth;
@@ -286,19 +289,19 @@ const ArenaBackground: React.FC = () => {
         };
     }, []);
     return (
-        <div className="fixed inset-0 z-0 bg-[#120307] overflow-hidden" aria-hidden="true">
+        <div className="fixed inset-0 z-0 bg-[#040A14] overflow-hidden" aria-hidden="true">
             <div className="absolute inset-0 responsive_bg opacity-90" />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#120307]/34 via-[#1b0509]/52 to-[#120307]/92 md:from-[#120307]/50 md:via-[#1b0509]/62 md:to-[#120307]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#040A14]/34 via-[#071120]/52 to-[#040A14]/92 md:from-[#040A14]/50 md:via-[#071120]/62 md:to-[#040A14]" />
             <div className="absolute inset-0 grid-lines opacity-70" />
             {/* Glowing circles using radial gradients (no blur filter) — same look, much cheaper */}
             <div className="absolute -top-40 right-[-10%] w-[55vw] h-[55vw] max-w-[720px] max-h-[720px] rounded-full animate-aurora"
                 style={{ background: 'radial-gradient(circle, rgba(227,179,65,0.20) 0%, rgba(227,179,65,0.08) 38%, transparent 68%)' }} />
             <div className="absolute top-[30%] left-[-12%] w-[42vw] h-[42vw] max-w-[560px] max-h-[560px] rounded-full animate-aurora"
-                style={{ animationDelay: '-6s', background: 'radial-gradient(circle, rgba(110,27,43,0.42) 0%, rgba(110,27,43,0.16) 38%, transparent 68%)' }} />
+                style={{ animationDelay: '-6s', background: 'radial-gradient(circle, rgba(39,80,127,0.42) 0%, rgba(39,80,127,0.16) 38%, transparent 68%)' }} />
             <div className="absolute bottom-[-20%] right-[20%] w-[36vw] h-[36vw] max-w-[480px] max-h-[480px] rounded-full animate-aurora"
                 style={{ animationDelay: '-3s', background: 'radial-gradient(circle, rgba(247,227,174,0.10) 0%, rgba(247,227,174,0.04) 38%, transparent 68%)' }} />
             <canvas ref={canvasRef} className="absolute inset-0 opacity-80" />
-            <div className="absolute inset-0 opacity-70 md:opacity-100 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,transparent_40%,rgba(18,3,7,0.65)_100%)]" />
+            <div className="absolute inset-0 opacity-70 md:opacity-100 bg-[radial-gradient(ellipse_80%_60%_at_50%_0%,transparent_40%,rgba(4,10,20,0.65)_100%)]" />
         </div>
     );
 };
@@ -338,30 +341,34 @@ const DeferredMount: React.FC<{ children: React.ReactNode; rootMargin?: string; 
 type MarqueeCell =
     | { kind: 'txt'; label: string; gold?: boolean }
     | { kind: 'tag'; label: string }
-    | { kind: 'char'; img: string; name: string; role: string; tone: 'gold' | 'ice' };
+    | { kind: 'char'; img: string; name: string; role: string; tone: 'gold' | 'ice' | 'blue' };
 
 const Marquee: React.FC<{ lang: Language }> = ({ lang }) => {
     const ar = lang === 'ar';
     const cells: MarqueeCell[] = ar
         ? [
-            { kind: 'txt', label: 'علي الهاشمي', gold: true },
-            { kind: 'txt', label: '21 سنة' },
-            { kind: 'txt', label: 'الإمارات' },
-            { kind: 'txt', label: 'صانع محتوى مع لفل ون' },
+            { kind: 'txt', label: 'عبدالله الشمري', gold: true },
+            { kind: 'txt', label: 'tmnaa' },
+            { kind: 'txt', label: 'صانع محتوى' },
+            { kind: 'txt', label: 'كلان ليفل ون' },
+            { kind: 'txt', label: 'أبث بشكل يومي' },
             { kind: 'tag', label: 'شخصيات قراند' },
-            { kind: 'char', img: 'char-scrab.webp', name: 'علي الهاشمي', role: 'مؤسس عصابة السكراب', tone: 'gold' },
-            { kind: 'char', img: 'char-iaa.webp', name: 'علي عبدالله', role: 'قطاع IAA الاستخباراتي', tone: 'ice' },
+            { kind: 'char', img: 'char-iaa.webp', name: 'عبدالله الشمري', role: 'قطاع IAA الاستخباراتي', tone: 'gold' },
+            { kind: 'char', img: 'char-scrab.webp', name: 'ابو عبدو', role: 'مواطن مجرم سكراب', tone: 'ice' },
+            { kind: 'char', img: 'char-police.webp', name: 'عبدالرحمن علي', role: 'عسكري POLICE', tone: 'blue' },
         ]
         : [
-            { kind: 'txt', label: 'ALI AL-HASHEMI', gold: true },
-            { kind: 'txt', label: 'AGE 21' },
-            { kind: 'txt', label: 'UAE' },
-            { kind: 'txt', label: 'CREATOR — LEVEL ONE' },
+            { kind: 'txt', label: 'ABDULLAH AL-SHAMMARI', gold: true },
+            { kind: 'txt', label: 'tmnaa' },
+            { kind: 'txt', label: 'CREATOR' },
+            { kind: 'txt', label: 'LEVEL ONE CLAN' },
+            { kind: 'txt', label: 'STREAMS DAILY' },
             { kind: 'tag', label: 'GTA CHARACTERS' },
-            { kind: 'char', img: 'char-scrab.webp', name: 'Ali Al-Hashemi', role: 'Founder — Scrab Gang', tone: 'gold' },
-            { kind: 'char', img: 'char-iaa.webp', name: 'Ali Abdullah', role: 'IAA Intelligence Sector', tone: 'ice' },
+            { kind: 'char', img: 'char-iaa.webp', name: 'Abdullah Al-Shammari', role: 'IAA Intelligence Sector', tone: 'gold' },
+            { kind: 'char', img: 'char-scrab.webp', name: 'Abu Abdo', role: 'Scrab Criminal Citizen', tone: 'ice' },
+            { kind: 'char', img: 'char-police.webp', name: 'Abdulrahman Ali', role: 'POLICE Officer', tone: 'blue' },
         ];
-    // صورتان فقط (~5KB لكل واحدة) — التحميل المسبقي أرخص من دائرة فاضية تظهر
+    // ثلاث صور (~3KB لكل واحدة) — التحميل المسبقي أرخص من دائرة فاضية تظهر
     // لحظة دخول الشخصية الشاشة، لأن الكسول ما يجلب إلا بعد مسافة قريبة من الشريط.
     // نصف المسار لازم يتجاوز عرض الشريط وإلا ظهر طرف فارغ عند اللفّ — ٦ مجموعات تكفي لأي شاشة
     const row = Array.from({ length: 6 }, () => cells).flat();
@@ -497,10 +504,10 @@ const LastSessionReport: React.FC<{ lang: Language; data: any; clips: any[]; pas
     ];
     return (
         <Reveal className="w-full">
-            <div className="relative overflow-hidden rounded-[28px] md:rounded-[36px] border border-gold/15 bg-wine-950/92 shadow-[0_30px_80px_rgba(0,0,0,0.6)]">
+            <div className="relative overflow-hidden rounded-[28px] md:rounded-[36px] border border-gold/15 bg-navy-950/92 shadow-[0_30px_80px_rgba(0,0,0,0.6)]">
                 {/* cinematic ambient from thumbnail */}
                 <img src={thumbnail} alt="" aria-hidden="true" className="hidden sm:block absolute inset-0 w-full h-full object-cover blur-3xl opacity-25 scale-110 pointer-events-none" />
-                <div className="absolute inset-0 bg-gradient-to-b from-wine-950/70 via-wine-950/45 to-wine-950/88 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-b from-navy-950/70 via-navy-950/45 to-navy-950/88 pointer-events-none" />
                 <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-l from-transparent via-gold to-transparent" />
                 <div className="relative p-5 sm:p-8 md:p-10">
                     {/* header */}
@@ -512,7 +519,7 @@ const LastSessionReport: React.FC<{ lang: Language; data: any; clips: any[]; pas
                                 <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                                 {fullDate} • {timeAgo(data.created_at)}
                             </span>
-                            <span className={`text-[10px] font-black px-3 py-1.5 rounded-full border tracking-widest ${isSubOnly ? 'bg-gold/10 border-gold/40 text-gold-light' : 'bg-crimson/10 border-crimson/40 text-crimson-soft'}`}>
+                            <span className={`text-[10px] font-black px-3 py-1.5 rounded-full border tracking-widest ${isSubOnly ? 'bg-gold/10 border-gold/40 text-gold-light' : 'bg-azure/10 border-azure/40 text-azure-soft'}`}>
                                 {isSubOnly ? t.subOnly : 'PUBLIC'}
                             </span>
                         </span>
@@ -522,9 +529,9 @@ const LastSessionReport: React.FC<{ lang: Language; data: any; clips: any[]; pas
                     <div className="flex flex-col lg:flex-row gap-6 md:gap-8 items-start">
                         <div className="[perspective:1200px] w-full lg:w-[380px] shrink-0 animate-fade-in-up" style={{ animationDelay: '80ms' }}>
                             <button type="button" onClick={playVod(data)}
-                                className="group relative block w-full text-start aspect-video rounded-2xl overflow-hidden border border-gold/30 bg-wine-950 shadow-[0_24px_60px_-16px_rgba(227,179,65,0.4)] [transform:rotateY(-7deg)_rotateX(2deg)] hover:[transform:rotateY(0deg)_rotateX(0deg)] transition-transform duration-700">
+                                className="group relative block w-full text-start aspect-video rounded-2xl overflow-hidden border border-gold/30 bg-navy-950 shadow-[0_24px_60px_-16px_rgba(227,179,65,0.4)] [transform:rotateY(-7deg)_rotateX(2deg)] hover:[transform:rotateY(0deg)_rotateX(0deg)] transition-transform duration-700">
                                 <img src={thumbnail} alt="Last Session" loading="lazy" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-wine-950/85 via-black/10 to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-navy-950/85 via-black/10 to-transparent" />
                                 <span className="absolute top-3 start-3 text-[10px] font-black px-2.5 py-1 rounded-full bg-black/70 border border-gold/25 text-gold-light backdrop-blur">VOD</span>
                                 <span className="absolute inset-0 m-auto w-14 h-14 md:w-16 md:h-16 rounded-full bg-gold/20 backdrop-blur-md border border-gold/70 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 shadow-[0_0_36px_rgba(227,179,65,0.55)]">
                                     <svg className="w-6 h-6 text-gold-pale fill-current translate-x-[1px] rtl:-translate-x-[1px]" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
@@ -536,7 +543,7 @@ const LastSessionReport: React.FC<{ lang: Language; data: any; clips: any[]; pas
                                 </span>
                             </button>
                             <span onClick={playVod(data)} role="button"
-                                className="mt-3 w-full min-h-[48px] flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-gold-light to-gold text-wine-950 font-black text-sm cursor-pointer shadow-[0_12px_30px_-10px_rgba(227,179,65,0.6)] active:scale-[0.98] transition-transform">
+                                className="mt-3 w-full min-h-[48px] flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-gold-light to-gold text-navy-950 font-black text-sm cursor-pointer shadow-[0_12px_30px_-10px_rgba(227,179,65,0.6)] active:scale-[0.98] transition-transform">
                                 {L.watch}
                                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                             </span>
@@ -555,9 +562,9 @@ const LastSessionReport: React.FC<{ lang: Language; data: any; clips: any[]; pas
                                         style={s.crown
                                             ? { animationDelay: `${220 + i * 80}ms`, background: 'linear-gradient(150deg, #FFF3D6 0%, #E3B341 52%, #B8860B 100%)', boxShadow: '0 16px 34px -14px rgba(227,179,65,0.85), inset 0 1px 0 rgba(255,255,255,0.6)' }
                                             : { animationDelay: `${220 + i * 80}ms` }}>
-                                        <span className={`mx-auto w-8 h-8 rounded-xl flex items-center justify-center mb-2 ${s.crown ? 'bg-wine-950/15 text-wine-950' : s.hot ? 'bg-gold/15 text-gold-light' : 'bg-white/[0.07] text-white/60'}`}>{s.icon}</span>
-                                        <p className={`text-lg sm:text-xl md:text-2xl font-black ${s.crown ? 'text-wine-950 [text-shadow:0_1px_0_rgba(255,255,255,0.45)]' : 'text-white'}`}>{s.value}</p>
-                                        <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mt-1 ${s.crown ? 'text-wine-950/70' : 'text-white/35'}`}>{s.label}</p>
+                                        <span className={`mx-auto w-8 h-8 rounded-xl flex items-center justify-center mb-2 ${s.crown ? 'bg-navy-950/15 text-navy-950' : s.hot ? 'bg-gold/15 text-gold-light' : 'bg-white/[0.07] text-white/60'}`}>{s.icon}</span>
+                                        <p className={`text-lg sm:text-xl md:text-2xl font-black ${s.crown ? 'text-navy-950 [text-shadow:0_1px_0_rgba(255,255,255,0.45)]' : 'text-white'}`}>{s.value}</p>
+                                        <p className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-widest mt-1 ${s.crown ? 'text-navy-950/70' : 'text-white/35'}`}>{s.label}</p>
                                     </div>
                                 ))}
                             </div>
@@ -628,10 +635,10 @@ const LastSessionReport: React.FC<{ lang: Language; data: any; clips: any[]; pas
                                 {clips.slice(0, 3).map((clip: any, i: number) => (
                                     <button type="button" key={clip.id || i}
                                         onClick={(e) => { e.preventDefault(); if (!clip.id) return; onPlay({ kind: 'clip', id: String(clip.id), title: clip.title, src: clip.clip_url || clip.video_url, poster: clip.thumbnail_url || clip.thumbnail?.url }); }}
-                                        className="group relative block aspect-video rounded-xl md:rounded-2xl overflow-hidden border border-gold/15 bg-wine-950 text-start hover:border-gold/60 hover:-translate-y-1 transition-all duration-300">
+                                        className="group relative block aspect-video rounded-xl md:rounded-2xl overflow-hidden border border-gold/15 bg-navy-950 text-start hover:border-gold/60 hover:-translate-y-1 transition-all duration-300">
                                         <img src={clip.thumbnail_url || clip.thumbnail?.url || SITE_BACKGROUND} alt={clip.title} loading="lazy"
                                             className="w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-wine-950/90 via-black/10 to-transparent" />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-navy-950/90 via-black/10 to-transparent" />
                                         <span className="absolute top-1.5 start-1.5 w-5 h-5 md:w-6 md:h-6 rounded-lg bg-black/70 border border-gold/25 text-gold-light text-[9px] md:text-[10px] font-black flex items-center justify-center backdrop-blur" dir="ltr">{i + 1}</span>
                                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                             <span className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-gold/25 backdrop-blur border border-gold/60 flex items-center justify-center">
@@ -653,16 +660,15 @@ const LastSessionReport: React.FC<{ lang: Language; data: any; clips: any[]; pas
     );
 };
 
-// --- Platform washes — كلها داخل عائلة الخمري/الذهر، بصمة المنصة بلون واحد خفيف ---
+// --- Platform washes — كلها داخل عائلة الأزرق الليلي/الذهبي، بصمة المنصة بلون واحد خفيف ---
 const BRAND_GRADIENTS: Record<string, string> = {
-    KICK: 'linear-gradient(135deg, rgba(227,179,65,0.22), rgba(62,14,26,0.55) 55%, transparent)',
-    Snapchat: 'linear-gradient(135deg, rgba(227,179,65,0.14), rgba(46,10,18,0.52) 58%, transparent)',
-    Instagram: 'linear-gradient(135deg, rgba(194,30,58,0.22), rgba(62,14,26,0.5) 58%, transparent)',
-    TikTok: 'linear-gradient(135deg, rgba(194,30,58,0.17), rgba(46,10,18,0.52) 58%, transparent)',
-    X: 'linear-gradient(135deg, rgba(255,247,236,0.11), rgba(27,5,9,0.55) 60%, transparent)',
-    WhatsApp: 'linear-gradient(135deg, rgba(227,179,65,0.16), rgba(46,10,18,0.52) 58%, transparent)',
-    Discord: 'linear-gradient(135deg, rgba(227,179,65,0.14), rgba(62,14,26,0.52) 58%, transparent)',
-    YouTube: 'linear-gradient(135deg, rgba(194,30,58,0.19), rgba(46,10,18,0.52) 58%, transparent)',
+    KICK: 'linear-gradient(135deg, rgba(227,179,65,0.22), rgba(20,44,76,0.55) 55%, transparent)',
+    Instagram: 'linear-gradient(135deg, rgba(47,127,214,0.22), rgba(20,44,76,0.5) 58%, transparent)',
+    TikTok: 'linear-gradient(135deg, rgba(47,127,214,0.17), rgba(14,32,56,0.52) 58%, transparent)',
+    X: 'linear-gradient(135deg, rgba(255,247,236,0.11), rgba(7,17,32,0.55) 60%, transparent)',
+    WhatsApp: 'linear-gradient(135deg, rgba(227,179,65,0.16), rgba(14,32,56,0.52) 58%, transparent)',
+    Discord: 'linear-gradient(135deg, rgba(227,179,65,0.14), rgba(20,44,76,0.52) 58%, transparent)',
+    YouTube: 'linear-gradient(135deg, rgba(47,127,214,0.19), rgba(14,32,56,0.52) 58%, transparent)',
 };
 
 // --- Social Card — premium edition (same data + behavior) ---
@@ -710,7 +716,7 @@ const SocialCard: React.FC<{
     const [launching, setLaunching] = useState(false);
     const [pressed, setPressed] = useState(false);
     const brand = social.hex || '#ffffff';
-    const bright = social.name === 'Snapchat' || social.name === 'KICK';
+    const bright = social.name === 'KICK';
     const go = (e: React.MouseEvent) => {
         e.preventDefault();
         if (launching) return;
@@ -719,7 +725,7 @@ const SocialCard: React.FC<{
     };
     const active = hover || launching;
     const card = (
-        <div className={`card-sheen relative h-full rounded-[22px] border bg-wine-900/92 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-active:translate-y-0 group-active:scale-[0.985] ${featured ? 'flex flex-col' : ''} ${launching ? 'glitch-active' : ''} ${pressed ? 'scale-[0.985]' : ''}`}
+        <div className={`card-sheen relative h-full rounded-[22px] border bg-navy-900/92 overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-active:translate-y-0 group-active:scale-[0.985] ${featured ? 'flex flex-col' : ''} ${launching ? 'glitch-active' : ''} ${pressed ? 'scale-[0.985]' : ''}`}
             style={{ borderColor: launching ? brand : active ? `${brand}99` : 'rgba(255,255,255,0.09)', boxShadow: active ? `0 18px 44px -16px ${brand}66, inset 0 1px 0 rgba(255,255,255,0.08)` : '0 10px 28px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
             {/* brand wash */}
             <div className="absolute inset-0 pointer-events-none transition-opacity duration-500" style={{ background: BRAND_GRADIENTS[social.name] || `linear-gradient(135deg, ${brand}22, transparent 60%)`, opacity: active ? 1 : 0.75 }} />
@@ -758,7 +764,7 @@ const SocialCard: React.FC<{
                     <p className={`font-black text-white truncate leading-tight mt-0.5 ${featured ? 'text-[17px] sm:text-[22px] lg:text-2xl' : 'text-[13px] sm:text-[15px] lg:text-[17px]'}`} dir="ltr">{social.username}</p>
                     <div className="flex items-center gap-1 sm:gap-1.5 mt-1 min-w-0">
                         {!featured && social.followerCount && (
-                            <span className={`inline-flex items-center gap-1 shrink-0 text-[10px] sm:text-[11px] font-black text-white/85 ${social.name === 'Snapchat' ? 'blur-[3px] select-none' : ''}`} dir="ltr">
+                            <span className="inline-flex items-center gap-1 shrink-0 text-[10px] sm:text-[11px] font-black text-white/85" dir="ltr">
                                 <svg className="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" /></svg>
                                 {social.followerCount}
                             </span>
@@ -783,7 +789,7 @@ const SocialCard: React.FC<{
                     <div className="h-px bg-gradient-to-l from-transparent via-gold/30 to-transparent" />
                     {status && (
                         <div className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-2">
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${live ? 'bg-[#C21E3A] animate-pulse shadow-[0_0_8px_rgba(194,30,58,0.9)]' : 'bg-gold/60'}`} />
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${live ? 'bg-[#2F7FD6] animate-pulse shadow-[0_0_8px_rgba(47,127,214,0.9)]' : 'bg-gold/60'}`} />
                             <span className="text-[10.5px] sm:text-[11.5px] font-black text-white/70 truncate">{status}</span>
                         </div>
                     )}
@@ -802,8 +808,8 @@ const SocialCard: React.FC<{
             {/* شريط الطلب السفلي: يوضح حالة الدخول ويملأ بقية الارتفاع */}
             {featured && (
                 <div className="relative mt-auto pt-2.5 px-2.5 sm:px-4 lg:px-5 pb-3 sm:pb-4 lg:pb-5">
-                    <div className="flex items-center justify-center gap-2 rounded-2xl px-4 py-3 bg-gradient-to-b from-gold-light to-gold text-wine-950 font-black text-[13px] sm:text-[15px] shadow-[0_10px_28px_-10px_rgba(227,179,65,0.75)] transition-transform duration-300 group-hover:scale-[1.02]">
-                        <span className={`w-2 h-2 rounded-full shrink-0 ${live ? 'bg-[#C21E3A] animate-pulse shadow-[0_0_8px_rgba(194,30,58,0.9)]' : 'bg-wine-950/45'}`} />
+                    <div className="flex items-center justify-center gap-2 rounded-2xl px-4 py-3 bg-gradient-to-b from-gold-light to-gold text-navy-950 font-black text-[13px] sm:text-[15px] shadow-[0_10px_28px_-10px_rgba(227,179,65,0.75)] transition-transform duration-300 group-hover:scale-[1.02]">
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${live ? 'bg-[#2F7FD6] animate-pulse shadow-[0_0_8px_rgba(47,127,214,0.9)]' : 'bg-navy-950/45'}`} />
                         {live
                             ? (lang === 'ar' ? 'الآن مباشر — ادخل البث' : 'LIVE NOW — JOIN IN')
                             : (lang === 'ar' ? 'ادخل القناة' : 'OPEN CHANNEL')}
@@ -820,10 +826,10 @@ const SocialCard: React.FC<{
             onTouchStart={() => setPressed(true)} onTouchEnd={() => setPressed(false)}
             style={{ animationDelay: `${Math.min(index * 60, 400)}ms` }}
             className={`group relative block h-full animate-fade-in-up select-none rounded-[22px] ${launching ? 'z-40' : ''}`}
-            title={`${social.name} - xlxwi Official`} aria-label={lang === 'ar' ? `تابع xlxwi على ${social.name}` : `Visit xlxwi on ${social.name}`}>
+            title={`${social.name} — TMNAA Official`} aria-label={lang === 'ar' ? `تابع TMNAA على ${social.name}` : `Visit TMNAA on ${social.name}`}>
             {featured ? (
-                <div className="h-full rounded-[24px] p-[1.5px] bg-gradient-to-l from-gold-light via-gold/50 to-crimson/70 shadow-[0_0_35px_rgba(227,179,65,0.22)]">
-                    <div className="h-full rounded-[22.5px] bg-wine-950">{card}</div>
+                <div className="h-full rounded-[24px] p-[1.5px] bg-gradient-to-l from-gold-light via-gold/50 to-azure/70 shadow-[0_0_35px_rgba(227,179,65,0.22)]">
+                    <div className="h-full rounded-[22.5px] bg-navy-950">{card}</div>
                 </div>
             ) : (
                 <>
@@ -835,29 +841,29 @@ const SocialCard: React.FC<{
     );
 };
 
-// ============ SUPPORTERS — live tip leaderboard (Streamlabs + Dokan), royal gold ============
+// ============ SUPPORTERS — بوابة دعم واحدة + لوحة متصدري دكان المباشرة ============
 type Supporter = { id: number; name: string; amount: number; currency: string; message?: string; source: string; created_at: string };
 
 const rankRing = (rank: number): string => {
     if (rank === 1) return 'conic-gradient(from 200deg, #FFF3D6, #B8860B, #F7E3AE, #8A5E12, #FFF3D6)';
     if (rank === 2) return 'conic-gradient(from 200deg, #E9EDF2, #7C8794, #FFFFFF, #7C8794, #E9EDF2)';
     if (rank === 3) return 'conic-gradient(from 200deg, #E8A87C, #8A4B22, #F3C9A6, #8A4B22, #E8A87C)';
-    return 'conic-gradient(from 200deg, #E3B341, #3E0E1A, rgba(227,179,65,0.45), #3E0E1A, #E3B341)';
+    return 'conic-gradient(from 200deg, #E3B341, #142C4C, rgba(227,179,65,0.45), #142C4C, #E3B341)';
 };
 
 const RankAvatar: React.FC<{ name: string; rank: number; size: string }> = ({ name, rank, size }) => {
     const initial = (name || '?').trim().charAt(0).toUpperCase();
     return (
         <span className={`relative ${size} rounded-full p-[2.5px] shrink-0 block`} style={{ background: rankRing(rank) }}>
-            <span className="w-full h-full rounded-full bg-wine-950 flex items-center justify-center font-black text-gold-pale">{initial}</span>
+            <span className="w-full h-full rounded-full bg-navy-950 flex items-center justify-center font-black text-gold-pale">{initial}</span>
         </span>
     );
 };
 
-// Rank plate — gold foil stamped on wine
+// Rank plate — gold foil stamped on navy
 const RankBadge: React.FC<{ rank: number; big?: boolean }> = ({ rank, big = false }) => (
     <span
-        className={`${big ? 'w-12 h-12 text-xl' : 'w-9 h-9 text-base sm:w-11 sm:h-11 sm:text-lg'} rounded-xl font-gaming shrink-0 flex items-center justify-center text-wine-950`}
+        className={`${big ? 'w-12 h-12 text-xl' : 'w-9 h-9 text-base sm:w-11 sm:h-11 sm:text-lg'} rounded-xl font-gaming shrink-0 flex items-center justify-center text-navy-950`}
         dir="ltr"
         style={{
             background: 'linear-gradient(150deg, #FFF3D6 0%, #E3B341 42%, #B8860B 72%, #F7E3AE 100%)',
@@ -875,11 +881,11 @@ const TIERS = [
     { amount: '99$', c: '#C0C0C0', name: 'SILVER', h: '42%' },
     { amount: '300$', c: '#E3B341', name: 'GOLD', h: '60%' },
     { amount: '505$', c: '#7FD4E8', name: 'DIAMOND', h: '80%' },
-    { amount: '999$', c: '#C21E3A', name: 'RUBY', h: '100%' },
+    { amount: '999$', c: '#2F7FD6', name: 'RUBY', h: '100%' },
 ];
 
 const AlertTiers: React.FC<{ title: string; note: string }> = ({ title, note }) => (
-    <div className="card-sheen mt-6 rounded-[26px] border border-gold/15 bg-wine-950/70 p-5 md:p-6 overflow-hidden">
+    <div className="card-sheen mt-6 rounded-[26px] border border-gold/15 bg-navy-950/70 p-5 md:p-6 overflow-hidden">
         <p className="text-center text-[10px] md:text-[11px] font-black text-gold/50 tracking-[0.3em] uppercase mb-5">{title}</p>
         <div className="flex items-end justify-center gap-2 sm:gap-4 h-44 sm:h-52" dir="ltr">
             {TIERS.map((tr, i) => (
@@ -899,66 +905,58 @@ const AlertTiers: React.FC<{ title: string; note: string }> = ({ title, note }) 
     </div>
 );
 
-// Static-3D donate gate with true brand identities + ambient effects (3D stays fixed)
-const DonateGate: React.FC<{
-    lang: Language; title: string; url: string;
-    color: string; color2?: string; label: string;
-    markImg?: string; glyph?: string;
-    secure: string; cta: string;
-}> = ({ lang, title, url, color, color2, label, markImg, glyph = '$', secure, cta }) => {
+// بوابة دعم واحدة عريضة — هوية الموقع على الوجه، ودكان هو مسار الدفع
+const DOKAN_TIP_URL = 'https://tip.dokan.sa/tmnaa';
+
+const SupportGate: React.FC<{ lang: Language }> = ({ lang }) => {
+    const ar = lang === 'ar';
     const [hover, setHover] = useState(false);
     const [busy, setBusy] = useState(false);
-    const go = (e: React.MouseEvent) => {
-        e.preventDefault(); if (busy) return; setBusy(true);
-        window.setTimeout(() => { window.open(url, '_blank'); window.setTimeout(() => setBusy(false), 600); }, 350);
-    };
-    const frame = color2
-        ? `linear-gradient(165deg, ${color}, ${color2} 55%, ${color})`
-        : `linear-gradient(165deg, ${color}99, rgba(255,255,255,0.12) 30%, rgba(255,255,255,0.04) 60%, ${color}55)`;
-    const glowBg = color2
-        ? `linear-gradient(150deg, ${color}55, ${color2}44 60%, transparent)`
-        : `linear-gradient(150deg, ${color}44, transparent 60%)`;
-    const wash = color2
-        ? `linear-gradient(140deg, ${color}26, ${color2}1a 55%, transparent)`
-        : `linear-gradient(140deg, ${color}1f, transparent 55%)`;
-    const topLine = color2
-        ? `linear-gradient(90deg, transparent, ${color}, ${color2}, transparent)`
-        : `linear-gradient(90deg, transparent, ${color}, transparent)`;
-    const ctaBg = color2 ? `linear-gradient(135deg, ${color}, ${color2})` : `linear-gradient(180deg, #fff 0%, ${color} 65%, ${color})`;
-    const ctaColor = color2 ? '#fff' : '#000';
+    // فتح التبويب بيد المتصفح نفسها — أضمن من window.open المؤجّل عرضة لحظر النوافذ
+    const go = () => { setBusy(true); window.setTimeout(() => setBusy(false), 1200); };
     return (
-        <a href={url} onClick={go} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
-            className="group relative block rounded-[26px] [perspective:900px]" aria-label={`${title} donation`}>
-            <div className="absolute -inset-1 rounded-[28px] pointer-events-none transition-opacity duration-300 animate-pulse-slow" style={{ background: glowBg, opacity: hover ? 0.9 : 0.45 }} />
-            <div className="rounded-[26px] p-[2px] transition-transform duration-300 group-hover:scale-[1.01]" style={{ background: frame }}>
-                <div className="card-sheen relative rounded-[24px] bg-wine-900 overflow-hidden [transform-style:preserve-3d]">
-                    <div className="absolute inset-0 pointer-events-none" style={{ background: wash }} />
-                    <div className="absolute top-0 inset-x-10 h-[2px] rounded-full" style={{ background: topLine }} />
-                    <div className="relative p-5 sm:p-6">
-                        <div className="flex items-center justify-between gap-3">
-                            <span className="text-[10px] font-black tracking-[0.3em] uppercase" style={{ color }}>{busy ? (lang === 'en' ? 'OPENING…' : 'جاري الفتح…') : label}</span>
-                            <span className="inline-flex items-center gap-1 text-[9px] font-black tracking-[0.2em] text-white/45 uppercase">
-                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                {secure}
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-4 mt-4 [transform:translateZ(34px)]">
-                            <span className="relative w-16 h-16 sm:w-[76px] sm:h-[76px] rounded-[20px] flex items-center justify-center shrink-0 overflow-hidden transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3"
-                                style={markImg
-                                    ? { background: `radial-gradient(115% 115% at 50% 8%, #42101D 0%, #1B0509 58%, #0C0205 100%)`, border: `1.5px solid ${color}88`, boxShadow: `0 14px 30px -10px ${color}77, inset 0 1px 0 rgba(255,243,214,0.22), inset 0 0 22px -6px ${color}55` }
-                                    : { background: `linear-gradient(160deg, ${color}, ${color}88)`, border: `1.5px solid ${color}`, boxShadow: `0 14px 30px -10px ${color}88, inset 0 1px 0 rgba(255,255,255,0.4)` }}>
-                                {markImg
-                                    ? <img src={markImg} alt={`${title} logo`} className="absolute inset-0 w-full h-full object-contain p-[8%] drop-shadow-[0_5px_12px_rgba(0,0,0,0.65)]" loading="lazy" />
-                                    : <span className="text-3xl sm:text-4xl font-black text-black" style={{ textShadow: '0 1px 0 rgba(255,255,255,0.4)' }}>{glyph}</span>}
-                            </span>
-                            <h3 className="font-black text-white tracking-tight leading-none text-[34px] sm:text-[40px] [transform:translateZ(18px)]"
-                                style={{ textShadow: '0 1px 0 #000, 0 2px 0 #000, 0 3px 0 rgba(0,0,0,0.7), 0 4px 14px rgba(0,0,0,0.8)' }} dir="ltr">{title}</h3>
-                        </div>
-                        <span className="mt-5 w-full min-h-[52px] inline-flex items-center justify-center gap-2 rounded-2xl font-black text-sm transition-all duration-300 group-hover:brightness-110 group-active:scale-[0.98]"
-                            style={{ background: ctaBg, color: ctaColor, boxShadow: hover ? `0 0 28px ${color}88` : `0 10px 24px -10px ${color}88`, textShadow: color2 ? '0 1px 2px rgba(0,0,0,0.5)' : 'none' }}>
-                            {cta}
-                            <svg className={`w-4 h-4 ${lang === 'ar' ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+        <a href={DOKAN_TIP_URL} target="_blank" rel="noopener noreferrer" onClick={go}
+            onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+            dir={ar ? 'rtl' : 'ltr'} className="group relative block rounded-[30px]"
+            aria-label={ar ? 'ادعم البث عبر دكان' : 'Support the stream via Dokan'}>
+            <div className="absolute -inset-1.5 rounded-[38px] pointer-events-none transition-opacity duration-500 animate-pulse-slow" aria-hidden="true"
+                style={{ background: 'radial-gradient(58% 120% at 50% 0%, rgba(227,179,65,0.32) 0%, transparent 68%), radial-gradient(58% 120% at 50% 100%, rgba(47,127,214,0.30) 0%, transparent 68%)', opacity: hover ? 1 : 0.5 }} />
+            <div className="relative rounded-[30px] p-[2px] transition-transform duration-300 group-hover:scale-[1.004]"
+                style={{ background: 'linear-gradient(150deg, #E3B341 0%, rgba(255,243,214,0.22) 24%, rgba(47,127,214,0.60) 50%, rgba(255,243,214,0.14) 76%, #C8912B 100%)' }}>
+                <div className="card-sheen relative overflow-hidden rounded-[28px] bg-navy-900 px-5 py-9 sm:px-8 sm:py-12 text-center">
+                    <div className="absolute inset-0 pointer-events-none" aria-hidden="true"
+                        style={{ background: 'radial-gradient(72% 100% at 50% 0%, rgba(227,179,65,0.13) 0%, transparent 62%), radial-gradient(70% 100% at 50% 100%, rgba(47,127,214,0.14) 0%, transparent 60%)' }} />
+                    <div className="absolute top-0 inset-x-14 h-[2px] rounded-full" aria-hidden="true"
+                        style={{ background: 'linear-gradient(90deg, transparent, #E3B341, rgba(47,127,214,0.9), transparent)' }} />
+                    {/* شعار دكان — مسار الدفع، مثل ما كان قبل */}
+                    <div className="relative flex items-center justify-center gap-4">
+                        <span className="h-px w-12 sm:w-24 bg-gradient-to-l from-gold/60 to-transparent" aria-hidden="true" />
+                        <span className="relative w-[74px] h-[74px] sm:w-[88px] sm:h-[88px] rounded-[22px] overflow-hidden shrink-0 transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3"
+                            style={{ background: 'radial-gradient(115% 115% at 50% 8%, #0B1E38 0%, #071120 58%, #02060C 100%)', border: '1.5px solid rgba(227,179,65,0.6)', boxShadow: '0 16px 34px -12px rgba(227,179,65,0.65), inset 0 1px 0 rgba(255,243,214,0.25), inset 0 0 24px -6px rgba(227,179,65,0.45)' }}>
+                            <img src="dokan-gate.webp" alt="" aria-hidden="true" loading="lazy" decoding="async"
+                                className="absolute inset-0 w-full h-full object-contain p-[15%] drop-shadow-[0_5px_12px_rgba(0,0,0,0.65)]" />
                         </span>
+                        <span className="h-px w-12 sm:w-24 bg-gradient-to-r from-gold/60 to-transparent" aria-hidden="true" />
+                    </div>
+                    {/* gold-foil يقصّ التدرّج على صندوق النص — بدون ارتفاع سطر ونفَس سفلي
+                        ينقطع ذيل الحروف العربية ويصير نصف الكلمة شفاف */}
+                    <h3 className={`relative mt-4 pb-[0.09em] leading-[1.24] tracking-tight gold-foil ${ar ? 'font-heading font-black text-[40px] sm:text-[52px]' : 'font-gaming text-[34px] sm:text-[46px] tracking-wide'}`}>
+                        {ar ? 'ادعم البث' : 'SUPPORT THE STREAM'}
+                    </h3>
+                    <p className="relative mt-3.5 mx-auto max-w-[620px] text-[13px] sm:text-[15px] font-bold leading-relaxed text-white/55" style={{ textWrap: 'balance' }}>
+                        {ar ? 'كل دعم يوصلني مباشرة، واسمك ينكتب في قاعة الأساطير.' : 'Every tip lands with me directly — and your name goes up in the Hall of Legends.'}
+                    </p>
+                    <span className="relative mt-7 inline-flex items-center justify-center gap-2.5 min-h-[58px] px-9 sm:px-12 rounded-2xl font-black text-[15px] sm:text-base transition-all duration-300 group-hover:brightness-110 group-active:scale-[0.98]"
+                        style={{ background: 'linear-gradient(135deg, #FFF3D6 0%, #E3B341 46%, #C8912B 100%)', color: '#08111F', textShadow: '0 1px 0 rgba(255,255,255,0.35)', boxShadow: hover ? '0 0 36px rgba(227,179,65,0.55), 0 16px 32px -12px rgba(227,179,65,0.85)' : '0 12px 26px -12px rgba(227,179,65,0.7)' }}>
+                        {busy ? (ar ? 'جاري الفتح…' : 'OPENING…') : (ar ? 'ادعم الآن' : 'DONATE NOW')}
+                        <svg className={`w-4 h-4 ${ar ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                    </span>
+                    <div className="relative mt-4 flex items-center justify-center gap-2 flex-wrap text-[10px] sm:text-[11px] font-black tracking-[0.18em] uppercase text-white/40">
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                        {ar ? 'آمن' : 'Secure'}
+                        <span className="w-1 h-1 rounded-full bg-white/25" aria-hidden="true" />
+                        <img src="dokan-mark.webp" alt="" aria-hidden="true" loading="lazy" className="w-4 h-4 rounded object-cover ring-1 ring-white/20" />
+                        {ar ? 'الدفع عبر دكان' : 'Paid via Dokan'}
                     </div>
                 </div>
             </div>
@@ -968,19 +966,18 @@ const DonateGate: React.FC<{
 
 const SupportArena: React.FC<{ lang: Language; supporters: Supporter[] }> = ({ lang, supporters }) => {
     const t = TRANSLATIONS[lang] as any;
-    const [source, setSource] = useState<TipSource>('streamlabs');
     const [tab, setTab] = useState<TipInterval>('all');
     const [board, setBoard] = useState<TipDonor[] | null>(null);
     useEffect(() => {
         let dead = false;
         setBoard(null);
-        getTipLeaderboard(source, tab).then(list => {
+        getTipLeaderboard(tab).then(list => {
             if (dead) return;
-            if (list.length) setBoard(list);
-            else setBoard(supporters.slice(0, 10).map((s, i) => ({ name: s.name, rank: i + 1 })));
+            // [] = الفترة بلا داعمين (حالة «كن أول أسطورة»). null = تعذّر الوصول فدكان → أسماء الدعم الثابتة بلا تمويه رقم.
+            setBoard(list && list.length ? list : list ? [] : supporters.slice(0, 10).map((s, i) => ({ name: s.name, rank: i + 1 })));
         }).catch(() => { if (!dead) setBoard([]); });
         return () => { dead = true; };
-    }, [source, tab, supporters]);
+    }, [tab, supporters]);
     const top3 = (board || []).slice(0, 3);
     const rows = (board || []).slice(3);
     const podiumOrder = top3.length >= 3 ? [top3[1], top3[0], top3[2]] : top3;
@@ -990,30 +987,21 @@ const SupportArena: React.FC<{ lang: Language; supporters: Supporter[] }> = ({ l
         { id: 'month', ar: 'شهري', en: 'MONTHLY' },
         { id: 'all', ar: 'الكل', en: 'ALL TIME' },
     ];
-    const sources: { id: TipSource; ar: string; en: string; mark: string }[] = [
-        { id: 'streamlabs', ar: t.sourceStreamlabs, en: 'STREAMLABS', mark: 'streamlabs-mark.webp' },
-        { id: 'dokan', ar: t.sourceDokan, en: 'DOKAN', mark: 'dokan-mark.webp' },
-    ];
     return (
         <div className="w-full">
-            {/* gates — true brand identities from official logos */}
+            {/* بوابة دعم واحدة — ستريم لابس محذوف: لا لوحة متصدرين ولا زرَّان يتقاسمان الانتباه */}
             <div className="relative">
                 <div className="absolute -top-10 right-0 w-64 h-64 rounded-full animate-aurora pointer-events-none" aria-hidden="true"
                     style={{ background: 'radial-gradient(circle, rgba(227,179,65,0.18) 0%, rgba(227,179,65,0.07) 40%, transparent 68%)' }} />
-                <div className="absolute -bottom-10 left-0 w-72 h-72 rounded-full animate-aurora pointer-events-none" style={{ animationDelay: '-7s', background: 'radial-gradient(circle, rgba(194,30,58,0.24) 0%, rgba(194,30,58,0.09) 40%, transparent 68%)' }} aria-hidden="true" />
-                {/* locked direction: Streamlabs always right, Dokan always left */}
-                <div className="relative grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-5" dir="rtl">
-                    <DonateGate lang={lang} title="STREAMLABS" url="https://streamlabs.com/xlxwi/tip" color="#E3B341" markImg="streamlabs-gate.webp"
-                        label={lang === 'en' ? 'PAYPAL • TIP' : 'ستريم لابس'} secure={lang === 'en' ? 'SECURE' : 'آمن'} cta={lang === 'en' ? 'Support the stream' : 'ادعم البث'} />
-                    <DonateGate lang={lang} title="DOKAN" url="https://tip.dokan.sa/xlxwi" color="#C21E3A" color2="#E3B341" markImg="dokan-gate.webp"
-                        label={lang === 'en' ? 'DOKAN • TIP' : 'دكان • دعم'}
-                        secure={lang === 'en' ? 'SECURE' : 'آمن'} cta={lang === 'en' ? 'Donate via Dokan' : 'ادعم عبر دكان'} />
+                <div className="absolute -bottom-10 left-0 w-72 h-72 rounded-full animate-aurora pointer-events-none" style={{ animationDelay: '-7s', background: 'radial-gradient(circle, rgba(47,127,214,0.24) 0%, rgba(47,127,214,0.09) 40%, transparent 68%)' }} aria-hidden="true" />
+                <div className="relative mx-auto max-w-[820px]">
+                    <SupportGate lang={lang} />
                 </div>
             </div>
 
             {/* hall of legends — live leaderboard, names + rank only */}
-            <div className="mt-6 md:mt-8 rounded-[26px] border border-gold/15 bg-wine-950/95 overflow-hidden">
-                <div className="h-[3px] bg-gradient-to-l from-gold-pale via-gold to-crimson" />
+            <div className="mt-6 md:mt-8 rounded-[26px] border border-gold/15 bg-navy-950/95 overflow-hidden">
+                <div className="h-[3px] bg-gradient-to-l from-gold-pale via-gold to-azure" />
                 <div className="p-5 sm:p-7">
                     <div className="text-center mb-5">
                         <p className={`text-3xl sm:text-4xl leading-tight gold-foil ${lang === 'en' ? 'font-gaming tracking-wide' : 'font-heading font-black'}`} dir={lang === 'en' ? 'ltr' : 'rtl'}>
@@ -1022,23 +1010,12 @@ const SupportArena: React.FC<{ lang: Language; supporters: Supporter[] }> = ({ l
                         <p className="text-xs sm:text-sm font-black text-gold/45 mt-1.5">{t.hallSub}</p>
                     </div>
 
-                    {/* source tabs — نفس الوجو، مرقّعة على طراز مربعات الدعم */}
+                    {/* مصدر اللوحة دكان — ستريم لابس بلا API عام للمتصدرين */}
                     <div className="flex justify-center mb-3">
-                        <div className="inline-flex rounded-2xl border border-gold/20 bg-gradient-to-b from-black/65 to-wine-950/80 p-1.5 gap-1.5 shadow-[inset_0_1px_0_rgba(255,243,214,0.08)]" role="tablist" aria-label="Leaderboard source">
-                            {sources.map(sr => {
-                                const on = source === sr.id;
-                                return (
-                                    <button key={sr.id} role="tab" aria-selected={on} onClick={() => setSource(sr.id)}
-                                        className={`inline-flex items-center gap-2.5 px-3.5 sm:px-5 py-2 rounded-xl text-[11px] sm:text-xs font-black tracking-widest uppercase transition-all duration-300 active:scale-95 ${on ? 'text-wine-950' : 'text-white/50 hover:text-gold-light'}`}
-                                        style={on ? { background: 'linear-gradient(150deg, #FFF3D6, #E3B341 55%, #B8860B)', boxShadow: '0 8px 24px -8px rgba(227,179,65,0.9), inset 0 1px 0 rgba(255,255,255,0.55)' } : undefined}>
-                                        <span className={`w-[26px] h-[26px] rounded-[9px] overflow-hidden shrink-0 transition-all duration-300 ${on ? 'ring-[1.5px] ring-wine-950/50 shadow-[0_0_16px_-2px_rgba(255,243,214,0.85)]' : 'ring-1 ring-gold/25 opacity-80 hover:opacity-100'}`}>
-                                            <img src={sr.mark} alt="" aria-hidden="true" loading="lazy" className="w-full h-full object-cover" />
-                                        </span>
-                                        {lang === 'en' ? sr.en : sr.ar}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                        <span className="inline-flex items-center gap-2 text-[10px] sm:text-[11px] font-black tracking-[0.22em] uppercase text-gold/55">
+                            <img src="dokan-mark.webp" alt="" aria-hidden="true" loading="lazy" className="w-5 h-5 rounded-md object-cover ring-1 ring-gold/25" />
+                            {lang === 'en' ? 'DOKAN LEADERBOARD' : t.sourceDokan}
+                        </span>
                     </div>
 
                     {/* interval tabs */}
@@ -1048,7 +1025,7 @@ const SupportArena: React.FC<{ lang: Language; supporters: Supporter[] }> = ({ l
                                 const on = tab === tb.id;
                                 return (
                                     <button key={tb.id} role="tab" aria-selected={on} onClick={() => setTab(tb.id)}
-                                        className={`px-5 sm:px-7 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all duration-300 active:scale-95 ${on ? 'text-wine-950' : 'text-white/55 hover:text-white'}`}
+                                        className={`px-5 sm:px-7 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all duration-300 active:scale-95 ${on ? 'text-navy-950' : 'text-white/55 hover:text-white'}`}
                                         style={on ? { background: 'linear-gradient(150deg, #F7E3AE, #E3B341 55%, #B8860B)', boxShadow: '0 6px 20px -6px rgba(227,179,65,0.8)' } : undefined}>
                                         {lang === 'en' ? tb.en : tb.ar}
                                     </button>
@@ -1061,25 +1038,25 @@ const SupportArena: React.FC<{ lang: Language; supporters: Supporter[] }> = ({ l
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3" aria-hidden="true">
                             {Array.from({ length: 6 }).map((_, i) => (
                                 <div key={i} className="flex items-center gap-3 rounded-2xl border border-gold/[0.12] bg-white/[0.02] p-3 animate-pulse">
-                                    <span className="w-11 h-11 rounded-xl bg-gradient-to-l from-gold/30 via-gold/10 to-crimson/25" />
+                                    <span className="w-11 h-11 rounded-xl bg-gradient-to-l from-gold/30 via-gold/10 to-azure/25" />
                                     <span className="h-4 rounded-lg bg-white/10 flex-1" />
                                 </div>
                             ))}
                         </div>
                     ) : board.length > 0 ? (
-                        <div key={`${source}-${tab}`}>
+                        <div key={`${tab}`}>
                             {/* static 3D podium — names only */}
                             <div className="flex items-end justify-center gap-2 sm:gap-5 [perspective:800px] mb-6" dir="ltr">
                                 {podiumOrder.map((d, i) => {
                                     const rank = i === 1 ? 1 : i === 0 ? 2 : 3;
                                     return (
-                                        <div key={`${source}-${tab}-${d.rank}-${d.name}`} className="flex flex-col items-center w-[30%] max-w-[190px] animate-fade-in-up" style={{ animationDelay: `${i * 90}ms` }}>
+                                        <div key={`${tab}-${d.rank}-${d.name}`} className="flex flex-col items-center w-[30%] max-w-[190px] animate-fade-in-up" style={{ animationDelay: `${i * 90}ms` }}>
                                             <RankAvatar name={d.name} rank={d.rank} size={rank === 1 ? 'w-14 h-14 sm:w-16 sm:h-16' : 'w-11 h-11 sm:w-14 sm:h-14'} />
                                             <p className="text-white font-black text-xs sm:text-sm truncate max-w-full mt-2" dir="auto">{d.name}</p>
                                             <div className={`${stepH[i]} w-full mt-2 rounded-t-xl border-x border-t border-gold/20 relative overflow-hidden [transform:rotateX(8deg)] origin-bottom`}
                                                 style={{ background: rank === 1
                                                     ? 'linear-gradient(to bottom, rgba(227,179,65,0.42), rgba(184,134,11,0.14) 60%, rgba(0,0,0,0.4))'
-                                                    : 'linear-gradient(to bottom, rgba(194,30,58,0.30), rgba(227,179,65,0.16) 60%, rgba(0,0,0,0.4))' }}>
+                                                    : 'linear-gradient(to bottom, rgba(47,127,214,0.30), rgba(227,179,65,0.16) 60%, rgba(0,0,0,0.4))' }}>
                                                 <div className="absolute inset-0 bg-gradient-to-b from-white/[0.08] to-transparent" />
                                                 <span className="absolute inset-0 flex items-start justify-center pt-2 font-gaming text-2xl sm:text-3xl text-gold/45" dir="ltr">{d.rank}</span>
                                             </div>
@@ -1091,7 +1068,7 @@ const SupportArena: React.FC<{ lang: Language; supporters: Supporter[] }> = ({ l
                             {rows.length > 0 && (
                                 <div className="grid grid-cols-2 gap-2 sm:gap-3">
                                     {rows.map((d, i) => (
-                                        <div key={`${source}-${tab}-${d.rank}-${d.name}`}
+                                        <div key={`${tab}-${d.rank}-${d.name}`}
                                             className="group flex items-center gap-2 sm:gap-3 rounded-2xl border border-gold/[0.14] bg-white/[0.03] p-2.5 sm:p-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-gold/55 hover:shadow-[0_14px_36px_-12px_rgba(227,179,65,0.45)] animate-fade-in-up"
                                             style={{ animationDelay: `${Math.min(i * 60, 420)}ms` }}>
                                             <RankBadge rank={d.rank} />
@@ -1104,7 +1081,7 @@ const SupportArena: React.FC<{ lang: Language; supporters: Supporter[] }> = ({ l
                         </div>
                     ) : (
                         <div className="rounded-2xl border border-dashed border-gold/35 bg-gold/[0.04] p-6 sm:p-8 text-center">
-                            <div className="mx-auto w-16 h-16 rounded-[20px] bg-gradient-to-b from-gold/25 to-crimson/10 border border-gold/40 flex items-center justify-center">
+                            <div className="mx-auto w-16 h-16 rounded-[20px] bg-gradient-to-b from-gold/25 to-azure/10 border border-gold/40 flex items-center justify-center">
                                 <svg className="w-8 h-8 text-gold-light" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}><path strokeLinecap="round" strokeLinejoin="round" d="M8 21h8m-4-4v4M7 4h10v5a5 5 0 01-10 0V4zm0 0H4v2a3 3 0 003 3m10-5h3v2a3 3 0 01-3 3" /></svg>
                             </div>
                             <p className="text-white font-black mt-4">{lang === 'en' ? 'Be the first legend' : 'كن أول أسطورة تدعم البث'}</p>
@@ -1128,7 +1105,7 @@ export default function App() {
     /* الأرقام مبدوءة على آخر قراءة موثّقة: كرت ما يطلع فاضي أبداً — لا قبل
        وصول الرد ولا لو فشل (إنستغرام يحجب عناوين السحابة كثيراً). */
     const [socialStats, setSocialStats] = useState<Record<string, string>>({
-        'KICK': formatFollowerCount(FALLBACK.kick!), 'Snapchat': formatFollowerCount(FALLBACK.snapchat!),
+        'KICK': formatFollowerCount(FALLBACK.kick!), 'YouTube': formatFollowerCount(FALLBACK.youtube!),
         'Instagram': formatFollowerCount(FALLBACK.instagram!), 'TikTok': formatFollowerCount(FALLBACK.tiktok!),
         'X': formatFollowerCount(FALLBACK.twitter!), 'WhatsApp': formatFollowerCount(FALLBACK.whatsapp!),
         'Discord': formatFollowerCount(FALLBACK.discord!)
@@ -1183,7 +1160,6 @@ export default function App() {
 
             const seo = seoRes.data;
             if (seo) {
-                document.title = seo.title || "xlxwi Stream Hub";
                 const setMeta = (name: string, content: string, isProperty = false) => {
                     if (!content) return;
                     const attr = isProperty ? 'property' : 'name';
@@ -1191,9 +1167,13 @@ export default function App() {
                     if (!meta) { meta = document.createElement('meta'); meta.setAttribute(attr, name); document.head.appendChild(meta); }
                     meta.setAttribute('content', content);
                 };
+                // لا نكتب إلا ما جاء من اللوحة فعلاً: صف فارغ كان يمسح عنوان ووصف index.html
+                if (seo.title) {
+                    document.title = seo.title;
+                    setMeta('og:title', seo.title, true);
+                }
                 setMeta('description', seo.description);
-                setMeta('keywords', seo.keywords || 'xlxwi, علي الهاشمي, كلان ليفل ون, Kick, Streamer');
-                setMeta('og:title', seo.title, true);
+                setMeta('keywords', seo.keywords);
                 setMeta('og:description', seo.description, true);
             }
         } catch (e) { console.error("Public Data Fetch Exception:", e); }
@@ -1251,7 +1231,7 @@ export default function App() {
     }, []);
     // Live social counters — dedicated 5-minute loop + instant cache paint (API-style)
     useEffect(() => {
-        const apply = (stats: { kick?: number; instagram?: number; tiktok?: number; twitter?: number; discord?: number; snapchat?: number; whatsapp?: number }) => {
+        const apply = (stats: { kick?: number; instagram?: number; tiktok?: number; twitter?: number; discord?: number; youtube?: number; whatsapp?: number }) => {
             setSocialStats(prev => ({
                 ...prev,
                 'KICK': formatFollowerCount(stats.kick || 0) || prev['KICK'],
@@ -1259,7 +1239,7 @@ export default function App() {
                 'TikTok': formatFollowerCount(stats.tiktok || 0) || prev['TikTok'],
                 'X': formatFollowerCount(stats.twitter || 0) || prev['X'],
                 'Discord': formatFollowerCount(stats.discord || 0) || prev['Discord'],
-                'Snapchat': formatFollowerCount(stats.snapchat || 0) || prev['Snapchat'],
+                'YouTube': formatFollowerCount(stats.youtube || 0) || prev['YouTube'],
                 'WhatsApp': formatFollowerCount(stats.whatsapp || 0) || prev['WhatsApp'],
             }));
             setSocialRaw(prev => {
@@ -1307,7 +1287,7 @@ export default function App() {
     }, []);
 
     const totalFollowers = useMemo(
-        () => ['kick', 'instagram', 'tiktok', 'twitter', 'discord', 'snapchat', 'whatsapp']
+        () => ['kick', 'instagram', 'tiktok', 'twitter', 'discord', 'youtube', 'whatsapp']
             .reduce((sum, platform) => sum + (socialRaw[platform] || 0), 0),
         [socialRaw],
     );
@@ -1323,11 +1303,11 @@ export default function App() {
     useEffect(() => {
         const cards = [
             { ...KICK_SOCIAL, followerCount: socialStats['KICK'] },
-            createSocialLink('snapchat', 'https://www.snapchat.com/@xlxwiii', socialStats['Snapchat'], 'يوميات حصرية وتغطيات خاصة'),
-            createSocialLink('instagram', 'https://www.instagram.com/3.4i/', socialStats['Instagram'], 'صور وكواليس حصرية'),
-            createSocialLink('tiktok', 'https://www.tiktok.com/@xlxwi', socialStats['TikTok'], 'أقوى المقاطع والتحديات'),
-            createSocialLink('twitter', 'https://x.com/xlxwi', socialStats['X'], 'أخبار وتحديثات سريعة'),
-            createSocialLink('whatsapp', 'https://www.whatsapp.com/channel/0029VadcjLc4Y9lnhHoOAw0a', socialStats['WhatsApp'], 'تواصل مباشر وتنبيهات البث'),
+            createSocialLink('instagram', 'https://www.instagram.com/tmnaa16', socialStats['Instagram'], 'صور وكواليس حصرية'),
+            createSocialLink('twitter', 'https://x.com/tmnaa16', socialStats['X'], 'أخبار وتحديثات سريعة'),
+            createSocialLink('youtube', 'https://www.youtube.com/@tmnaa1', socialStats['YouTube'], 'أرشيف المقاطع الطويلة'),
+            createSocialLink('tiktok', 'https://www.tiktok.com/@tmnaa0', socialStats['TikTok'], 'أقوى المقاطع والتحديات'),
+            createSocialLink('whatsapp', 'https://www.whatsapp.com/channel/0029VadcjLc4Y9lnhHoOAw0a', socialStats['WhatsApp'], 'تنبيهات البث مباشرة على جوالك'),
             createSocialLink('discord', 'https://discord.gg/tmfx', socialStats['Discord'], 'بيت كلان ليفل ون'),
         ];
         setPlatformTotal(cards.length);
@@ -1350,7 +1330,7 @@ export default function App() {
     // آخر بث حي ناجح — يُخزَّن لثلاث ساعات فقط، فينطفي القسم تلقائياً بعدها لو طالت المدة
     useEffect(() => {
         if (!streamInfo.isLive || !streamInfo.title) return;
-        try { localStorage.setItem(`xlxwi_stream_${CHANNEL_SLUG}`, JSON.stringify({ ...streamInfo, cachedAt: Date.now() })); } catch { /* التخزين ممتلئ */ }
+        try { localStorage.setItem(`tmnaa_stream_${CHANNEL_SLUG}`, JSON.stringify({ ...streamInfo, cachedAt: Date.now() })); } catch { /* التخزين ممتلئ */ }
     }, [streamInfo]);
     const t = TRANSLATIONS[lang];
 
@@ -1426,7 +1406,7 @@ export default function App() {
             setClips(Array.isArray(clipsArray) ? clipsArray.slice(0, 3) : []);
         } catch (err) {
             // فشل الجلب لا يكسر الصفحة — الأرقام تبقى على آخر قيمة معروضة
-            console.warn('[xlxwi] kick status fetch failed', err);
+            console.warn('[tmnaa] kick status fetch failed', err);
         }
     }, []);
 
@@ -1443,7 +1423,7 @@ export default function App() {
     }, [fetchKickStatus]);
 
     const handleShare = async () => {
-        const shareUrl = "https://kick.com/xlxwi";
+        const shareUrl = "https://kick.com/tmnaa";
         if (navigator.share) { try { await navigator.share({ title: t.shareTitle, text: t.shareText, url: shareUrl }); } catch { /* dismissed */ } }
         else { try { await navigator.clipboard.writeText(shareUrl); } catch { /* clipboard blocked */ } alert(t.copied); }
     };
@@ -1453,8 +1433,7 @@ export default function App() {
     const showDebrief = !streamInfo.isLive && !!lastSession;
 
     const kickCard = socials.find(s => s.name === 'KICK');
-    const snapCard = socials.find(s => s.name === 'Snapchat');
-    const restSocials = socials.filter(s => s.name !== 'KICK' && s.name !== 'Snapchat');
+    const restSocials = socials.filter(s => s.name !== 'KICK');
 
     /* البطاقة الطويلة (كيك): أرقام حقيقية فقط — من البث الحي وهو على الهواء،
        وإلا من آخر جلسة مسجّلة. ما نختلق بديل: «—» أوضح من رقم مخترع. */
@@ -1492,8 +1471,8 @@ export default function App() {
             ...(streamInfo.isLive ? [{ id: 'live', ar: 'البث', en: 'Live' }] : []),
             { id: 'support', ar: 'الدعم', en: 'Support' },
             { id: 'moderators', ar: 'المودات', en: 'Mods' },
-            // تقرير الجلسة لا يظهر إلا والقناة مغلقة، وموضعه بعد المودات
-            ...(!streamInfo.isLive ? [{ id: 'report', ar: 'الجلسة', en: 'Session' }] : []),
+            // تقرير الجلسة لا يظهر إلا والقناة مغلقة وفيها جلسة — نفس شرط القسم، وإلا صار الرابط ميت
+            ...(!streamInfo.isLive && lastSession ? [{ id: 'report', ar: 'الجلسة', en: 'Session' }] : []),
         ];
         if (hasSchedule) links.push({ id: 'schedule', ar: 'الجدول', en: 'Schedule' });
         links.push(
@@ -1502,7 +1481,7 @@ export default function App() {
             { id: 'library', ar: 'الفيديوهات', en: 'Videos' },
         );
         return links;
-    }, [streamInfo.isLive, isScheduleActive, isFaqActive, schedule.length, faqs.length]);
+    }, [streamInfo.isLive, lastSession, isScheduleActive, isFaqActive, schedule.length, faqs.length]);
 
     const [activeSection, setActiveSection] = useState('');
     const [menuOpen, setMenuOpen] = useState(false);
@@ -1560,17 +1539,17 @@ export default function App() {
                     <header className="sticky top-2 md:top-5 z-50">
                         <div className="absolute -top-8 inset-x-8 h-16 rounded-full pointer-events-none" aria-hidden="true"
                             style={{ background: 'radial-gradient(ellipse 60% 100% at 50% 50%, rgba(227,179,65,0.16) 0%, transparent 70%)' }} />
-                        <nav className="relative flex items-center justify-between gap-2 px-3 sm:px-4 md:px-6 py-2.5 rounded-2xl bg-wine-900/92 border border-gold/15 shadow-[0_18px_50px_rgba(0,0,0,0.55)] overflow-hidden" aria-label="Main">
+                        <nav className="relative flex items-center justify-between gap-2 px-3 sm:px-4 md:px-6 py-2.5 rounded-2xl bg-navy-900/92 border border-gold/15 shadow-[0_18px_50px_rgba(0,0,0,0.55)] overflow-hidden" aria-label="Main">
                             <span className="absolute top-0 inset-x-10 h-[2px] rounded-full bg-gradient-to-r from-transparent via-gold/80 to-transparent pointer-events-none" aria-hidden="true" />
                             <a href="#top" className="nav-brand group flex items-center gap-2.5 shrink-0 min-w-0">
-                                <span className="relative w-10 h-10 rounded-[14px] overflow-hidden border border-gold/45 bg-wine-950 shadow-[0_0_20px_rgba(227,179,65,0.35)] shrink-0 block transition-transform duration-500 group-hover:scale-105">
-                                    <img src={branding.profileImage} alt="xlxwi logo" className="w-full h-full object-cover" />
-                                    <span className={`absolute bottom-1 end-1 w-2 h-2 rounded-full ring-2 ring-wine-950 ${streamInfo.isLive ? 'bg-[#E3B341] animate-pulse' : 'bg-white/25'}`} />
+                                <span className="relative w-10 h-10 rounded-[14px] overflow-hidden border border-gold/45 bg-navy-950 shadow-[0_0_20px_rgba(227,179,65,0.35)] shrink-0 block transition-transform duration-500 group-hover:scale-105">
+                                    <img src={branding.profileImage} alt="TMNAA logo" className="w-full h-full object-cover" />
+                                    <span className={`absolute bottom-1 end-1 w-2 h-2 rounded-full ring-2 ring-navy-950 ${streamInfo.isLive ? 'bg-[#E3B341] animate-pulse' : 'bg-white/25'}`} />
                                 </span>
                                 <span className="hidden min-[420px]:block leading-none min-w-0">
                                     <span className="flex items-center gap-1.5">
-                                        <span className="nav-wm font-gaming text-[20px] leading-[1.1] tracking-[0.04em]" dir="ltr">XLXWI</span>
-                                        {streamInfo.isLive && <span className="text-[8px] font-black px-1.5 py-[3px] rounded-md bg-[#C21E3A] text-white tracking-widest animate-pulse" dir="ltr">LIVE</span>}
+                                        <span className="nav-wm font-gaming text-[20px] leading-[1.1] tracking-[0.04em]" dir="ltr">TMNAA</span>
+                                        {streamInfo.isLive && <span className="text-[8px] font-black px-1.5 py-[3px] rounded-md bg-[#2F7FD6] text-white tracking-widest animate-pulse" dir="ltr">LIVE</span>}
                                     </span>
                                     <span className="block text-[9px] font-bold text-gold/45 mt-1.5 truncate">{t.headerTitle}</span>
                                 </span>
@@ -1580,7 +1559,7 @@ export default function App() {
                                     const on = activeSection === n.id;
                                     return (
                                         <a key={n.id} href={`#${n.id}`} onClick={(e) => { e.preventDefault(); goToSection(n.id); }}
-                                            className={`px-3 py-2 rounded-xl transition-all duration-300 ${on ? 'text-wine-950' : 'text-white/55 hover:text-white hover:bg-white/[0.06]'}`}
+                                            className={`px-3 py-2 rounded-xl transition-all duration-300 ${on ? 'text-navy-950' : 'text-white/55 hover:text-white hover:bg-white/[0.06]'}`}
                                             style={on ? { background: 'linear-gradient(150deg, #FFF3D6, #E3B341 58%, #B8860B)', boxShadow: '0 8px 20px -8px rgba(227,179,65,0.85), inset 0 1px 0 rgba(255,255,255,0.5)' } : undefined}>
                                             {lang === 'en' ? n.en : n.ar}
                                         </a>
@@ -1594,7 +1573,7 @@ export default function App() {
                                     {streamInfo.isLive && streamInfo.viewers > 0 && <span dir="ltr">• {streamInfo.viewers.toLocaleString()}</span>}
                                 </span>
                                 <button onClick={() => setMenuOpen(v => !v)} aria-label={lang === 'en' ? 'Sections' : 'الأقسام'} aria-expanded={menuOpen}
-                                    className={`btn-arena lg:hidden w-11 h-11 rounded-xl border flex items-center justify-center active:scale-95 transition-colors ${menuOpen ? 'bg-gold text-wine-950 border-gold' : 'bg-white/[0.06] border-gold/15 text-white/70 hover:text-white'}`}>
+                                    className={`btn-arena lg:hidden w-11 h-11 rounded-xl border flex items-center justify-center active:scale-95 transition-colors ${menuOpen ? 'bg-gold text-navy-950 border-gold' : 'bg-white/[0.06] border-gold/15 text-white/70 hover:text-white'}`}>
                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
                                         {menuOpen
                                             ? <path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" />
@@ -1606,7 +1585,7 @@ export default function App() {
                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                                 </button>
                                 <button onClick={() => setLang(p => p === 'en' ? 'ar' : 'en')}
-                                    className="btn-arena h-11 px-4 sm:px-5 rounded-xl bg-gradient-to-b from-gold-light to-gold text-wine-950 text-xs font-black tracking-wider active:scale-95 shadow-[0_0_24px_rgba(227,179,65,0.4)]">
+                                    className="btn-arena h-11 px-4 sm:px-5 rounded-xl bg-gradient-to-b from-gold-light to-gold text-navy-950 text-xs font-black tracking-wider active:scale-95 shadow-[0_0_24px_rgba(227,179,65,0.4)]">
                                     {lang === 'en' ? 'عربي' : 'EN'}
                                 </button>
                             </div>
@@ -1614,7 +1593,7 @@ export default function App() {
                         {/* قائمة الأقسام للجوال — خارج الـ nav لأنه overflow-hidden */}
                         {menuOpen && (
                             <div className="lg:hidden absolute top-full inset-x-0 mt-2 z-50 animate-slide-down">
-                                <div className="rounded-2xl border border-gold/20 bg-wine-950/97 backdrop-blur-xl shadow-[0_28px_70px_rgba(0,0,0,0.72)] p-2">
+                                <div className="rounded-2xl border border-gold/20 bg-navy-950/97 backdrop-blur-xl shadow-[0_28px_70px_rgba(0,0,0,0.72)] p-2">
                                     <p className="px-3 pt-2 pb-2.5 text-[9px] font-black tracking-[0.3em] text-gold/45 uppercase">{lang === 'en' ? 'SECTIONS' : 'الأقسام'}</p>
                                     {navLinks.map((n) => {
                                         const on = activeSection === n.id;
@@ -1629,39 +1608,27 @@ export default function App() {
                                 </div>
                             </div>
                         )}
-                        {/* mobile: status strip */}
-                        <div className="sm:hidden mt-2 rounded-2xl p-[1px] bg-gradient-to-b from-white/15 via-white/[0.06] to-transparent">
-                            <div className="rounded-[15px] bg-black/70 overflow-hidden">
-                                <div className={`h-[2px] ${streamInfo.isLive ? 'bg-gradient-to-l from-[#E3B341] via-[#E3B341]/40 to-transparent' : 'bg-gradient-to-l from-white/25 via-white/10 to-transparent'}`} />
-                                <div className="px-4 py-2.5 flex items-center justify-center gap-2">
-                                    <span className={`w-2 h-2 rounded-full shrink-0 ${streamInfo.isLive ? 'bg-[#E3B341] animate-pulse shadow-[0_0_10px_#E3B341]' : 'bg-white/30'}`} />
-                                    <p className={`text-[11px] font-black ${streamInfo.isLive ? 'text-[#E3B341]' : 'text-white/60'}`}>
-                                        {streamInfo.isLive ? `${t.status}${streamInfo.viewers > 0 ? ` • ${streamInfo.viewers.toLocaleString()} ${t.viewers}` : ''}` : t.statusOffline}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
                     </header>
 
                     {/* ===== HERO ===== */}
                     <section id="top" className="pt-6 md:pt-10 pb-6 md:pb-8 overflow-clip">
                         <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-8 lg:gap-10 items-center justify-items-center lg:justify-items-stretch">
                             <div className="animate-fade-in-up w-full max-w-xl text-center lg:text-start order-2 lg:order-1">
-                                <h1 className="wm-mark relative font-gaming leading-none tracking-wide select-none text-[clamp(96px,24vw,180px)] lg:text-[180px]" dir="ltr" aria-label="xlxwi">
-                                    <span aria-hidden="true" className="wm-depth wm-depth-2 font-gaming leading-none tracking-wide">XLXWI</span>
-                                    <span aria-hidden="true" className="wm-depth wm-depth-1 font-gaming leading-none tracking-wide">XLXWI</span>
+                                <h1 className={`wm-mark relative font-gaming leading-none tracking-wide select-none whitespace-nowrap text-[clamp(78px,24vw,180px)] lg:text-[clamp(128px,10.5vw,156px)] ${lang === 'ar' ? 'lg:text-right' : 'lg:text-left'}`} dir="ltr" aria-label="TMNAA">
+                                    <span aria-hidden="true" className="wm-depth wm-depth-2 font-gaming leading-none tracking-wide">TMNAA</span>
+                                    <span aria-hidden="true" className="wm-depth wm-depth-1 font-gaming leading-none tracking-wide">TMNAA</span>
                                     <span aria-hidden="true" className="relative z-10">
-                                        <span className="wm-letter wm-stroke">X</span><span className="wm-letter wm-stroke">L</span><span className="wm-letter wm-stroke">X</span><span className="wm-letter wm-stroke">W</span><span className="wm-letter wm-stroke">I</span>
+                                        <span className="wm-letter wm-stroke">T</span><span className="wm-letter wm-stroke">M</span><span className="wm-letter wm-stroke">N</span><span className="wm-letter wm-stroke">A</span><span className="wm-letter wm-stroke">A</span>
                                     </span>
-                                    <span aria-hidden="true" className="wm-sheen font-gaming leading-none tracking-wide z-20">XLXWI</span>
+                                    <span aria-hidden="true" className="wm-sheen font-gaming leading-none tracking-wide z-20">TMNAA</span>
                                 </h1>
-                                <p className="font-gaming text-xl sm:text-2xl md:text-4xl text-stroke mt-1 tracking-wide" dir="ltr" aria-hidden="true">STAY ONE</p>
+                                <p className={`font-gaming text-xl sm:text-2xl md:text-4xl text-stroke mt-1 tracking-wide whitespace-nowrap ${lang === 'ar' ? 'lg:text-right' : 'lg:text-left'}`} dir="ltr" aria-hidden="true">STAY ONE</p>
                                 {/* Clan Level One — درع الكلان: هو الزر الوحيد القابل للضغط هنا */}
                                 <div className="mt-3 inline-flex flex-wrap items-center justify-center lg:justify-start gap-2.5">
                                     <a href="https://x.com/level_one" target="_blank" rel="noopener noreferrer"
                                         className="clan-crest card-sheen" dir="ltr"
-                                        title={lang === 'ar' ? 'كلان لفل ون على إكس' : 'Clan Level One on X'}
-                                        aria-label={lang === 'ar' ? 'كلان لفل ون على إكس' : 'Clan Level One on X'}>
+                                        title={lang === 'ar' ? 'كلان ليفل ون على إكس' : 'Clan Level One on X'}
+                                        aria-label={lang === 'ar' ? 'كلان ليفل ون على إكس' : 'Clan Level One on X'}>
                                         <span className="clan-crest-shield" aria-hidden="true">
                                             <img src="level-one-mark.webp" alt="" width={271} height={330} />
                                             <b>01</b>
@@ -1676,7 +1643,8 @@ export default function App() {
                                     </a>
                                     {/* الوسم زينة هوية — بلا رابط ولا تفاعل */}
                                     <span className="clan-tag" dir="ltr">{CLAN.tag}</span>
-                                    <span className="clan-ar">{CLAN.ar}</span>
+                                    {/* الشرح العربي يظهر في العربية فقط: في الإنجليزية يكرر نص الدرع */}
+                                    {lang === 'ar' && <span className="clan-ar">{CLAN.ar}</span>}
                                 </div>
                                 <p className="text-white/65 text-[15px] md:text-lg leading-relaxed max-w-xl mt-4 md:mt-5 font-medium mx-auto lg:mx-0">{t.bio}</p>
                                 <div className="flex flex-wrap justify-center lg:justify-start gap-2 sm:gap-2.5 mt-4 md:mt-5">
@@ -1685,8 +1653,8 @@ export default function App() {
                                     ))}
                                 </div>
                                 <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 mt-6 md:mt-7">
-                                    <a href="https://kick.com/xlxwi" target="_blank" rel="noopener noreferrer"
-                                        className="btn-arena inline-flex items-center justify-center gap-2.5 px-7 py-4 sm:py-3.5 rounded-2xl bg-gradient-to-b from-gold-light to-gold text-wine-950 font-black text-[15px] md:text-base shadow-[0_0_35px_rgba(227,179,65,0.45)] active:scale-[0.98]">
+                                    <a href="https://kick.com/tmnaa" target="_blank" rel="noopener noreferrer"
+                                        className="btn-arena inline-flex items-center justify-center gap-2.5 px-7 py-4 sm:py-3.5 rounded-2xl bg-gradient-to-b from-gold-light to-gold text-navy-950 font-black text-[15px] md:text-base shadow-[0_0_35px_rgba(227,179,65,0.45)] active:scale-[0.98]">
                                         <svg className="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                                         {t.watchLive}
                                     </a>
@@ -1718,15 +1686,15 @@ export default function App() {
                                     <div className="profile-3d-ring-inner" />
                                     <div className="tech-corner tech-corner-tl" /><div className="tech-corner tech-corner-tr" />
                                     <div className="tech-corner tech-corner-bl" /><div className="tech-corner tech-corner-br" />
-                                    <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 rounded-full overflow-hidden border-2 border-gold/30 shadow-[0_0_70px_rgba(227,179,65,0.28)] bg-wine-950 transition-transform duration-500 hover:scale-[1.03]">
+                                    <div className="relative w-48 h-48 sm:w-64 sm:h-64 md:w-72 md:h-72 rounded-full overflow-hidden border-2 border-gold/30 shadow-[0_0_70px_rgba(227,179,65,0.28)] bg-navy-950 transition-transform duration-500 hover:scale-[1.03]">
                                         <div className="profile-scanner" />
-                                        <img src={branding.profileImage} alt="xlxwi — علي الهاشمي" className={`w-full h-full object-cover transition-transform duration-700 ${isHoveringProfile ? 'scale-110 rotate-1' : ''}`} loading="eager" />
+                                        <img src={branding.profileImage} alt="TMNAA — عبدالله الشمري" className={`w-full h-full object-cover transition-transform duration-700 ${isHoveringProfile ? 'scale-110 rotate-1' : ''}`} loading="eager" />
                                         <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.75)] pointer-events-none" />
                                     </div>
                                     <div className="absolute -bottom-2 -end-1 z-20">
                                         <div className="relative w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
                                             <div className="absolute inset-0 bg-[#E3B341] rounded-2xl blur-lg opacity-40 animate-pulse" />
-                                            <div className="relative w-full h-full bg-wine-950 rounded-2xl border border-[#E3B341]/60 flex items-center justify-center rotate-6">
+                                            <div className="relative w-full h-full bg-navy-950 rounded-2xl border border-[#E3B341]/60 flex items-center justify-center rotate-6">
                                                 <KickIcon className="w-6 h-6 sm:w-7 sm:h-7 text-gold -rotate-6" />
                                             </div>
                                         </div>
@@ -1751,8 +1719,7 @@ export default function App() {
                     {/* ===== SOCIALS BENTO ===== */}
                     <section id="socials" className="pt-12 md:pt-16 scroll-mt-28">
                         <Reveal><SectionHeading no="01" title={t.socialsTitle} sub={t.socialsSub} en="SOCIAL ARENA" /></Reveal>
-                        {/* كيك = عمود طولي ياخذ ثلاثة أدوار، وبقية المنصات تملأ الصفوف بجانبها.
-                            السناب آخر بطاقة (سطر 6) عشان عدّاده مغّب ولا ينافس المباشر. */}
+                        {/* كيك = عمود طولي ياخذ ثلاثة أدوار، وست منصات تملأ الصفوف بجانبها. */}
                         <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 md:gap-4 lg:auto-rows-[1fr]">
                             {kickCard && (
                                 <Reveal delay={0} className="col-span-2 lg:col-span-1 lg:row-span-3">
@@ -1764,11 +1731,6 @@ export default function App() {
                                     <SocialCard social={s} index={i + 2} lang={lang} />
                                 </Reveal>
                             ))}
-                            {snapCard && (
-                                <Reveal delay={330}>
-                                    <SocialCard social={snapCard} index={restSocials.length + 2} lang={lang} />
-                                </Reveal>
-                            )}
                         </div>
                     </section>
 
@@ -1779,7 +1741,7 @@ export default function App() {
                             <div className="pointer-events-none absolute -top-10 right-[8%] w-[420px] h-[220px] rounded-full"
                                 style={{ background: 'radial-gradient(ellipse, rgba(227,179,65,0.13) 0%, transparent 68%)' }} />
                             <div className="pointer-events-none absolute bottom-0 left-[5%] w-[320px] h-[190px] rounded-full"
-                                style={{ background: 'radial-gradient(ellipse, rgba(110,27,43,0.30) 0%, transparent 68%)' }} />
+                                style={{ background: 'radial-gradient(ellipse, rgba(39,80,127,0.30) 0%, transparent 68%)' }} />
                             <Reveal><SectionHeading no="02" title={t.theaterTitle} sub={`${streamInfo.viewers.toLocaleString()} ${t.viewers}`} en="LIVE THEATER" /></Reveal>
                             <Suspense fallback={<div className="w-full h-[520px] rounded-[32px] border border-gold/15 bg-white/[0.02] animate-pulse" />}>
                                 <LiveTheater lang={lang} stream={streamInfo} channelSlug={CHANNEL_SLUG}
@@ -1796,7 +1758,7 @@ export default function App() {
 
                     {/* ===== MODERATORS ===== */}
                     <section id="moderators" className="pt-12 md:pt-16 scroll-mt-28">
-                        <Reveal><SectionHeading no={showTheater ? '04' : '03'} title={t.modsTitle} en="MODERATORS" /></Reveal>
+                        <Reveal><SectionHeading no={showTheater ? '04' : '03'} title={t.modsTitle} sub={t.modsSub} en="MODERATORS" /></Reveal>
                         <Reveal delay={80}>
                             <Suspense fallback={<div className="w-full h-64 rounded-[26px] border border-gold/15 bg-white/[0.02] animate-pulse" />}>
                                 <DeferredMount minHeight={280}>
@@ -1820,12 +1782,12 @@ export default function App() {
                     {activePoll && (
                         <section className="pt-12 md:pt-16">
                             <Reveal>
-                                <div className="relative overflow-hidden rounded-[28px] border border-gold/15 bg-wine-950/92 p-6 md:p-9 shadow-2xl">
-                                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-l from-transparent via-[#C21E3A] to-transparent" />
+                                <div className="relative overflow-hidden rounded-[28px] border border-gold/15 bg-navy-950/92 p-6 md:p-9 shadow-2xl">
+                                    <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-l from-transparent via-[#2F7FD6] to-transparent" />
                                     <div className="flex items-center justify-center gap-3 mb-7">
-                                        <span className="w-2 h-2 rounded-full bg-[#C21E3A] shadow-[0_0_10px_#C21E3A] animate-pulse" />
+                                        <span className="w-2 h-2 rounded-full bg-[#2F7FD6] shadow-[0_0_10px_#2F7FD6] animate-pulse" />
                                         <h3 className="text-lg md:text-2xl font-black text-white text-center">{activePoll.question}</h3>
-                                        <span className="w-2 h-2 rounded-full bg-[#C21E3A] shadow-[0_0_10px_#C21E3A] animate-pulse" />
+                                        <span className="w-2 h-2 rounded-full bg-[#2F7FD6] shadow-[0_0_10px_#2F7FD6] animate-pulse" />
                                     </div>
                                     <div className="flex flex-col gap-3 max-w-2xl mx-auto">
                                         {activePoll.options.map((opt: any) => {
@@ -1834,8 +1796,8 @@ export default function App() {
                                             const voted = !!localStorage.getItem(`voted_${activePoll.id}`);
                                             return (
                                                 <button key={opt.id} onClick={() => handleVote(opt.id)} disabled={voted}
-                                                    className={`relative overflow-hidden rounded-2xl border p-4 md:p-5 transition-all duration-300 text-start ${voted ? 'border-white/[0.07] bg-white/[0.03] cursor-default' : 'border-gold/15 bg-black/40 hover:border-[#C21E3A]/50 hover:-translate-y-0.5'}`}>
-                                                    {voted && <span className="absolute top-0 bottom-0 end-0 bg-gradient-to-l from-[#C21E3A]/25 to-transparent transition-all duration-1000" style={{ width: `${pct}%` }} />}
+                                                    className={`relative overflow-hidden rounded-2xl border p-4 md:p-5 transition-all duration-300 text-start ${voted ? 'border-white/[0.07] bg-white/[0.03] cursor-default' : 'border-gold/15 bg-black/40 hover:border-[#2F7FD6]/50 hover:-translate-y-0.5'}`}>
+                                                    {voted && <span className="absolute top-0 bottom-0 end-0 bg-gradient-to-l from-[#2F7FD6]/25 to-transparent transition-all duration-1000" style={{ width: `${pct}%` }} />}
                                                     <span className="relative z-10 flex justify-between items-center gap-3">
                                                         <span className="font-black text-white">{opt.text}</span>
                                                         {voted && <span className="text-sm font-black text-white/60" dir="ltr">{pct}% ({opt.votes})</span>}
@@ -1871,17 +1833,21 @@ export default function App() {
 
                     {/* ===== FOOTER ===== */}
                     <footer className="mt-16 md:mt-24 rounded-[28px] border border-gold/15 bg-black/85 overflow-hidden relative">
-                        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-transparent via-[#C21E3A]/70 to-transparent" />
+                        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-l from-transparent via-[#2F7FD6]/70 to-transparent" />
                         <div className="p-8 md:p-12 text-center relative">
-                            <p className="font-gaming text-[18vw] md:text-[120px] leading-none text-stroke opacity-40 select-none" dir="ltr" aria-hidden="true">XLXWI</p>
+                            <p className="font-gaming text-[18vw] md:text-[120px] leading-none text-stroke opacity-40 select-none" dir="ltr" aria-hidden="true">TMNAA</p>
                             <div className="flex flex-wrap justify-center gap-2.5 -mt-4 md:-mt-8 relative">
                                 {socials.slice(0, 6).map(s => (
                                     <a key={s.name} href={s.url} target="_blank" rel="noopener noreferrer" aria-label={s.name}
-                                        className="btn-arena w-11 h-11 rounded-xl bg-white/[0.05] border border-gold/15 flex items-center justify-center text-white/60 hover:text-white hover:border-[#C21E3A]/50">
+                                        className="btn-arena w-11 h-11 rounded-xl bg-white/[0.05] border border-gold/15 flex items-center justify-center text-white/60 hover:text-white hover:border-[#2F7FD6]/50">
                                         <span className="scale-[0.8] block">{s.icon}</span>
                                     </a>
                                 ))}
                             </div>
+                            {/* وصف الموقع — نص حقيقي يُقرأ ويُفهرس، لا زينة */}
+                            <p className="mx-auto mt-6 max-w-[640px] text-[12.5px] md:text-[13.5px] font-medium leading-[1.9] text-white/45" style={{ textWrap: 'pretty' }}>
+                                {t.about}
+                            </p>
                             {EMAIL_ADDRESS && (
                                 <a href={`mailto:${EMAIL_ADDRESS}`} className="inline-flex items-center gap-2 mt-6 text-white/40 hover:text-white text-xs font-bold transition-colors">
                                     <MailIcon className="w-4 h-4" /> {t.contact}: {EMAIL_ADDRESS}

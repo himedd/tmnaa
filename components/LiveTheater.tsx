@@ -189,10 +189,10 @@ export const LiveTheater: React.FC<LiveTheaterProps> = ({ lang, stream, channelS
     }, [channelSlug, onShare]);
 
     const roomRules = useMemo(() => {
-        const list: { label: string; tone: 'gold' | 'wine' | 'muted' }[] = [];
-        list.push({ label: stream.slowMode ? tr.slow.replace('{n}', String(stream.messageInterval || 15)) : tr.publicOnly, tone: stream.slowMode ? 'wine' : 'muted' });
-        if (stream.subsOnly) list.push({ label: tr.subOnly, tone: 'wine' });
-        else if (stream.followersOnly) list.push({ label: tr.followOnly, tone: 'wine' });
+        const list: { label: string; tone: 'gold' | 'navy' | 'muted' }[] = [];
+        list.push({ label: stream.slowMode ? tr.slow.replace('{n}', String(stream.messageInterval || 15)) : tr.publicOnly, tone: stream.slowMode ? 'navy' : 'muted' });
+        if (stream.subsOnly) list.push({ label: tr.subOnly, tone: 'navy' });
+        else if (stream.followersOnly) list.push({ label: tr.followOnly, tone: 'navy' });
         if (stream.emotesOn) list.push({ label: tr.emotes, tone: 'gold' });
         if (stream.subTiers > 0) list.push({ label: `${stream.subTiers} ${ar ? 'مستوى اشتراك' : 'sub tiers'}`, tone: 'gold' });
         return list;
@@ -235,14 +235,14 @@ export const LiveTheater: React.FC<LiveTheaterProps> = ({ lang, stream, channelS
             <div className="absolute -inset-4 rounded-[40px] pointer-events-none"
                 style={{ background: 'radial-gradient(ellipse 58% 44% at 50% 4%, rgba(227,179,65,0.14) 0%, transparent 70%)' }} />
             <div className="absolute -inset-4 rounded-[40px] pointer-events-none"
-                style={{ background: 'radial-gradient(ellipse 46% 40% at 18% 100%, rgba(110,27,43,0.32) 0%, transparent 72%)' }} />
+                style={{ background: 'radial-gradient(ellipse 46% 40% at 18% 100%, rgba(39,80,127,0.32) 0%, transparent 72%)' }} />
 
-            <div className="relative rounded-[31px] overflow-hidden bg-gradient-to-b from-wine-950/[0.97] via-wine-900/[0.93] to-wine-950/[0.97]">
+            <div className="relative rounded-[31px] overflow-hidden bg-gradient-to-b from-navy-950/[0.97] via-navy-900/[0.93] to-navy-950/[0.97]">
                 {/* ===== شريط الحالة العلوي ===== */}
                 <div className="flex items-center gap-2 px-3 md:px-5 py-3 border-b border-gold/[0.14] bg-gradient-to-b from-white/[0.07] to-transparent">
-                    <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-3 py-1.5 rounded-full text-wine-950 tracking-[0.18em]"
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-black px-3 py-1.5 rounded-full text-navy-950 tracking-[0.18em]"
                         style={{ background: GOLD_FOIL, boxShadow: '0 0 22px rgba(227,179,65,0.5), inset 0 1px 0 rgba(255,255,255,0.5)' }}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-wine-900 animate-pulse" />{tr.live}
+                        <span className="w-1.5 h-1.5 rounded-full bg-navy-900 animate-pulse" />{tr.live}
                     </span>
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-black px-3 py-1.5 rounded-full bg-white/[0.05] border border-gold/20 text-gold-light" dir="ltr">
                         <svg className="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24">{ICONS.clock}</svg>
@@ -291,7 +291,7 @@ export const LiveTheater: React.FC<LiveTheaterProps> = ({ lang, stream, channelS
                                 <div className="min-w-0 flex-1">
                                     <h3 className="text-[17px] md:text-2xl font-black text-white leading-tight" title={stream.title}>{stream.title || tr.never}</h3>
                                     <p className="text-[13px] md:text-sm font-bold mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
-                                        <span className="nav-wm font-gaming text-[15px] md:text-[17px] tracking-[0.05em]" dir="ltr">XLXWI</span>
+                                        <span className="nav-wm font-gaming text-[15px] md:text-[17px] tracking-[0.05em]" dir="ltr">TMNAA</span>
                                         {stream.verified && (
                                             <span className="inline-flex items-center gap-1 text-[10px] font-black text-gold/70">
                                                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1.5l2.5 2.1 3.3-.3.9 3.2 2.8 1.8-1.4 3 1.4 3-2.8 1.8-.9 3.2-3.3-.3L12 22.5l-2.5-2.1-3.3.3-.9-3.2L2.5 15.7l1.4-3-1.4-3 2.8-1.8.9-3.2 3.3.3L12 1.5zm4.1 8.6l-1.3-1.3-4 4-2.5-2.5-1.3 1.3 3.8 3.8 5.3-5.3z" /></svg>
@@ -338,17 +338,17 @@ export const LiveTheater: React.FC<LiveTheaterProps> = ({ lang, stream, channelS
                             {/* أزرار الإجراءات */}
                             <div className="flex flex-wrap items-center gap-2">
                                 <a href={`https://kick.com/${channelSlug}`} target="_blank" rel="noopener noreferrer"
-                                    className="btn-arena inline-flex items-center gap-2 h-11 px-5 rounded-2xl text-wine-950 text-[13px] font-black"
+                                    className="btn-arena inline-flex items-center gap-2 h-11 px-5 rounded-2xl text-navy-950 text-[13px] font-black"
                                     style={{ background: GOLD_FOIL, boxShadow: '0 14px 30px -12px rgba(227,179,65,0.85), inset 0 1px 0 rgba(255,255,255,0.5)' }}>
                                     <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                                     {ar ? 'شاهد على كيك' : 'Watch on Kick'}
                                 </a>
-                                <a href="https://kick.com/xlxwi/subscribe" target="_blank" rel="noopener noreferrer"
+                                <a href="https://kick.com/tmnaa/subscribe" target="_blank" rel="noopener noreferrer"
                                     className="btn-arena inline-flex items-center gap-2 h-11 px-4 rounded-2xl border border-gold/45 text-gold-light text-[13px] font-black hover:bg-gold/10 transition-colors">
                                     <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2.6l2.6 5.5 6 .8-4.4 4.2 1.1 6L12 16.1 6.7 19.1l1.1-6L3.4 8.9l6-.8L12 2.6z" /></svg>
                                     {tr.subscribe}
                                 </a>
-                                <a href="https://tip.dokan.sa/xlxwi" target="_blank" rel="noopener noreferrer"
+                                <a href="https://tip.dokan.sa/tmnaa" target="_blank" rel="noopener noreferrer"
                                     className="btn-arena inline-flex items-center gap-2 h-11 px-4 rounded-2xl border border-white/[0.09] bg-white/[0.05] text-white/80 text-[13px] font-black hover:border-gold/40 hover:text-white transition-colors">
                                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                                     {tr.support}
@@ -385,7 +385,7 @@ export const LiveTheater: React.FC<LiveTheaterProps> = ({ lang, stream, channelS
                                     <span className="text-[9px] font-black tracking-[0.18em] uppercase text-gold/50 me-1">{tr.room}</span>
                                     {roomRules.map(r => (
                                         <span key={r.label} dir="auto"
-                                            className={`px-2.5 py-1 rounded-lg text-[11px] font-black border ${r.tone === 'gold' ? 'bg-gold/10 border-gold/35 text-gold-light' : r.tone === 'wine' ? 'bg-wine-800/60 border-white/10 text-white/70' : 'bg-white/[0.04] border-white/[0.07] text-white/45'}`}>
+                                            className={`px-2.5 py-1 rounded-lg text-[11px] font-black border ${r.tone === 'gold' ? 'bg-gold/10 border-gold/35 text-gold-light' : r.tone === 'navy' ? 'bg-navy-800/60 border-white/10 text-white/70' : 'bg-white/[0.04] border-white/[0.07] text-white/45'}`}>
                                             {r.label}
                                         </span>
                                     ))}
@@ -406,7 +406,7 @@ export const LiveTheater: React.FC<LiveTheaterProps> = ({ lang, stream, channelS
 
                     {/* ===== العمود الأيمن: الشات الحي (ارتفاع محسوم + يلتصق بالمشاهدة) ===== */}
                     <div className="w-full xl:w-[400px] shrink-0 self-start xl:sticky xl:top-[104px] p-3 md:p-4 xl:ps-0">
-                        <div className="h-[520px] md:h-[600px] xl:h-[calc(100vh-136px)] xl:min-h-[600px] xl:max-h-[880px] rounded-[22px] overflow-hidden border border-gold/20 bg-wine-950 shadow-[0_24px_70px_rgba(0,0,0,0.55)] flex flex-col min-h-0">
+                        <div className="h-[520px] md:h-[600px] xl:h-[calc(100vh-136px)] xl:min-h-[600px] xl:max-h-[880px] rounded-[22px] overflow-hidden border border-gold/20 bg-navy-950 shadow-[0_24px_70px_rgba(0,0,0,0.55)] flex flex-col min-h-0">
                             <ChatWidget lang={lang} />
                         </div>
                     </div>

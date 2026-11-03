@@ -1,4 +1,4 @@
--- iABS Stream Hub - Supabase SQL (Schema + RLS Policies)
+-- TMNAA Stream Hub - Supabase SQL (Schema + RLS Policies)
 -- Run this in Supabase SQL Editor.
 -- Notes:
 -- - Uses Auth-based admin access via table: admin_users
