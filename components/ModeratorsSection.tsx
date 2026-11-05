@@ -33,8 +33,8 @@ interface RosterEntry {
 
 const ROSTER: RosterEntry[] = [
   { x: '7yarall', name: 'YARA', avatar: 'mods/7yarall-avatar.webp', banner: 'mods/7yarall-banner.webp', seedFollowers: 569, lead: true },
-  { x: 'tmna16_', name: 'MIRO', avatar: 'mods/tmna16_-avatar.webp', banner: 'mods/tmna16_-banner.webp', seedFollowers: 748, seedVerified: true },
   { x: '_l7o0', name: 'llinay', avatar: 'mods/_l7o0-avatar.webp', banner: 'mods/_l7o0-banner.webp', seedFollowers: 304 },
+  { x: 'tmna16_', name: 'MIRO', avatar: 'mods/tmna16_-avatar.webp', banner: 'mods/tmna16_-banner.webp', seedFollowers: 748, seedVerified: true },
   { x: 's7le_a', name: 'Alghamdi', avatar: 'mods/s7le_a-avatar.webp', seedFollowers: 2298 },
   { x: 'ixravii', name: 'Reem', avatar: 'mods/ixravii-avatar.webp', seedFollowers: 498, seedVerified: true },
   { x: 'rawah515', name: 'Rawah', avatar: 'mods/rawah515-avatar.webp', seedFollowers: 173 },
