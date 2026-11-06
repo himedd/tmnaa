@@ -4,6 +4,19 @@ import react from '@vitejs/plugin-react';
 import socialHandler from './api/social.ts';
 import kickHandler from './api/kick.ts';
 
+/** جسم الطلب يُقرأ كما هو حتى تُمرَّره Middleware التطوير إلى دالة الإنتاج نفسها */
+const readBody = (req: any): Promise<string | undefined> => new Promise((resolve, reject) => {
+  const chunks: Buffer[] = [];
+  let size = 0;
+  req.on('data', (c: Buffer) => {
+    chunks.push(c);
+    size += c.length;
+    if (size > 64_000) { reject(new Error('Request body too large')); req.destroy?.(); }
+  });
+  req.on('end', () => resolve(size ? Buffer.concat(chunks).toString('utf8') : undefined));
+  req.on('error', reject);
+});
+
 export default defineConfig(() => {
   return {
     server: {
@@ -36,7 +49,13 @@ export default defineConfig(() => {
               // فيركل فقط، فيشتغل الموقع محلياً ويفشل منشوراً (خطأ أساطير الشات).
               try {
                 const base = `http://${req.headers.host || 'localhost'}`;
-                const webRes = await kickHandler(new Request(new URL(req.url, base).toString(), { method: req.method || 'GET' }));
+                // الجسم لازم يُقرأ ويُمرَّر، وإلا فشل تجديد بيانات Pusher محلياً ونجح منشوراً
+                const body = (req.method || 'GET') === 'GET' ? undefined : await readBody(req);
+                const webRes = await kickHandler(new Request(new URL(req.url, base).toString(), {
+                  method: req.method || 'GET',
+                  headers: { 'Content-Type': req.headers['content-type'] || 'application/json' },
+                  body,
+                }));
                 res.statusCode = webRes.status;
                 res.setHeader('Content-Type', 'application/json');
                 res.setHeader('Access-Control-Allow-Origin', '*');

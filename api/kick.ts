@@ -13,16 +13,24 @@ const ALLOWED_HOSTS = new Set([
   'botrix.live', // أساطير الشات + ساعات مشاهدة الكلان
 ]);
 
-const isAllowed = (raw: string): boolean => {
+const isAllowed = (raw: string): URL | null => {
   let url: URL;
   try {
     url = new URL(raw);
   } catch {
-    return false;
+    return null;
   }
-  if (url.protocol !== 'https:') return false;
-  return ALLOWED_HOSTS.has(url.hostname) || [...ALLOWED_HOSTS].some(h => url.hostname.endsWith(`.${h}`));
+  if (url.protocol !== 'https:') return null;
+  return ALLOWED_HOSTS.has(url.hostname) || [...ALLOWED_HOSTS].some(h => url.hostname.endsWith(`.${h}`)) ? url : null;
 };
+
+/**
+ * بيانات اعتماد Pusher تُطلب بـ POST، وكيك لا تُرجع ترويسة CORS لـ POST
+ * (المفحوص: 200 بلا access-control-allow-origin، وOPTIONS يردّ 204 بلا ترويسات)،
+ * فالمتصفح يحجبها ولا يبقى سوى المفتاح المثبّت. هذا المسار وحده يمرّ من هنا.
+ */
+const ALLOWED_POST_PATHS = new Set(['/api/v1/realtime/connection']);
+const MAX_POST_BODY = 4096;
 
 export default async function handler(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -31,18 +39,32 @@ export default async function handler(request: Request) {
   if (!endpoint) {
     return new Response(JSON.stringify({ error: 'Endpoint is required' }), { status: 400 });
   }
-  if (!isAllowed(endpoint)) {
+  const target = isAllowed(endpoint);
+  if (!target) {
     return new Response(JSON.stringify({ error: 'Endpoint not allowed' }), { status: 403 });
   }
+
+  const method = (request.method || 'GET').toUpperCase();
+  if (method !== 'GET' && method !== 'HEAD') {
+    if (method !== 'POST' || !ALLOWED_POST_PATHS.has(target.pathname)) {
+      return new Response(JSON.stringify({ error: 'Method not allowed for this endpoint' }), { status: 405 });
+    }
+  }
+
+  // بلا تمرير للترويسات الواردة: لا Authorization ولا cookies تصل إلى كيك
+  const body = method === 'POST' ? (await request.text()).slice(0, MAX_POST_BODY) : undefined;
 
   try {
     // الخادم الخاص بك (Vercel) هو من سيقوم بالطلب الآن وليس المتصفح
     const apiResponse = await fetch(endpoint, {
+      method,
       headers: {
         'Accept': 'application/json',
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
         // UA مختصر فقط — الـ UA الكامل يفعّل حظر Kick الأمني (403)
         'User-Agent': 'Mozilla/5.0',
       },
+      body,
     });
 
     if (!apiResponse.ok) {
@@ -53,11 +75,13 @@ export default async function handler(request: Request) {
     const data = await apiResponse.json();
 
     // إرجاع البيانات الصافية للمتصفح مع تفعيل الكاش في سيرفرات Vercel
+    // بيانات الاعتماد لكل عميل جديد، فلا تُخزَّن مشتركة على CDN
+    const cache = body ? 'no-store' : 's-maxage=60, stale-while-revalidate=300';
     return new Response(JSON.stringify(data), {
       status: 200,
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 's-maxage=60, stale-while-revalidate=300' // كاش لمدة دقيقة
+        'Cache-Control': cache
       },
     });
 

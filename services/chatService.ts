@@ -255,33 +255,37 @@ class ChatService {
       } catch { /* كاش تالف */ }
     }
 
-    try {
-      const res = await fetchWithTimeout(REALTIME_CONNECTION_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          'x-app-platform': 'web',
-        },
-        body: JSON.stringify({
-          client: { id: crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`, type: 'web' },
-          capabilities: { accepted_providers: [{ provider: 'pusher' }] },
-        }),
-      }, 6000);
-      if (!res.ok) throw new Error(`status ${res.status}`);
-      const json = await res.json();
-      const pusherConn = json?.data?.connections?.find((c: any) => c?.provider === 'pusher');
-      const app_key = pusherConn?.credentials?.app_key;
-      const cluster = pusherConn?.credentials?.cluster || PUSHER_FALLBACK.cluster;
-      if (!app_key) throw new Error('no pusher credentials');
-      this.credentials = { key: app_key, cluster };
-      localStorage.setItem(CREDENTIALS_CACHE_KEY, JSON.stringify({ app_key, cluster, ts: Date.now() }));
-      return this.credentials;
-    } catch (e) {
-      console.warn('[ChatService] Credential fetch failed, using fallback key.', e);
-      this.credentials = PUSHER_FALLBACK;
-      return PUSHER_FALLBACK;
+    const payload = JSON.stringify({
+      client: { id: crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`, type: 'web' },
+      capabilities: { accepted_providers: [{ provider: 'pusher' }] },
+    });
+    const attempts = [
+      // كيك لا تُرجع ترويسة CORS لـ POST (المفحوص: 200 بلا access-control-allow-origin)،
+      // فالمتصفح يحجب الطلب والمفتاح المثبّت وحده يبقى — الدوال الخاصة بالموقع تتولاه
+      { url: `/api/kick?endpoint=${encodeURIComponent(REALTIME_CONNECTION_URL)}`, headers: { 'Content-Type': 'application/json', Accept: 'application/json' } },
+      // مستضيف بلا دوال (ملفات ثابتة): المباشر هو الخيار الوحيد
+      { url: REALTIME_CONNECTION_URL, headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'x-app-platform': 'web' } },
+    ];
+
+    for (const attempt of attempts) {
+      try {
+        const res = await fetchWithTimeout(attempt.url, { method: 'POST', headers: attempt.headers, body: payload }, 6000);
+        if (!res.ok) throw new Error(`status ${res.status}`);
+        const json = await res.json();
+        const pusherConn = json?.data?.connections?.find((c: any) => c?.provider === 'pusher');
+        const app_key = pusherConn?.credentials?.app_key;
+        if (!app_key) throw new Error('no pusher credentials');
+        this.credentials = { key: String(app_key), cluster: String(pusherConn?.credentials?.cluster || PUSHER_FALLBACK.cluster) };
+        try { localStorage.setItem(CREDENTIALS_CACHE_KEY, JSON.stringify({ app_key, cluster: this.credentials.cluster, ts: Date.now() })); } catch { /* التخزين محظور */ }
+        return this.credentials;
+      } catch (e) {
+        console.warn('[ChatService] Credential fetch failed via', attempt.url.slice(0, 40), e);
+      }
     }
+
+    console.warn('[ChatService] Using fallback Pusher key.');
+    this.credentials = PUSHER_FALLBACK;
+    return PUSHER_FALLBACK;
   }
 
   /** مفتاح مرفوض (4001/4000) = الكاش صار قديماً — امسحه ليُجلب جديد في المحاولة التالية */
