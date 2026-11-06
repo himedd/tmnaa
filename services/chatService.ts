@@ -13,6 +13,10 @@ const PUSHER_FALLBACK = { key: '34bf7a0ff419a2a775b9', cluster: 'us2' };
 /** المفتاح المرفوض يردّ بهذه الأكواد — عندها يجب مسح الكاش وجلب مفتاح جديد */
 const INVALID_KEY_CODES = [4001, 4000];
 
+/** رقم غرفة الشات يُتحقّق منه عند كيك أولاً؛ الكاش صالح 12 ساعة ثم يُعاد تأكيده */
+const CHATROOM_CACHE_PREFIX = 'kick_chatroom_v2_';
+const CHATROOM_TTL_MS = 12 * 3600_000;
+
 /**
  * أنواع الشارات كما تُعرّفها كيك نفسها (مأخوذة من حزمة نصوص الهوية في موقعها):
  * broadcaster / moderator / staff / vip / og / founder / kick_founder22 / kick_whale /
@@ -36,6 +40,9 @@ const BADGE_NOISE = new Set(['member', 'viewer', 'user', 'public', 'default', 'n
 const BADGE_ORDER = ['broadcaster', 'op', 'staff', 'moderator', 'founder', 'kick_founder22', 'vip', 'og', 'sidekick',
   'kicks_gifter', 'sub_gifter', 'kick_whale', 'subscriber', 'verified', 'bot', 'level', 'early_follower', 'chat_identity'];
 
+/** الأنواع التي للواجهة رسمٌ معروف بها — ما عداها من الشارات الدعائية لا يُعرض */
+const DRAWN_BADGES = new Set(BADGE_ORDER);
+
 const normType = (raw: unknown): string => {
   const key = String(raw ?? '').toLowerCase().trim().replace(/[\s-]+/g, '_');
   if (!key || BADGE_NOISE.has(key)) return '';
@@ -52,8 +59,10 @@ const getRoleFromBadges = (types: Set<string>): 'owner' | 'moderator' | 'vip' | 
 };
 
 /**
- * كيك يغيّر مكان الشارات بين نسخة وأخرى (مصفوفة، نص مفرد، كائن اشتراك، دور)،
- * فتُجمع كل المصادر في قائمة واحدة بلا تكرار.
+ * كيك يرسل الشارات في قائمتين داخل `sender.identity`:
+ * `badges` القديمة للأدوار ({type, text, count}) و`badges_v2` الجديدة ({name, metadata})
+ * وفيها مستوى الدردشة وشعارات عالمية لا تعرف الواجهة رسمها فتُتجاهل.
+ * تُجمع الاثنتان في قائمة واحدة بلا تكرار.
  */
 const collectBadges = (sender: any, data: any, username: string): ChatBadge[] => {
   const identity = sender?.identity || data?.identity || {};
@@ -61,7 +70,7 @@ const collectBadges = (sender: any, data: any, username: string): ChatBadge[] =>
   const push = (rawType: unknown, rawVersion?: unknown) => {
     const type = normType(rawType);
     if (!type) return;
-    const version = String(rawVersion ?? '').trim().replace(/[^0-9]/g, '');
+    const version = String(rawVersion ?? '').replace(/[^0-9]/g, '').replace(/^0+(?=\d)/, '');
     const prev = found.get(type);
     if (!prev || (version && !(prev.version || ''))) found.set(type, { type, version: version || undefined });
   };
@@ -71,13 +80,19 @@ const collectBadges = (sender: any, data: any, username: string): ChatBadge[] =>
     if (!Array.isArray(arr)) continue;
     for (const b of arr) {
       if (typeof b === 'string') push(b);
-      else push(b?.type ?? b?.name ?? b?.slug, b?.version ?? b?.text);
+      else push(b?.type ?? b?.name ?? b?.slug, b?.count ?? b?.version ?? b?.text);
     }
+  }
+
+  for (const b of Array.isArray(identity?.badges_v2) ? identity.badges_v2 : []) {
+    const type = normType(b?.name);
+    if (!DRAWN_BADGES.has(type)) continue;
+    push(type, b?.metadata?.level ?? b?.count);
   }
 
   const single = identity?.badge ?? sender?.badge ?? data?.badge;
   if (typeof single === 'string' && single.trim()) for (const part of single.split(/[,+|/]/)) push(part);
-  else if (single && typeof single === 'object') push(single.type ?? single.name, single.version);
+  else if (single && typeof single === 'object') push(single.type ?? single.name, single.count ?? single.version);
 
   for (const role of [sender?.role?.type, sender?.role, ...(Array.isArray(sender?.roles) ? sender.roles.map((r: any) => r?.type ?? r) : [])]) push(role);
 
@@ -90,13 +105,16 @@ const collectBadges = (sender: any, data: any, username: string): ChatBadge[] =>
 
   if (isBotAccount(username)) push('bot');
 
-  return [...found.values()]
-    .sort((a, b) => {
-      const ia = BADGE_ORDER.indexOf(a.type);
-      const ib = BADGE_ORDER.indexOf(b.type);
-      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-    })
-    .slice(0, 5);
+  const ordered = [...found.values()].sort((a, b) => {
+    const ia = BADGE_ORDER.indexOf(a.type);
+    const ib = BADGE_ORDER.indexOf(b.type);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  });
+  const capped = ordered.slice(0, 5);
+  // مستوى الدردشة لا يسقط أمام زحمة الشارات: يعود مكان آخر خانة إن كان السقف قد امتلأ
+  const level = ordered.find(b => b.type === 'level');
+  if (level && capped.length === 5 && !capped.includes(level)) capped[4] = level;
+  return capped;
 };
 
 const normalizeUrl = (value: string): string => {  if (value.startsWith('//')) return `https:${value}`;
@@ -143,9 +161,9 @@ class ChatService {
   private channel: any = null;
 
   private KNOWN_CHATROOM_IDS: Record<string, number> = {
-    // معرّف معروف مسبقاً = اتصال فوري بدون انتظار البحث من الـ API
-    'tmnaa': 5976096,
-    'xeid': 47582,
+    // احتياط عند تعذّر الطلب من كيك — المرجع هو الـ API أولاً حتى لا يبقى رقم خاطئ حيّاً للأبد
+    'tmnaa': 5634197,
+    'xeid': 5945902,
   };
 
   private connectionId = 0;
@@ -159,51 +177,66 @@ class ChatService {
   private credentials: { key: string; cluster: string } | null = null;
   private seenMessageIds = new Set<string>();
 
+  /** الكاش القديم كان يُقرأ بلا طابع زمني، فيبقي رقماً خاطئاً إلى الأبد */
+  private dropLegacyCache(slug: string) {
+    try { localStorage.removeItem(`kick_chatroom_id_${slug}`); } catch { /* التخزين محظور */ }
+  }
+
+  private readCache(slug: string): { id: number; ts: number } | null {
+    try {
+      const raw = localStorage.getItem(CHATROOM_CACHE_PREFIX + slug);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return Number.isInteger(parsed?.id) && parsed.id > 0 ? { id: parsed.id, ts: parsed.ts || 0 } : null;
+    } catch { return null; }
+  }
+
+  private writeCache(slug: string, id: number) {
+    try { localStorage.setItem(CHATROOM_CACHE_PREFIX + slug, JSON.stringify({ id, ts: Date.now() })); } catch { /* التخزين محظور */ }
+  }
+
   async getChatroomId(channelSlug: string): Promise<number | null> {
     const slug = channelSlug.toLowerCase().trim();
+    this.dropLegacyCache(slug);
 
-    if (this.KNOWN_CHATROOM_IDS[slug]) return this.KNOWN_CHATROOM_IDS[slug];
-
-    const cachedId = localStorage.getItem(`kick_chatroom_id_${slug}`);
-    if (cachedId && /^\d+$/.test(cachedId)) return parseInt(cachedId, 10);
-
-    const kickUrl = `https://kick.com/api/v2/channels/${slug}/chatroom`;
+    const chatroomUrl = `https://kick.com/api/v2/channels/${slug}/chatroom`;
+    const channelUrl = `https://kick.com/api/v2/channels/${slug}`;
     const attempts = [
       // كيك يفتح القراءة للمتصفح عبر CORS — المباشر أولاً وأسرع وسيط داخلي بعدها
-      { url: kickUrl, wrapped: false },
-      { url: `/api/kick?endpoint=${encodeURIComponent(kickUrl)}`, wrapped: false },
-      { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(kickUrl)}`, wrapped: true },
-      { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(kickUrl)}`, wrapped: true },
+      { url: chatroomUrl, shape: 'chatroom' as const, wrapped: false },
+      { url: `/api/kick?endpoint=${encodeURIComponent(chatroomUrl)}`, shape: 'chatroom' as const, wrapped: false },
+      // بيانات القناة تحمل الرقم داخل chatroom.id — مخرج لو كيك أقفلت مسار الغرفة
+      { url: channelUrl, shape: 'channel' as const, wrapped: false },
+      { url: `/api/kick?endpoint=${encodeURIComponent(channelUrl)}`, shape: 'channel' as const, wrapped: false },
+      { url: `https://api.allorigins.win/raw?url=${encodeURIComponent(chatroomUrl)}`, shape: 'chatroom' as const, wrapped: true },
+      { url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(chatroomUrl)}`, shape: 'chatroom' as const, wrapped: true },
     ];
 
     try {
-      const found = await Promise.any(attempts.map(async ({ url, wrapped }) => {
-        const res = await fetchWithTimeout(url, { headers: { Accept: 'application/json' } });
+      const found = await Promise.any(attempts.map(async ({ url, shape, wrapped }) => {
+        const res = await fetchWithTimeout(url, { headers: { Accept: 'application/json' } }, 6000);
         if (!res.ok) throw new Error(`status ${res.status}`);
         const json = await res.json();
         const data = wrapped ? parseProxyPayload(url, json) : json;
-        const id = data?.id || data?.chatroom?.id || data?.data?.id || data?.data?.chatroom?.id;
-        if (!id) throw new Error('no chatroom id');
-        localStorage.setItem(`kick_chatroom_id_${slug}`, String(id));
-        return Number(id);
+        // مسار القناة يُرجع id = معرّف القناة نفسه؛ أخذه يفتح غرفة وهمية صامتة إلى الأبد
+        const rawId = shape === 'channel'
+          ? (data?.chatroom?.id ?? data?.data?.chatroom?.id)
+          : (data?.chatroom?.id ?? data?.id ?? data?.data?.chatroom?.id ?? data?.data?.id);
+        const id = Number(rawId);
+        if (!Number.isInteger(id) || id <= 0) throw new Error('no chatroom id');
+        this.writeCache(slug, id);
+        return id;
       }));
       return found;
     } catch {
-      console.warn(`[ChatService] Chatroom lookup failed for ${slug}.`);
+      console.warn(`[ChatService] Live chatroom lookup failed for ${slug}; falling back to cache/table.`);
     }
 
-    // آخر محاولة: بيانات القناة نفسها (تحتوي chatroom.id)
-    try {
-      const res = await fetchWithTimeout(`/api/kick?endpoint=${encodeURIComponent(`https://kick.com/api/v2/channels/${slug}`)}`);
-      const data = res.ok ? await res.json() : null;
-      const id = data?.chatroom?.id || data?.channel?.chatroom?.id;
-      if (id) {
-        localStorage.setItem(`kick_chatroom_id_${slug}`, String(id));
-        return Number(id);
-      }
-    } catch { /* لا شيء */ }
-
-    return null;
+    // لا شبكة: الكاش الصالح، ثم الجدول الثابت، ثم أي كاش قديم
+    const cached = this.readCache(slug);
+    if (cached && Date.now() - cached.ts < CHATROOM_TTL_MS) return cached.id;
+    if (this.KNOWN_CHATROOM_IDS[slug]) return this.KNOWN_CHATROOM_IDS[slug];
+    return cached?.id ?? null;
   }
 
   /** الجلب من web.kick.com يعكس Origin في CORS، فلا يحتاج وسيطاً */
@@ -322,21 +355,24 @@ class ChatService {
 
         const sender = data?.sender || data?.user || {};
         const username = sender?.username || 'Unknown';
+        const identity = sender?.identity || data?.identity || {};
         const badges = collectBadges(sender, data, username);
         const isBot = badges.some(b => b.type === 'bot');
+        // وقت كيك هو المرجع: وقت المتصفح يتقدّم ويتأخّر مع إعادة الاتصال
+        const sentAt = Date.parse(String(data?.created_at ?? ''));
 
         const message: ChatMessage = {
           id,
           user: {
             id: String(sender?.id || '0'),
             username,
-            color: isBot ? '#3FA9FF' : (sender?.identity?.color || data?.identity?.color || '#E3B341'),
+            color: isBot ? '#3FA9FF' : (identity?.color || '#E3B341'),
             avatar: pickAvatar(sender),
           },
           content: data?.content || '',
           role: getRoleFromBadges(new Set(badges.map(b => b.type))),
           badges,
-          timestamp: Date.now()
+          timestamp: Number.isFinite(sentAt) ? sentAt : Date.now()
         };
 
         this.listeners.forEach(cb => {
@@ -349,7 +385,7 @@ class ChatService {
       });
 
       this.channel.bind('App\\Events\\MessageDeletedEvent', (data: any) => {
-        const messageId = data?.message?.id;
+        const messageId = data?.message?.id ?? data?.message_id;
         if (messageId) this.deleteListeners.forEach(cb => cb(messageId));
       });
 
